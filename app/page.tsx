@@ -18,10 +18,30 @@ const SPECS = [
 ];
 
 const SOFTWARE = [
-  { repo: "verana-labs/vpr", name: "VPR", desc: "Cosmos-SDK Layer-1 reference implementation." },
-  { repo: "verana-labs/indexer", name: "Indexer", desc: "Trust Resolver / query surface." },
-  { repo: "verana-labs/vs-agent", name: "VS-Agent", desc: "The verifiable-service agent runtime." },
-  { repo: "verana-labs/frontend", name: "Frontend", desc: "Reference web frontend." },
+  {
+    repo: "verana-labs/vpr",
+    name: "Verifiable Public Registry",
+    desc: "Cosmos-SDK Layer-1 reference implementation.",
+    license: "AGPL-3.0",
+  },
+  {
+    repo: "verana-labs/indexer",
+    name: "Indexer",
+    desc: "Trust Resolver / query surface.",
+    license: "Apache-2.0",
+  },
+  {
+    repo: "verana-labs/vs-agent",
+    name: "VS-Agent",
+    desc: "The verifiable-service agent runtime.",
+    license: "Apache-2.0",
+  },
+  {
+    repo: "verana-labs/frontend",
+    name: "Frontend",
+    desc: "Reference web frontend.",
+    license: "Apache-2.0",
+  },
 ];
 
 const WORKING_GROUPS = [
@@ -145,7 +165,7 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-3">
             <div>
-              <p className="tag mb-3">Stewarded · Apache 2.0</p>
+              <p className="tag mb-3">Stewarded · open source</p>
               <h2 className="display text-3xl">Open-source software</h2>
             </div>
             <a
@@ -180,9 +200,22 @@ export default async function HomePage() {
                 <p className="text-sm text-muted leading-relaxed mt-2">
                   {s.desc}
                 </p>
+                <span
+                  className={`badge mt-3 self-start ${
+                    s.license === "Apache-2.0" ? "badge-green" : "badge-purple"
+                  }`}
+                >
+                  {s.license}
+                </span>
               </a>
             ))}
           </div>
+          <p className="mt-6 text-sm text-muted">
+            All modules are <strong className="text-ink">Apache 2.0</strong>{" "}
+            (copyright held by contributors), except the{" "}
+            <strong className="text-ink">Verifiable Public Registry</strong>,
+            which is <strong className="text-ink">AGPL-3.0</strong>.
+          </p>
         </div>
       </section>
 
