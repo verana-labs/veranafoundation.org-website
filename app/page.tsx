@@ -51,9 +51,17 @@ const WORKING_GROUPS = [
 ];
 
 const FOUNDERS = [
-  { name: "2060 OÜ", href: "https://2060.io" },
-  { name: "Mobiera", href: "https://mobiera.com" },
-  { name: "Orchestrating Identity", href: "https://www.oidentity.com/" },
+  { name: "2060 OÜ", href: "https://2060.io", logo: "/assets/img/logo_2060.svg" },
+  {
+    name: "Mobiera",
+    href: "https://mobiera.com",
+    logo: "/assets/img/logo_mobiera.svg",
+  },
+  {
+    name: "Orchestrating Identity",
+    href: "https://www.oidentity.com/",
+    logo: "/assets/img/logo_oidentity.svg",
+  },
 ];
 
 // Fallback contributor initials, used only if the live GitHub fetch fails.
@@ -343,8 +351,16 @@ export default async function HomePage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {FOUNDERS.map((f) => (
-              <a key={f.name} href={f.href} rel="noopener" className="logo-tile">
-                {f.name}
+              <a
+                key={f.name}
+                href={f.href}
+                rel="noopener"
+                className="logo-wall-item"
+                title={f.name}
+                aria-label={f.name}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={f.logo} alt={`${f.name} logo`} loading="lazy" />
               </a>
             ))}
           </div>
