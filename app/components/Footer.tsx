@@ -114,7 +114,13 @@ export default function Footer() {
             </div>
           </div>
           <div className="mt-14 pt-8 border-t border-rule flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-muted">
-            <p>© {year} Verana Foundation (in formation, stewarded by 2060 OÜ)</p>
+            <p>
+              © {year} Verana Foundation (in formation, stewarded by{" "}
+              <a href="https://2060.io" rel="noopener">
+                2060 OÜ
+              </a>
+              )
+            </p>
             <ul className="flex flex-wrap gap-4">
               <li>
                 <Link href="/privacy">Privacy</Link>
