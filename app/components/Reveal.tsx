@@ -1,13 +1,20 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
 /**
  * Progressive enhancement: reveals elements with the `.reveal` class as they
- * scroll into view. No-op (and content stays visible) when IntersectionObserver
- * is unavailable or the user prefers reduced motion.
+ * scroll into view. Re-runs on every route change so client-side navigations
+ * (which don't remount the layout) still observe the new page's elements —
+ * otherwise `.reveal` content would stay at opacity:0 until a full reload.
+ *
+ * No-op (content stays visible) when IntersectionObserver is unavailable or the
+ * user prefers reduced motion.
  */
 export default function Reveal() {
+  const pathname = usePathname();
+
   useEffect(() => {
     const els = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
     if (els.length === 0) return;
@@ -32,9 +39,14 @@ export default function Reveal() {
       { rootMargin: "0px 0px -10% 0px", threshold: 0.05 }
     );
 
-    els.forEach((el) => io.observe(el));
+    els.forEach((el) => {
+      // Re-arm any element that a previous route left marked visible.
+      el.classList.remove("is-visible");
+      io.observe(el);
+    });
+
     return () => io.disconnect();
-  }, []);
+  }, [pathname]);
 
   return null;
 }
