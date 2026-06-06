@@ -1,0 +1,22 @@
+name: Release Please
+
+# Opens/maintains a release PR from Conventional Commits on `main`. When the
+# release PR is merged, release-please creates a GitHub release and a `v*` git
+# tag. That tag push is picked up by `docker-publish.yml` (which triggers on
+# `tags: ["v*"]`) to build and push the versioned Docker image.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

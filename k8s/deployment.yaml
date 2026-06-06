@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: veranafoundation-website
+  namespace: web
+  labels:
+    app.kubernetes.io/name: veranafoundation-website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: veranafoundation-website
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: veranafoundation-website
+    spec:
+      containers:
+        - name: veranafoundation-website
+          # Mutable tag; paired with imagePullPolicy: Always so a
+          # `kubectl rollout restart` in CI always repulls the newest build.
+          image: veranalabs/veranafoundation.org-website:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3000"
+            - name: HOSTNAME
+              value: 0.0.0.0
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3

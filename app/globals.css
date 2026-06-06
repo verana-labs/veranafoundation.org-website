@@ -1,0 +1,605 @@
+@import "tailwindcss";
+
+/* ===========================================================================
+   Verana Foundation — design tokens.
+
+   Sister sub-brand of the Council, but its own "open-source commons"
+   personality: Verana purple as the PRIMARY, a signal green as the
+   "growth & community" SECONDARY, Space Grotesk for display/headings,
+   IBM Plex Mono used prominently, and a lighter, more modular feel.
+
+   Tokens live in @theme so the matching utilities (bg-surface, text-ink,
+   text-muted, border-rule, bg-purple, text-green, …) are generated AND the
+   CSS variables are emitted, which we re-bind under [data-theme="dark"] so
+   utilities flip automatically in dark mode.
+=========================================================================== */
+@theme {
+  --color-purple: #763ef0; /* primary */
+  --color-purple-dark: #5b2fc9; /* primary hover */
+  --color-green: #1fb57a; /* secondary — growth & community */
+  --color-green-dark: #178a5e;
+  --color-indigo: #2e2a8f; /* supporting ink / headline tone */
+
+  --color-surface: #fafafb;
+  --color-ink: #111111;
+  --color-muted: #5b5b5b;
+  --color-rule: #e8e6e0;
+  --color-card: #ffffff;
+  --color-elevated: #ffffff;
+
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), "Space Grotesk", var(--font-inter),
+    sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), "IBM Plex Mono", ui-monospace,
+    monospace;
+}
+
+:root {
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --color-purple: #a892ff;
+  --color-purple-dark: #c4b6ff;
+  --color-green: #3fd29a;
+  --color-green-dark: #5fe0b0;
+  --color-indigo: #8a85ff;
+
+  --color-surface: #0d0d11;
+  --color-ink: #ececec;
+  --color-muted: #9a9aa3;
+  --color-rule: #2a2a33;
+  --color-card: #16161c;
+  --color-elevated: #1b1b22;
+  color-scheme: dark;
+}
+
+html {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01" 1, "cv11" 1;
+}
+
+/* Display type — Space Grotesk, tight tracking (matches 2060.io) ---------- */
+.display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+/* Wordmark -------------------------------------------------------- */
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+.wordmark .dot {
+  color: var(--color-purple);
+}
+
+/* Accent line — purple → green, the Foundation's signature rule ---------- */
+.accent-line {
+  width: 3.5rem;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--color-purple), var(--color-green));
+}
+
+/* Eyebrow / tag label ------------------------------------------------- */
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-purple);
+}
+
+/* Prose body copy (legal + long-form pages) -------------------------- */
+.prose-body h2 {
+  font-family: var(--font-display);
+  font-size: 1.875rem;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  color: var(--color-ink);
+}
+.prose-body h3 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1.3;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-ink);
+}
+.prose-body p,
+.prose-body li {
+  color: var(--color-ink);
+  line-height: 1.65;
+}
+.prose-body p {
+  margin: 0 0 1rem;
+}
+.prose-body ul,
+.prose-body ol {
+  margin: 0 0 1.25rem 1.25rem;
+}
+.prose-body ul {
+  list-style: disc;
+}
+.prose-body ol {
+  list-style: decimal;
+}
+.prose-body li + li {
+  margin-top: 0.375rem;
+}
+.prose-body a {
+  color: var(--color-purple);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+.prose-body a:hover {
+  color: var(--color-purple-dark);
+  text-decoration-thickness: 2px;
+}
+.prose-body hr {
+  border: 0;
+  border-top: 1px solid var(--color-rule);
+  margin: 3rem 0;
+}
+.prose-body code {
+  font-family: var(--font-mono);
+  background: var(--color-card);
+  border: 1px solid var(--color-rule);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+.prose-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+}
+.prose-body table th,
+.prose-body table td {
+  border: 1px solid var(--color-rule);
+  padding: 0.625rem 0.875rem;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-body table th {
+  background: var(--color-card);
+  font-weight: 600;
+}
+
+/* Buttons --------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  line-height: 1;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: background-color 120ms ease, border-color 120ms ease,
+    color 120ms ease, transform 120ms ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn:hover {
+  transform: translateY(-1px);
+}
+.btn-primary {
+  background: var(--color-purple);
+  color: #fff;
+  border-color: var(--color-purple);
+}
+.btn-primary:hover {
+  background: var(--color-purple-dark);
+  border-color: var(--color-purple-dark);
+  color: #fff;
+}
+.btn-green {
+  background: var(--color-green);
+  color: #04231a;
+  border-color: var(--color-green);
+}
+.btn-green:hover {
+  background: var(--color-green-dark);
+  border-color: var(--color-green-dark);
+  color: #04231a;
+}
+.btn-secondary {
+  background: transparent;
+  color: var(--color-ink);
+  border-color: var(--color-rule);
+}
+.btn-secondary:hover {
+  border-color: var(--color-ink);
+}
+.btn-inverse {
+  background: #fff;
+  color: var(--color-purple);
+  border-color: #fff;
+}
+.btn-inverse:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.9);
+  color: var(--color-purple);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--color-purple);
+  border-color: transparent;
+  padding-left: 0;
+  padding-right: 0;
+}
+.btn-ghost:hover {
+  text-decoration: underline;
+  transform: none;
+}
+.prose-body a.btn {
+  text-decoration: none;
+}
+.prose-body a.btn-primary,
+.prose-body a.btn-primary:hover {
+  color: #fff;
+}
+
+/* Header / nav --------------------------------------------------- */
+.site-header {
+  border-bottom: 1px solid var(--color-rule);
+  background: color-mix(in srgb, var(--color-surface) 85%, transparent);
+  backdrop-filter: saturate(140%) blur(8px);
+}
+.site-header a.nav-link {
+  color: var(--color-ink);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  padding: 0.5rem 0;
+  display: inline-block;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+.site-header a.nav-link:hover,
+.site-header a.nav-link[aria-current="page"] {
+  border-bottom-color: var(--color-purple);
+  color: var(--color-purple);
+}
+
+/* Announcement bar ------------------------------------------------ */
+.announcement {
+  background: linear-gradient(
+    90deg,
+    var(--color-purple),
+    color-mix(in srgb, var(--color-purple) 55%, var(--color-green))
+  );
+  color: #fafafb;
+  font-size: 0.875rem;
+}
+.announcement a {
+  color: #fff;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Footer ---------------------------------------------------------- */
+.site-footer {
+  background: var(--color-card);
+  border-top: 1px solid var(--color-rule);
+  color: var(--color-ink);
+}
+.site-footer h3 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 0.75rem;
+}
+.site-footer a {
+  color: var(--color-ink);
+  text-decoration: none;
+  font-size: 0.9375rem;
+}
+.site-footer a:hover {
+  color: var(--color-purple);
+  text-decoration: underline;
+}
+
+/* Cards ----------------------------------------------------------- */
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+.card h3 {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--color-ink);
+}
+
+/* Repo / software card — GitHub-flavored, with a mono header ------- */
+.repo-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+.repo-card:hover {
+  border-color: var(--color-purple);
+  transform: translateY(-2px);
+}
+.repo-card .repo-name {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Working-group tile --------------------------------------------- */
+.wg-tile {
+  background: var(--color-card);
+  border: 1px solid var(--color-rule);
+  border-left: 3px solid var(--color-green);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+}
+
+/* Badge / pill --------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-rule);
+  color: var(--color-muted);
+}
+.badge-green {
+  color: var(--color-green-dark);
+  border-color: color-mix(in srgb, var(--color-green) 45%, transparent);
+  background: color-mix(in srgb, var(--color-green) 12%, transparent);
+}
+.badge-purple {
+  color: var(--color-purple);
+  border-color: color-mix(in srgb, var(--color-purple) 40%, transparent);
+  background: color-mix(in srgb, var(--color-purple) 10%, transparent);
+}
+
+/* Logo tile — placeholder slots for member / founder logos -------- */
+.logo-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 5rem;
+  padding: 1rem 1.25rem;
+  background: var(--color-card);
+  border: 1px dashed var(--color-rule);
+  border-radius: 10px;
+  color: var(--color-ink);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+.logo-tile:hover {
+  border-color: var(--color-purple);
+  border-style: solid;
+  color: var(--color-purple);
+}
+
+/* Contributor avatar (placeholder) -------------------------------- */
+.avatar {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+  border: 2px solid var(--color-surface);
+}
+
+/* Stat / metric pill --------------------------------------------- */
+.stat {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+/* Form fields ----------------------------------------------------- */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 1rem;
+}
+.form-field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+.form-field label .req {
+  color: var(--color-purple);
+}
+.form-field .opt {
+  color: var(--color-muted);
+  font-weight: 400;
+  font-size: 0.8125rem;
+}
+.field,
+.form-field input,
+.form-field select,
+.form-field textarea {
+  border: 1px solid var(--color-rule);
+  background: var(--color-card);
+  padding: 0.625rem 0.75rem;
+  border-radius: 6px;
+  font: inherit;
+  color: var(--color-ink);
+  width: 100%;
+}
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus,
+.field:focus {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+.form-field .hint {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
+
+/* Focus states --------------------------------------------------- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Cookie banner -------------------------------------------------- */
+.cookie-banner {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  right: 1rem;
+  max-width: 56rem;
+  margin-left: auto;
+  margin-right: auto;
+  background: var(--color-card);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 4px 24px rgba(17, 17, 17, 0.1);
+  z-index: 50;
+  font-size: 0.875rem;
+}
+
+/* Theme toggle --------------------------------------------------- */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-rule);
+  background: transparent;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease,
+    color 120ms ease;
+}
+.theme-toggle:hover {
+  border-color: var(--color-purple);
+  color: var(--color-purple);
+}
+.theme-toggle .icon-sun {
+  display: none;
+}
+.theme-toggle .icon-moon {
+  display: block;
+}
+[data-theme="dark"] .theme-toggle .icon-sun {
+  display: block;
+}
+[data-theme="dark"] .theme-toggle .icon-moon {
+  display: none;
+}
+
+/* Reveal-on-scroll (progressive enhancement) --------------------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 500ms ease, transform 500ms ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .btn:hover,
+  .repo-card:hover {
+    transform: none;
+  }
+}
+
+/* Print ---------------------------------------------------------- */
+@media print {
+  .site-header,
+  .site-footer,
+  .announcement,
+  .cookie-banner {
+    display: none !important;
+  }
+  a {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+}
+
+/* Dark-mode helpers ---------------------------------------------- */
+[data-theme="dark"] .btn-primary {
+  color: #0d0d11;
+}
+[data-theme="dark"] .btn-primary:hover {
+  color: #0d0d11;
+}
+[data-theme="dark"] .btn-inverse {
+  background: var(--color-card);
+  border-color: var(--color-card);
+  color: var(--color-purple);
+}
+[data-theme="dark"] .form-field select option {
+  background: var(--color-card);
+  color: var(--color-ink);
+}
