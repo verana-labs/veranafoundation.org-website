@@ -319,7 +319,9 @@ body {
 .site-footer a {
   color: var(--color-ink);
   text-decoration: none;
-  font-size: 0.9375rem;
+  /* Inherit the surrounding size so links match their context (the nav
+     columns are text-sm; the bottom copyright/legal bar is text-xs). */
+  font-size: inherit;
 }
 .site-footer a:hover {
   color: var(--color-purple);
