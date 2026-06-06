@@ -52,6 +52,11 @@ export default function Footer() {
                   <Link href="/contribute">Working groups</Link>
                 </li>
                 <li>
+                  <a href="https://discord.gg/edjaFn252q" rel="noopener">
+                    Discord ↗
+                  </a>
+                </li>
+                <li>
                   <Link href="/contact">Contact</Link>
                 </li>
               </ul>
