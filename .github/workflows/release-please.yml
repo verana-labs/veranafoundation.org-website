@@ -1,0 +1,67 @@
+name: Release Please
+
+# Opens/maintains a release PR from Conventional Commits on `main`. When the
+# release PR is merged, release-please creates a GitHub release and a `v*` git
+# tag. That tag push is picked up by `docker-publish.yml` (which triggers on
+# `tags: ["v*"]`) to build and push the versioned Docker image.
+#
+# Because the GitHub Release is created with the default GITHUB_TOKEN, the
+# `release: published` event does NOT trigger downstream workflows. So we call
+# the Discord notification reusable workflow directly here, gated on the
+# release-please `release_created` output.
+on:
+  push:
+    branches: [main]
+  # Manual trigger to (re)send a Discord release notification for an existing
+  # tag, e.g. to backfill a release that was published before the webhook
+  # secret was configured. Only the discord-notify-manual job runs for this.
+  workflow_dispatch:
+    inputs:
+      notify_tag:
+        description: "Release tag to (re)announce on Discord, e.g. v1.2.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # Announce the release on Discord, gated on release-please having created a
+  # release (i.e. when the release PR was merged).
+  discord-notify:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    uses: 2060-io/organization/.github/workflows/discord-release-notify-call.yml@main
+    with:
+      tag_name: ${{ needs.release-please.outputs.tag_name }}
+    # Pass explicitly rather than `secrets: inherit`: the reusable workflow lives
+    # in a different org (2060-io), and inherited secrets are not reliably
+    # forwarded across the org boundary. Explicit mapping reads the secret in
+    # this repo's context and passes it by name.
+    secrets:
+      DISCORD_UPDATES_WEBHOOK_URL: ${{ secrets.DISCORD_UPDATES_WEBHOOK_URL }}
+
+  # Manual (re)send of the Discord notification for an existing tag, triggered
+  # via workflow_dispatch. Independent of release-please so it can announce a
+  # tag that was already released.
+  discord-notify-manual:
+    if: github.event_name == 'workflow_dispatch'
+    uses: 2060-io/organization/.github/workflows/discord-release-notify-call.yml@main
+    with:
+      tag_name: ${{ inputs.notify_tag }}
+    secrets:
+      DISCORD_UPDATES_WEBHOOK_URL: ${{ secrets.DISCORD_UPDATES_WEBHOOK_URL }}
