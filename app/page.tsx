@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { getOrgStats, formatCount, formatRelative } from "./lib/github";
+
+// Revalidate the live GitHub stats roughly once a day (ISR).
+export const revalidate = 86400;
 
 const SPECS = [
   {
@@ -32,11 +36,14 @@ const FOUNDERS = [
   { name: "Orchestrating Identity", href: "https://www.oidentity.com/" },
 ];
 
-// Placeholder contributor initials (real avatars pull from GitHub later).
+// Fallback contributor initials, used only if the live GitHub fetch fails.
 const CONTRIBUTORS = ["AG", "FR", "JS", "MK", "RB", "TL", "VP", "DW", "NH", "EC"];
 const AVATAR_COLORS = ["#763EF0", "#1FB57A", "#2E2A8F", "#5b2fc9", "#178a5e"];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const stats = await getOrgStats();
+  const lastActivity = formatRelative(stats?.lastActivity ?? null);
+
   return (
     <>
       {/* Hero */}
@@ -185,24 +192,84 @@ export default function HomePage() {
           <p className="tag mb-3">A living commons</p>
           <h2 className="display text-3xl">Built in the open, by a community</h2>
           <div className="accent-line mt-4 mb-10" />
+
+          {/* Live stats from the verana-labs GitHub org (ISR, daily) */}
+          {stats && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+              <div className="stat-tile">
+                <div className="stat">{stats.repoCount}</div>
+                <div className="stat-label">Public repos</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat">{formatCount(stats.stars)}</div>
+                <div className="stat-label">Stars</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat">{formatCount(stats.forks)}</div>
+                <div className="stat-label">Forks</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat text-purple" style={{ fontSize: "1.1rem" }}>
+                  {lastActivity ?? "—"}
+                </div>
+                <div className="stat-label">
+                  {stats.lastActivityRepo
+                    ? `last commit · ${stats.lastActivityRepo}`
+                    : "last activity"}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid lg:grid-cols-2 gap-10">
             {/* Contributors wall */}
             <div>
               <h3 className="display text-lg mb-4">Contributors</h3>
               <div className="flex flex-wrap gap-2">
-                {CONTRIBUTORS.map((c, i) => (
-                  <span
-                    key={c}
-                    className="avatar"
-                    style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }}
-                    aria-hidden="true"
-                  >
-                    {c}
-                  </span>
-                ))}
-                <span className="avatar" style={{ background: "#5b5b5b" }}>
+                {stats && stats.contributors.length > 0
+                  ? stats.contributors.map((c) => (
+                      <a
+                        key={c.login}
+                        href={c.html_url}
+                        rel="noopener"
+                        title={c.login}
+                        aria-label={c.login}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`${c.avatar_url}${
+                            c.avatar_url.includes("?") ? "&" : "?"
+                          }s=88`}
+                          alt={c.login}
+                          width={44}
+                          height={44}
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          className="avatar-img"
+                        />
+                      </a>
+                    ))
+                  : CONTRIBUTORS.map((c, i) => (
+                      <span
+                        key={c}
+                        className="avatar"
+                        style={{
+                          background: AVATAR_COLORS[i % AVATAR_COLORS.length],
+                        }}
+                        aria-hidden="true"
+                      >
+                        {c}
+                      </span>
+                    ))}
+                <a
+                  href="https://github.com/orgs/verana-labs/people"
+                  rel="noopener"
+                  className="avatar"
+                  style={{ background: "#5b5b5b" }}
+                  aria-label="More contributors on GitHub"
+                >
                   +
-                </span>
+                </a>
               </div>
               <p className="text-sm text-muted mt-4">
                 Everyone who authors the specs and maintains the software, in
