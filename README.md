@@ -42,10 +42,13 @@ docker run --rm -p 3000:3000 veranalabs/veranafoundation.org-website:local
   (`veranalabs/veranafoundation.org-website`) and rolls out to the OVH Kubernetes
   cluster (namespace `web`).
 - **`release-please.yml`** — maintains a release PR from Conventional Commits; merging
-  it tags `v*`, which triggers the versioned image build.
-- **`discord-release-notify.yml`** — posts a Discord notice on published releases.
+  it tags `v*` (which triggers the versioned image build) and announces the release
+  on Discord via the reusable `2060-io/organization` workflow. A manual
+  `workflow_dispatch` (input `notify_tag`) can (re)send a notification for an existing
+  tag.
 
-Required repo secrets: `DOCKER_HUB_LOGIN`, `DOCKER_HUB_PWD`, `OVH_KUBECONFIG`.
+Required repo secrets: `DOCKER_HUB_LOGIN`, `DOCKER_HUB_PWD`, `OVH_KUBECONFIG`,
+`DISCORD_UPDATES_WEBHOOK_URL`.
 
 ## Content spec
 
