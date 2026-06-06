@@ -91,11 +91,7 @@ export default async function HomePage() {
             <Link href="/join" className="btn btn-primary">
               Join the Foundation
             </Link>
-            <a
-              href="https://verana-labs.github.io/verifiable-trust-spec/"
-              className="btn btn-secondary"
-              rel="noopener"
-            >
+            <a href="#specifications" className="btn btn-secondary">
               Read the specifications
             </a>
           </div>
@@ -145,7 +141,10 @@ export default async function HomePage() {
       </section>
 
       {/* Specifications */}
-      <section className="border-b border-rule reveal">
+      <section
+        id="specifications"
+        className="border-b border-rule reveal scroll-mt-24"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <p className="tag mb-3">Owned &amp; hosted</p>
           <h2 className="display text-3xl">Specifications</h2>
