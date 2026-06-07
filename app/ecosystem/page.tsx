@@ -28,7 +28,7 @@ export default function EcosystemPage() {
       <section className="border-b border-rule reveal">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid md:grid-cols-2 gap-6">
           <div className="card">
-            <span className="badge badge-green">grants</span>
+            <span className="badge badge-green self-start">grants</span>
             <h3>Grants</h3>
             <p className="text-sm text-muted leading-relaxed">
               Funding for builders, integrations, and public-good contributions
@@ -42,7 +42,7 @@ export default function EcosystemPage() {
             </p>
           </div>
           <div className="card">
-            <span className="badge badge-purple">devrel</span>
+            <span className="badge badge-purple self-start">devrel</span>
             <h3>Developer relations</h3>
             <p className="text-sm text-muted leading-relaxed">
               Docs, SDKs, and community support around the open-source software.

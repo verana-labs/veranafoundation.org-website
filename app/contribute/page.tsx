@@ -9,19 +9,32 @@ export const metadata: Metadata = {
 
 const WORKING_GROUPS = [
   {
-    name: "Verifiable Trust spec WG",
-    desc: "Authors and maintains the Verifiable Trust specification.",
-    href: "https://github.com/verana-labs/verifiable-trust-spec",
-  },
-  {
-    name: "VPR spec WG",
-    desc: "Authors and maintains the Verifiable Public Registry specification.",
-    href: "https://github.com/verana-labs/verifiable-trust-vpr-spec",
-  },
-  {
-    name: "Software working groups",
-    desc: "Maintain the open-source reference implementations: VPR, Indexer, VS-Agent, Frontend.",
+    name: "Specification WG",
+    desc: "Authors and maintains the Verifiable Trust and Verifiable Public Registry specifications.",
     href: "https://github.com/verana-labs",
+    requires: "Associate or Contributor",
+    associateOnly: false,
+  },
+  {
+    name: "Reference Implementations WG",
+    desc: "Maintains the open-source software: Verifiable Public Registry, Indexer, VS-Agent, Frontend.",
+    href: "https://github.com/verana-labs",
+    requires: "Associate or Contributor",
+    associateOnly: false,
+  },
+  {
+    name: "Interop WG",
+    desc: "Cross-implementation interoperability testing and conformance.",
+    href: "https://github.com/verana-labs",
+    requires: "Associate or Contributor",
+    associateOnly: false,
+  },
+  {
+    name: "Business Cases WG",
+    desc: "Use cases, business models, and adoption patterns for the open trust layer.",
+    href: "https://github.com/verana-labs",
+    requires: "Associate only",
+    associateOnly: true,
   },
 ];
 
@@ -50,9 +63,11 @@ export default function ContributePage() {
               Working-group participation requires membership
             </h2>
             <p className="text-sm text-muted leading-relaxed">
-              Joining any working group requires Foundation membership —{" "}
-              <strong className="text-ink">Associate</strong> or{" "}
-              <strong className="text-ink">Contributor</strong>.{" "}
+              Joining a working group requires Foundation membership. Most are open
+              to <strong className="text-ink">Associate</strong> or{" "}
+              <strong className="text-ink">Contributor</strong> members; the{" "}
+              <strong className="text-ink">Business Cases WG</strong> requires{" "}
+              <strong className="text-ink">Associate</strong> membership.{" "}
               <Link href="/join" className="text-purple hover:underline">
                 Compare &amp; join →
               </Link>{" "}
@@ -80,7 +95,13 @@ export default function ContributePage() {
               >
                 <div className="flex items-center justify-between gap-4">
                   <p className="display text-lg text-ink">{wg.name}</p>
-                  <span className="text-sm text-purple">Join →</span>
+                  <span
+                    className={`badge flex-shrink-0 ${
+                      wg.associateOnly ? "badge-purple" : ""
+                    }`}
+                  >
+                    {wg.requires}
+                  </span>
                 </div>
                 <p className="text-sm text-muted mt-1">{wg.desc}</p>
               </a>
