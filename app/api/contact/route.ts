@@ -81,7 +81,9 @@ export async function POST(req: NextRequest) {
     email,
     organization: String(data.organization ?? "").trim() || undefined,
     role: String(data.role ?? "").trim() || undefined,
-    website: String(data.website ?? "").trim() || undefined,
+    linkedin: String(data.linkedin ?? "").trim() || undefined,
+    companyWebsite:
+      String(data.company_website ?? data.website ?? "").trim() || undefined,
     message,
     source: String(data.source ?? "").trim() || undefined,
     consentAt: new Date().toISOString(),

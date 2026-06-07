@@ -1,29 +1,34 @@
 /**
  * Server-only client for the Relaticle CRM REST API (https://crm.2060.io,
- * in-cluster). Used by the /api/contact route to turn a contact-form
- * submission into CRM records.
+ * in-cluster). Turns a contact-form submission into CRM records.
  *
  * Mapping (per product decision):
- *   organization  -> Company   (always created when present; no dedupe)
- *   name/email/…  -> Person     (linked to the company)
- *   full inquiry  -> Note       (linked to the person + company)
- *   lead inquiries-> Opportunity (membership / partnership / grant only)
+ *   organization   -> Company    (always created when present; no dedupe)
+ *   name/email/…   -> Person      (linked to the company)
+ *   full inquiry   -> Note        (linked to the person + company)
+ *   lead inquiries -> Opportunity (membership / partnership / grant; stage = Prospecting)
+ *   every inquiry  -> Task        ("To do", assigned to the connected account)
  *
  * Relaticle API contract (v1):
  *   POST /api/v1/people        { name, company_id?, custom_fields:{<code>:value} }
  *   POST /api/v1/companies     { name, custom_fields }
  *   POST /api/v1/notes         { title, people_ids?[], company_ids?[], custom_fields }
  *   POST /api/v1/opportunities { name, company_id?, contact_id?, custom_fields }
- *   GET  /api/v1/custom-fields?entity_type=… -> field definitions (id, code, name, type)
+ *   POST /api/v1/tasks         { title, assignee_ids?[], people_ids?[], company_ids?[],
+ *                                opportunity_ids?[], custom_fields }
+ *   GET  /api/v1/custom-fields?entity_type=…  (JSON:API: data[].attributes.{code,name,type,options})
+ *   GET  /api/v1/user          (connected account; data.id)
  *   Auth: Authorization: Bearer <token> (token bound to the "2060" team).
  *
- * `custom_fields` is an object keyed by each field's *code*. Because codes are
- * team-configured, we discover them at runtime and match by name/code. Every
- * create falls back to a custom-field-free payload if the CRM rejects the
- * custom fields, so a mapping mismatch never loses the core record — and the
- * full inquiry is always captured in the Note body (or its title) and the logs.
+ * `custom_fields` is keyed by each field's *code*. Field codes/types/options are
+ * discovered at runtime. Value shape depends on the field type: email/phone/link
+ * fields take an ARRAY of values; text/rich-editor/select take a scalar (select
+ * = the chosen option's value/id). Each create falls back to a
+ * custom-field-free payload if the CRM rejects the custom fields, so a mapping
+ * mismatch never loses the core record — and the full inquiry is always in the
+ * Note body (and the logs).
  *
- * This module must never be imported from client components.
+ * Never import this from a client component.
  */
 
 const BASE = process.env.RELATICLE_API_URL?.replace(/\/+$/, "");
@@ -40,7 +45,8 @@ export type Inquiry = {
   email: string;
   organization?: string;
   role?: string;
-  website?: string;
+  linkedin?: string; // the person's LinkedIn
+  companyWebsite?: string; // the company's website (or LinkedIn if a linkedin.com URL)
   message: string;
   source?: string;
   consentAt: string;
@@ -51,6 +57,7 @@ export type CrmResult = {
   companyId?: string;
   noteId?: string;
   opportunityId?: string;
+  taskId?: string;
 };
 
 const TOPIC_LABELS: Record<string, string> = {
@@ -69,6 +76,19 @@ const LEAD_TOPICS = new Set([
   "membership-contributor",
   "partnership",
   "grant",
+]);
+
+// Custom-field types whose value must be sent as an array (verified against the
+// live API: email/phone/link reject scalars; text/select/rich-editor are scalar).
+const ARRAY_TYPES = new Set([
+  "email",
+  "phone",
+  "link",
+  "url",
+  "tags",
+  "multi_select",
+  "multiselect",
+  "checkbox-list",
 ]);
 
 function topicLabel(topic: string): string {
@@ -110,30 +130,45 @@ function idOf(resp: unknown): string | undefined {
 
 // --- custom-field discovery (cached) ---------------------------------------
 
-type CustomField = { id: string; code: string; name: string; type?: string };
+type FieldOption = { label: string; value: string };
+type CustomField = {
+  id: string;
+  code: string;
+  name: string;
+  type: string;
+  options: FieldOption[];
+};
 const cfCache = new Map<string, { at: number; fields: CustomField[] }>();
-const CF_TTL_MS = 10 * 60 * 1000;
+const CACHE_TTL_MS = 10 * 60 * 1000;
 
 async function customFields(entityType: string): Promise<CustomField[]> {
   const cached = cfCache.get(entityType);
-  if (cached && Date.now() - cached.at < CF_TTL_MS) return cached.fields;
+  if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.fields;
 
   const fields: CustomField[] = [];
   for (let page = 1; page <= 10; page++) {
     const data = (await api(
       `/custom-fields?entity_type=${encodeURIComponent(entityType)}&page=${page}`,
       { method: "GET" }
-    )) as { data?: unknown[]; links?: { next?: string | null } } | unknown[];
-    const items = (Array.isArray(data) ? data : (data?.data ?? [])) as Array<
-      Record<string, unknown>
-    >;
+    )) as
+      | { data?: Array<Record<string, unknown>>; links?: { next?: string | null } }
+      | Array<Record<string, unknown>>;
+    const items = Array.isArray(data) ? data : (data?.data ?? []);
     for (const it of items) {
-      if (it.code) {
+      // JSON:API shape: { id, attributes:{ code, name, type, options } }
+      const a = (it.attributes ?? it) as Record<string, unknown>;
+      if (a.code) {
         fields.push({
-          id: String(it.id ?? ""),
-          code: String(it.code),
-          name: String(it.name ?? ""),
-          type: it.type ? String(it.type) : undefined,
+          id: String(it.id ?? a.id ?? ""),
+          code: String(a.code),
+          name: String(a.name ?? ""),
+          type: String(a.type ?? ""),
+          options: Array.isArray(a.options)
+            ? (a.options as FieldOption[]).map((o) => ({
+                label: String(o.label),
+                value: String(o.value),
+              }))
+            : [],
         });
       }
     }
@@ -145,13 +180,50 @@ async function customFields(entityType: string): Promise<CustomField[]> {
   return fields;
 }
 
-function pick(fields: CustomField[], re: RegExp): CustomField | undefined {
-  return fields.find((f) => re.test(f.code) || re.test(f.name));
+/** The connected account (token owner), used to assign tasks. Cached. */
+let userCache: { at: number; id?: string } | null = null;
+async function connectedUserId(): Promise<string | undefined> {
+  if (userCache && Date.now() - userCache.at < CACHE_TTL_MS) return userCache.id;
+  try {
+    const id = idOf(await api("/user", { method: "GET" }));
+    userCache = { at: Date.now(), id };
+    return id;
+  } catch {
+    return undefined;
+  }
 }
 
-function cfValue(field: CustomField, value: string): unknown {
-  // Wrap in an array only for clearly multi-valued field types; otherwise scalar.
-  return /multi|array|tags|repeat|list/i.test(field.type ?? "")
+/** Find a field by candidate codes (preferred), then a name/code regex fallback. */
+function findField(
+  fields: CustomField[],
+  codes: string[],
+  nameRe?: RegExp
+): CustomField | undefined {
+  const byCode = fields.find((f) =>
+    codes.some((c) => c.toLowerCase() === f.code.toLowerCase())
+  );
+  if (byCode) return byCode;
+  return nameRe
+    ? fields.find((f) => nameRe.test(f.code) || nameRe.test(f.name))
+    : undefined;
+}
+
+/** The value (option id) of a select field's option whose label matches. */
+function optionValue(
+  field: CustomField | undefined,
+  labelRe: RegExp
+): string | undefined {
+  return field?.options.find((o) => labelRe.test(o.label))?.value;
+}
+
+/** Add `value` to `target` under the field's code, shaped per the field type. */
+function addCustom(
+  target: AnyJson,
+  field: CustomField | undefined,
+  value: string | undefined
+): void {
+  if (!field || !value) return;
+  target[field.code] = ARRAY_TYPES.has(field.type.toLowerCase())
     ? [value]
     : value;
 }
@@ -168,7 +240,7 @@ async function createWithFallback(
     if (Object.keys(custom).length === 0) throw err;
     console.warn(
       `[relaticle] ${path} create with custom_fields failed, retrying without them:`,
-      String(err).slice(0, 200)
+      String(err).slice(0, 300)
     );
     return api(path, { method: "POST", body: { ...base, custom_fields: {} } });
   }
@@ -186,9 +258,10 @@ function noteBody(inq: Inquiry): string {
     `Inquiry type: ${topicLabel(inq.topic)}`,
     `Name: ${inq.name}`,
     `Email: ${inq.email}`,
+    inq.linkedin ? `LinkedIn: ${inq.linkedin}` : null,
     inq.organization ? `Organization: ${inq.organization}` : null,
+    inq.companyWebsite ? `Company website: ${inq.companyWebsite}` : null,
     inq.role ? `Role: ${inq.role}` : null,
-    inq.website ? `Website: ${inq.website}` : null,
     inq.source ? `Heard about us: ${inq.source}` : null,
     `Consent: yes (${inq.consentAt})`,
     "",
@@ -203,12 +276,19 @@ function noteBody(inq: Inquiry): string {
 export async function submitInquiry(inq: Inquiry): Promise<CrmResult> {
   const result: CrmResult = {};
 
-  // 1) Company (always create when an organization is given; no dedupe).
+  // 1) Company (always create when an organization is given; no dedupe). The
+  // "company website" goes to the company LinkedIn field for linkedin.com URLs,
+  // otherwise to the company domains/website field.
   if (inq.organization?.trim()) {
     const cf = await customFields("company");
     const fields: AnyJson = {};
-    const domain = pick(cf, /domain|website|url|link/i);
-    if (domain && inq.website) fields[domain.code] = cfValue(domain, inq.website);
+    const w = inq.companyWebsite?.trim();
+    if (w) {
+      const field = /linkedin\.com/i.test(w)
+        ? findField(cf, ["linkedin"], /linkedin/i)
+        : findField(cf, ["domains", "domain", "website", "url"], /domain|website|url|link/i);
+      addCustom(fields, field, w);
+    }
     const company = await createWithFallback(
       "/companies",
       { name: inq.organization.trim() },
@@ -217,16 +297,21 @@ export async function submitInquiry(inq: Inquiry): Promise<CrmResult> {
     result.companyId = idOf(company);
   }
 
-  // 2) Person (linked to the company).
+  // 2) Person (linked to the company): email, job title, the person's LinkedIn.
   {
     const cf = await customFields("people");
     const fields: AnyJson = {};
-    const email = pick(cf, /email/i);
-    if (email) fields[email.code] = cfValue(email, inq.email);
-    const role = pick(cf, /job.?title|role|position|title/i);
-    if (role && inq.role) fields[role.code] = cfValue(role, inq.role);
-    const web = pick(cf, /link|website|url/i);
-    if (web && inq.website) fields[web.code] = cfValue(web, inq.website);
+    addCustom(fields, findField(cf, ["emails", "email"], /email/i), inq.email);
+    addCustom(
+      fields,
+      findField(cf, ["job_title"], /job.?title|role|position|title/i),
+      inq.role
+    );
+    addCustom(
+      fields,
+      findField(cf, ["linkedin", "links", "url"], /linkedin|link|url/i),
+      inq.linkedin
+    );
     const person = await createWithFallback(
       "/people",
       { name: inq.name, company_id: result.companyId ?? null },
@@ -239,8 +324,15 @@ export async function submitInquiry(inq: Inquiry): Promise<CrmResult> {
   {
     const cf = await customFields("note");
     const fields: AnyJson = {};
-    const body = pick(cf, /body|content|description|note|message|text/i);
-    if (body) fields[body.code] = cfValue(body, noteBody(inq));
+    addCustom(
+      fields,
+      findField(
+        cf,
+        ["body", "content", "description", "note"],
+        /body|content|description|note|message|text/i
+      ),
+      noteBody(inq)
+    );
     const note = await createWithFallback(
       "/notes",
       {
@@ -253,8 +345,13 @@ export async function submitInquiry(inq: Inquiry): Promise<CrmResult> {
     result.noteId = idOf(note);
   }
 
-  // 4) Opportunity for lead-type inquiries.
+  // 4) Opportunity for lead-type inquiries, stage = Prospecting.
   if (LEAD_TOPICS.has(inq.topic)) {
+    const cf = await customFields("opportunity");
+    const fields: AnyJson = {};
+    const stage = findField(cf, ["stage"], /stage/i);
+    const prospecting = optionValue(stage, /prospect/i);
+    if (stage && prospecting) fields[stage.code] = prospecting;
     const opp = await createWithFallback(
       "/opportunities",
       {
@@ -262,9 +359,32 @@ export async function submitInquiry(inq: Inquiry): Promise<CrmResult> {
         company_id: result.companyId ?? null,
         contact_id: result.personId ?? null,
       },
-      {}
+      fields
     );
     result.opportunityId = idOf(opp);
+  }
+
+  // 5) Follow-up Task (every inquiry): status "To do", assigned to the
+  // connected account, linked to the person/company/opportunity.
+  {
+    const cf = await customFields("task");
+    const fields: AnyJson = {};
+    const status = findField(cf, ["status"], /status/i);
+    const todo = optionValue(status, /^to.?do$|todo/i);
+    if (status && todo) fields[status.code] = todo;
+    const userId = await connectedUserId();
+    const task = await createWithFallback(
+      "/tasks",
+      {
+        title: `Follow up: ${noteTitle(inq)}`.slice(0, 255),
+        assignee_ids: userId ? [userId] : [],
+        people_ids: result.personId ? [result.personId] : [],
+        company_ids: result.companyId ? [result.companyId] : [],
+        opportunity_ids: result.opportunityId ? [result.opportunityId] : [],
+      },
+      fields
+    );
+    result.taskId = idOf(task);
   }
 
   return result;
