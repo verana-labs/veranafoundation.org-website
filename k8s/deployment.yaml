@@ -32,6 +32,17 @@ spec:
               value: "3000"
             - name: HOSTNAME
               value: 0.0.0.0
+            # Relaticle CRM (in-cluster). The contact form posts inquiries here.
+            - name: RELATICLE_API_URL
+              value: http://relaticle.relaticle.svc.cluster.local
+            - name: RELATICLE_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: RELATICLE_API_TOKEN
+                  # Optional so the pod still starts if the secret is absent;
+                  # the contact route degrades to best-effort (logs only).
+                  optional: true
           resources:
             requests:
               cpu: "50m"

@@ -18,11 +18,13 @@ const MAX_MESSAGE = 4000;
 export default function ContactForm() {
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "submitting" | "success" | "error"
+  >("idle");
   const [renderedAt, setRenderedAt] = useState("");
 
   // Preselect inquiry type from ?topic= (set by the Join page buttons) and
-  // record render time for a server-side time-to-submit check (when wired).
+  // record render time for a server-side time-to-submit check.
   useEffect(() => {
     setRenderedAt(String(Date.now()));
     const params = new URLSearchParams(window.location.search);
@@ -30,11 +32,11 @@ export default function ContactForm() {
     if (t && TOPICS.some((o) => o.value === t)) setTopic(t);
   }, []);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
 
-    // Honeypot: if filled, silently treat as success without doing anything.
+    // Honeypot (hidden field): silently treat as success.
     const honeypot = (form.elements.namedItem("website_hp") as HTMLInputElement)
       ?.value;
     if (honeypot) {
@@ -48,12 +50,36 @@ export default function ContactForm() {
       return;
     }
 
-    // No backend is wired yet (intake mechanism is "detailed later"). The form
-    // validates and shows the success state; nothing is transmitted.
-    setStatus("success");
-    form.reset();
-    setTopic("");
-    setMessage("");
+    const fd = new FormData(form);
+    const payload = {
+      topic: fd.get("topic"),
+      name: fd.get("name"),
+      email: fd.get("email"),
+      organization: fd.get("organization"),
+      role: fd.get("role"),
+      website: fd.get("website"),
+      message: fd.get("message"),
+      source: fd.get("source"),
+      consent: (form.elements.namedItem("consent") as HTMLInputElement)?.checked,
+      website_hp: honeypot ?? "",
+      rendered_at: renderedAt,
+    };
+
+    setStatus("submitting");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setStatus("success");
+      form.reset();
+      setTopic("");
+      setMessage("");
+    } catch {
+      setStatus("error");
+    }
   }
 
   if (status === "success") {
@@ -61,9 +87,8 @@ export default function ContactForm() {
       <div className="card" role="status" aria-live="polite">
         <h3 className="display text-lg">Thank you.</h3>
         <p className="text-sm text-muted leading-relaxed">
-          We received your message and will route it to the right person. (Note:
-          while the Foundation is in formation, the intake mechanism is being
-          finalized — this confirmation is a placeholder.)
+          We received your message and will route it to the right person. We
+          reply within a few business days.
         </p>
         <button
           type="button"
@@ -75,6 +100,8 @@ export default function ContactForm() {
       </div>
     );
   }
+
+  const submitting = status === "submitting";
 
   return (
     <form className="space-y-1" onSubmit={handleSubmit} noValidate>
@@ -212,13 +239,13 @@ export default function ContactForm() {
       {status === "error" && (
         <p className="text-sm" style={{ color: "#c0392b" }} role="alert">
           Please complete the required fields (message must be at least{" "}
-          {MIN_MESSAGE} characters).
+          {MIN_MESSAGE} characters), then try again.
         </p>
       )}
 
       <div className="pt-2 flex flex-wrap items-center gap-4">
-        <button type="submit" className="btn btn-primary">
-          Send message
+        <button type="submit" className="btn btn-primary" disabled={submitting}>
+          {submitting ? "Sending…" : "Send message"}
         </button>
         <span className="text-xs text-muted">
           We do not publish email addresses; messages are routed internally.

@@ -48,7 +48,28 @@ docker run --rm -p 3000:3000 veranalabs/veranafoundation.org-website:local
   tag.
 
 Required repo secrets: `DOCKER_HUB_LOGIN`, `DOCKER_HUB_PWD`, `OVH_KUBECONFIG`,
-`DISCORD_UPDATES_WEBHOOK_URL`.
+`DISCORD_UPDATES_WEBHOOK_URL`, `RELATICLE_API_TOKEN`.
+
+## Contact form → CRM
+
+The `/contact` form posts to a server-side route (`app/api/contact/route.ts`)
+which writes the inquiry into the self-hosted **Relaticle CRM** as a Company
+(when an organization is given), a Person, a Note, and — for membership /
+partnership / grant inquiries — an Opportunity. Writes are **best-effort**: a CRM
+error never fails the user's submission (it's logged, and alerted if
+`ALERT_WEBHOOK_URL` is set).
+
+Configuration (see `.env.example`):
+
+| Var | Where | Notes |
+| --- | --- | --- |
+| `RELATICLE_API_URL` | k8s deployment env | In-cluster: `http://relaticle.relaticle.svc.cluster.local` |
+| `RELATICLE_API_TOKEN` | GitHub secret → k8s Secret | Sanctum token bound to the `2060` team; CI upserts it into `veranafoundation-website-secrets` |
+| `ALERT_WEBHOOK_URL` | optional env | Discord/Slack-compatible alert on CRM write failure |
+
+For local development, copy `.env.example` to `.env.local` (gitignored) and set
+the token. In production the token comes from the GitHub Actions secret — never
+commit a `.env` file.
 
 ## Content spec
 

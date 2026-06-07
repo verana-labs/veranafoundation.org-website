@@ -95,12 +95,14 @@ export default function PrivacyPage() {
 
         <h2>Where data is processed</h2>
         <p>
-          Hosting, the contact-form submission handler, and anti-abuse measures
-          are being finalized during implementation and will be listed here.
+          Contact-form submissions are stored in our <strong>self-hosted
+          Relaticle CRM</strong> (<code>crm.2060.io</code>), operated by 2060 OÜ
+          on our own infrastructure, so we can respond to and manage your
+          inquiry. No third-party CRM or marketing platform receives this data.
           Spam protection is self-hosted (honeypot, time-to-submit, rate
-          limiting); no third-party captcha is used. Any cross-border transfer
-          will rely on an EC adequacy decision, the EU-US Data Privacy Framework,
-          or Standard Contractual Clauses as applicable.
+          limiting); no third-party captcha is used. Site hosting and any
+          cross-border transfer rely on an EC adequacy decision, the EU-US Data
+          Privacy Framework, or Standard Contractual Clauses as applicable.
         </p>
 
         <h2>How long we keep it</h2>
