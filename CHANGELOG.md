@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.2.0...veranafoundation-website-v0.3.0) (2026-06-07)
+
+
+### Features
+
+* ecosystem partner logos ([#6](https://github.com/verana-labs/veranafoundation.org-website/issues/6)) ([3b16ea6](https://github.com/verana-labs/veranafoundation.org-website/commit/3b16ea6cdfe2492e9d17f1afe877072b3ab16b12))
+
 ## [0.2.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.1.0...veranafoundation-website-v0.2.0) (2026-06-06)
 
 
