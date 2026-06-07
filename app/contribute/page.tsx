@@ -101,8 +101,9 @@ export default function ContributePage() {
               <span className="badge">no membership needed</span>
               <h3>Use the open-source software</h3>
               <p className="text-sm text-muted leading-relaxed">
-                Public repos, issue trackers, and releases. Apache 2.0; copyright
-                held by contributors.
+                Public repos, issue trackers, and releases. Apache 2.0
+                (AGPL-3.0 for the Verifiable Public Registry); copyright held by
+                contributors.
               </p>
               <a
                 href="https://github.com/verana-labs"

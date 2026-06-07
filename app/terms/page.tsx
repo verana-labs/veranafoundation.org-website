@@ -40,10 +40,11 @@ export default function TermsPage() {
 
         <h2>Open-source software &amp; specifications</h2>
         <p>
-          The reference software is licensed under Apache 2.0 (copyright held by
-          contributors); the specifications are published under their own terms.
-          Your use of those artifacts is governed by their respective licenses,
-          available in their repositories, not by these terms.
+          The reference software is licensed under Apache 2.0, except the
+          Verifiable Public Registry, which is AGPL-3.0 (copyright held by
+          contributors); the specifications are licensed CC BY-SA 4.0. Your use
+          of those artifacts is governed by their respective licenses, available
+          in their repositories, not by these terms.
         </p>
 
         <h2>Content license</h2>
