@@ -33,7 +33,7 @@ const ROWS: { label: string; assoc: string; contrib: string }[] = [
     label: "Annual dues",
     assoc:
       "Sliding scale by org size: €1,500 (1–10 employees) up to €50,000 (10,001+). Non-refundable; hardship & non-profit/government adjustments at the Foundation's discretion.",
-    contrib: "€0 — free.",
+    contrib: "free.",
   },
   {
     label: "Governance",
@@ -86,7 +86,7 @@ export default function JoinPage() {
             <div className="card">
               <div className="flex items-center justify-between">
                 <h2 className="display text-2xl">Contributor Member</h2>
-                <span className="badge badge-green">€0 — free</span>
+                <span className="badge badge-green">free</span>
               </div>
               <p className="text-sm text-muted">Technical &amp; standards contributors.</p>
             </div>
