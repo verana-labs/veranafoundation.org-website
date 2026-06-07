@@ -77,14 +77,14 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="border-b border-rule">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <p className="tag mb-4">Verana Foundation · in formation</p>
+          <p className="tag mb-4">Verana Foundation</p>
           <h1 className="display text-4xl sm:text-5xl lg:text-6xl leading-[1.05] max-w-4xl">
             The non-profit steward of the open trust layer.
           </h1>
           <p className="mt-6 text-lg text-muted max-w-2xl leading-relaxed">
             A non-profit rebuilding digital trust for the agentic web. The
             Foundation owns the specifications, stewards the open-source software
-            under Apache 2.0, and grows the ecosystem around it — in the open,
+            under Apache 2.0 and AGPL-3.0, and grows the ecosystem around it — in the open,
             with its community.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
@@ -109,7 +109,7 @@ export default async function HomePage() {
               },
               {
                 title: "Stewards the open source",
-                desc: "Reference implementations maintained under Apache 2.0; copyright held by contributors.",
+                desc: "Reference open source implementations; copyright held by contributors.",
               },
               {
                 title: "Grows the ecosystem",
@@ -155,15 +155,25 @@ export default async function HomePage() {
                 key={s.name}
                 href={s.href}
                 rel="noopener"
-                className="repo-card block"
+                className="repo-card flex flex-col h-full"
               >
                 <h3 className="display text-lg">{s.name} ↗</h3>
                 <p className="text-sm text-muted leading-relaxed mt-2">
                   {s.desc}
                 </p>
+                <span className="badge badge-green mt-auto self-end">
+                  CC BY-SA 4.0
+                </span>
               </a>
             ))}
           </div>
+          <p className="mt-6 text-sm text-muted">
+            Both specifications are licensed{" "}
+            <strong className="text-ink">
+              Creative Commons Attribution-ShareAlike 4.0
+            </strong>{" "}
+            (CC BY-SA 4.0).
+          </p>
         </div>
       </section>
 

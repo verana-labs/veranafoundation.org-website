@@ -54,12 +54,14 @@ export default function AboutPage() {
             >
               Verifiable Public Registry (VPR)
             </a>
-            .
+            . Both are licensed{" "}
+            <strong>Creative Commons Attribution-ShareAlike 4.0</strong>{" "}
+            (CC BY-SA 4.0).
           </li>
           <li>
             <strong>Open-source software</strong> — the Foundation{" "}
             <strong>hosts, stewards and maintains</strong> the reference
-            implementations. Released under <strong>Apache 2.0</strong>;
+            implementations. Released under <strong>Apache 2.0 and AGPL-3.0</strong>;
             copyright is held by the contributors, so the Foundation stewards
             rather than owns the code. See{" "}
             <a href="https://github.com/verana-labs" rel="noopener">
