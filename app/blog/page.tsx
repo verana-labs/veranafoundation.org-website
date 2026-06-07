@@ -24,9 +24,9 @@ const POSTS = [
   {
     date: "2026-Q2",
     tag: "Open source",
-    title: "Reference implementations stewarded under Apache 2.0",
+    title: "Reference implementations stewarded as open source",
     excerpt:
-      "VPR, Indexer, VS-Agent, and the reference Frontend are hosted and maintained in public; copyright held by contributors.",
+      "Indexer, VS-Agent, and the reference Frontend are Apache 2.0; the Verifiable Public Registry is AGPL-3.0. Hosted and maintained in public; copyright held by contributors.",
   },
 ];
 

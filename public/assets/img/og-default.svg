@@ -16,5 +16,6 @@
   </g>
   <text x="96" y="330" font-family="'Space Grotesk', sans-serif" font-size="72" font-weight="700" fill="#111111">The non-profit steward</text>
   <text x="96" y="412" font-family="'Space Grotesk', sans-serif" font-size="72" font-weight="700" fill="#111111">of the open trust layer.</text>
-  <text x="96" y="500" font-family="'IBM Plex Mono', monospace" font-size="28" fill="#5b5b5b">Owns the specs · Stewards the open source (Apache 2.0) · Grows the ecosystem</text>
+  <text x="96" y="486" font-family="'IBM Plex Mono', monospace" font-size="28" fill="#5b5b5b">Owns the specifications · Stewards the open source</text>
+  <text x="96" y="528" font-family="'IBM Plex Mono', monospace" font-size="28" fill="#5b5b5b">Grows the ecosystem · Apache 2.0 &amp; AGPL-3.0</text>
 </svg>

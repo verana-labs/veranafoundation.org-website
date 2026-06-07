@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { getOrgStats, formatCount, formatRelative } from "./lib/github";
+
+// Revalidate the live GitHub stats roughly once a day (ISR).
+export const revalidate = 86400;
 
 const SPECS = [
   {
@@ -14,10 +18,30 @@ const SPECS = [
 ];
 
 const SOFTWARE = [
-  { repo: "verana-labs/vpr", name: "VPR", desc: "Cosmos-SDK Layer-1 reference implementation." },
-  { repo: "verana-labs/indexer", name: "Indexer", desc: "Trust Resolver / query surface." },
-  { repo: "verana-labs/vs-agent", name: "VS-Agent", desc: "The verifiable-service agent runtime." },
-  { repo: "verana-labs/frontend", name: "Frontend", desc: "Reference web frontend." },
+  {
+    repo: "verana-labs/vpr",
+    name: "Verifiable Public Registry",
+    desc: "Cosmos-SDK Layer-1 reference implementation.",
+    license: "AGPL-3.0",
+  },
+  {
+    repo: "verana-labs/indexer",
+    name: "Indexer",
+    desc: "Trust Resolver / query surface.",
+    license: "Apache-2.0",
+  },
+  {
+    repo: "verana-labs/vs-agent",
+    name: "VS-Agent",
+    desc: "The verifiable-service agent runtime.",
+    license: "Apache-2.0",
+  },
+  {
+    repo: "verana-labs/frontend",
+    name: "Frontend",
+    desc: "Reference web frontend.",
+    license: "Apache-2.0",
+  },
 ];
 
 const WORKING_GROUPS = [
@@ -27,40 +51,47 @@ const WORKING_GROUPS = [
 ];
 
 const FOUNDERS = [
-  { name: "2060 OÜ", href: "https://2060.io" },
-  { name: "Mobiera", href: "https://mobiera.com" },
-  { name: "Orchestrating Identity", href: "https://www.oidentity.com/" },
+  { name: "2060 OÜ", href: "https://2060.io", logo: "/assets/img/logo_2060.svg" },
+  {
+    name: "Mobiera",
+    href: "https://mobiera.com",
+    logo: "/assets/img/logo_mobiera.svg",
+  },
+  {
+    name: "Orchestrating Identity",
+    href: "https://www.oidentity.com/",
+    logo: "/assets/img/logo_oidentity.svg",
+  },
 ];
 
-// Placeholder contributor initials (real avatars pull from GitHub later).
+// Fallback contributor initials, used only if the live GitHub fetch fails.
 const CONTRIBUTORS = ["AG", "FR", "JS", "MK", "RB", "TL", "VP", "DW", "NH", "EC"];
 const AVATAR_COLORS = ["#763EF0", "#1FB57A", "#2E2A8F", "#5b2fc9", "#178a5e"];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const stats = await getOrgStats();
+  const lastActivity = formatRelative(stats?.lastActivity ?? null);
+
   return (
     <>
       {/* Hero */}
       <section className="border-b border-rule">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <p className="tag mb-4">Verana Foundation · in formation</p>
+          <p className="tag mb-4">Verana Foundation</p>
           <h1 className="display text-4xl sm:text-5xl lg:text-6xl leading-[1.05] max-w-4xl">
             The non-profit steward of the open trust layer.
           </h1>
           <p className="mt-6 text-lg text-muted max-w-2xl leading-relaxed">
             A non-profit rebuilding digital trust for the agentic web. The
             Foundation owns the specifications, stewards the open-source software
-            under Apache 2.0, and grows the ecosystem around it — in the open,
+            under Apache 2.0 and AGPL-3.0, and grows the ecosystem around it — in the open,
             with its community.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link href="/join" className="btn btn-primary">
               Join the Foundation
             </Link>
-            <a
-              href="https://verana-labs.github.io/verifiable-trust-spec/"
-              className="btn btn-secondary"
-              rel="noopener"
-            >
+            <a href="#specifications" className="btn btn-secondary">
               Read the specifications
             </a>
           </div>
@@ -78,7 +109,7 @@ export default function HomePage() {
               },
               {
                 title: "Stewards the open source",
-                desc: "Reference implementations maintained under Apache 2.0; copyright held by contributors.",
+                desc: "Reference open source implementations; copyright held by contributors.",
               },
               {
                 title: "Grows the ecosystem",
@@ -110,7 +141,10 @@ export default function HomePage() {
       </section>
 
       {/* Specifications */}
-      <section className="border-b border-rule reveal">
+      <section
+        id="specifications"
+        className="border-b border-rule reveal scroll-mt-24"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <p className="tag mb-3">Owned &amp; hosted</p>
           <h2 className="display text-3xl">Specifications</h2>
@@ -121,15 +155,25 @@ export default function HomePage() {
                 key={s.name}
                 href={s.href}
                 rel="noopener"
-                className="repo-card block"
+                className="repo-card flex flex-col h-full"
               >
                 <h3 className="display text-lg">{s.name} ↗</h3>
                 <p className="text-sm text-muted leading-relaxed mt-2">
                   {s.desc}
                 </p>
+                <span className="badge badge-green mt-auto self-end">
+                  CC BY-SA 4.0
+                </span>
               </a>
             ))}
           </div>
+          <p className="mt-6 text-sm text-muted">
+            Both specifications are licensed{" "}
+            <strong className="text-ink">
+              Creative Commons Attribution-ShareAlike 4.0
+            </strong>{" "}
+            (CC BY-SA 4.0).
+          </p>
         </div>
       </section>
 
@@ -138,7 +182,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="flex flex-wrap items-end justify-between gap-4 mb-3">
             <div>
-              <p className="tag mb-3">Stewarded · Apache 2.0</p>
+              <p className="tag mb-3">Stewarded · open source</p>
               <h2 className="display text-3xl">Open-source software</h2>
             </div>
             <a
@@ -156,7 +200,7 @@ export default function HomePage() {
                 key={s.name}
                 href={`https://github.com/${s.repo}`}
                 rel="noopener"
-                className="repo-card block"
+                className="repo-card flex flex-col h-full"
               >
                 <span className="repo-name">
                   <svg
@@ -173,9 +217,22 @@ export default function HomePage() {
                 <p className="text-sm text-muted leading-relaxed mt-2">
                   {s.desc}
                 </p>
+                <span
+                  className={`badge mt-auto self-end ${
+                    s.license === "Apache-2.0" ? "badge-green" : "badge-purple"
+                  }`}
+                >
+                  {s.license}
+                </span>
               </a>
             ))}
           </div>
+          <p className="mt-6 text-sm text-muted">
+            All modules are <strong className="text-ink">Apache 2.0</strong>{" "}
+            (copyright held by contributors), except the{" "}
+            <strong className="text-ink">Verifiable Public Registry</strong>,
+            which is <strong className="text-ink">AGPL-3.0</strong>.
+          </p>
         </div>
       </section>
 
@@ -185,24 +242,84 @@ export default function HomePage() {
           <p className="tag mb-3">A living commons</p>
           <h2 className="display text-3xl">Built in the open, by a community</h2>
           <div className="accent-line mt-4 mb-10" />
+
+          {/* Live stats from the verana-labs GitHub org (ISR, daily) */}
+          {stats && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+              <div className="stat-tile">
+                <div className="stat">{stats.repoCount}</div>
+                <div className="stat-label">Public repos</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat">{formatCount(stats.stars)}</div>
+                <div className="stat-label">Stars</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat">{formatCount(stats.forks)}</div>
+                <div className="stat-label">Forks</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat text-purple" style={{ fontSize: "1.1rem" }}>
+                  {lastActivity ?? "—"}
+                </div>
+                <div className="stat-label">
+                  {stats.lastActivityRepo
+                    ? `last commit · ${stats.lastActivityRepo}`
+                    : "last activity"}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid lg:grid-cols-2 gap-10">
             {/* Contributors wall */}
             <div>
               <h3 className="display text-lg mb-4">Contributors</h3>
               <div className="flex flex-wrap gap-2">
-                {CONTRIBUTORS.map((c, i) => (
-                  <span
-                    key={c}
-                    className="avatar"
-                    style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }}
-                    aria-hidden="true"
-                  >
-                    {c}
-                  </span>
-                ))}
-                <span className="avatar" style={{ background: "#5b5b5b" }}>
+                {stats && stats.contributors.length > 0
+                  ? stats.contributors.map((c) => (
+                      <a
+                        key={c.login}
+                        href={c.html_url}
+                        rel="noopener"
+                        title={c.login}
+                        aria-label={c.login}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`${c.avatar_url}${
+                            c.avatar_url.includes("?") ? "&" : "?"
+                          }s=88`}
+                          alt={c.login}
+                          width={44}
+                          height={44}
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          className="avatar-img"
+                        />
+                      </a>
+                    ))
+                  : CONTRIBUTORS.map((c, i) => (
+                      <span
+                        key={c}
+                        className="avatar"
+                        style={{
+                          background: AVATAR_COLORS[i % AVATAR_COLORS.length],
+                        }}
+                        aria-hidden="true"
+                      >
+                        {c}
+                      </span>
+                    ))}
+                <a
+                  href="https://github.com/orgs/verana-labs/people"
+                  rel="noopener"
+                  className="avatar"
+                  style={{ background: "#5b5b5b" }}
+                  aria-label="More contributors on GitHub"
+                >
                   +
-                </span>
+                </a>
               </div>
               <p className="text-sm text-muted mt-4">
                 Everyone who authors the specs and maintains the software, in
@@ -243,8 +360,16 @@ export default function HomePage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {FOUNDERS.map((f) => (
-              <a key={f.name} href={f.href} rel="noopener" className="logo-tile">
-                {f.name}
+              <a
+                key={f.name}
+                href={f.href}
+                rel="noopener"
+                className="logo-wall-item"
+                title={f.name}
+                aria-label={f.name}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={f.logo} alt={`${f.name} logo`} loading="lazy" />
               </a>
             ))}
           </div>
@@ -274,7 +399,7 @@ export default function HomePage() {
             <div className="card">
               <div className="flex items-center justify-between">
                 <h3 className="display text-xl">Contributor Member</h3>
-                <span className="badge badge-green">€0 — free</span>
+                <span className="badge badge-green">free</span>
               </div>
               <p className="text-sm text-muted leading-relaxed">
                 Organizations contributing technical &amp; standards work through

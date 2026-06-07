@@ -74,9 +74,9 @@ body {
   font-weight: 600;
 }
 
-/* Wordmark -------------------------------------------------------- */
+/* Wordmark — Inter, the proper typeface for the Verana logo lockup ------- */
 .wordmark {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--color-ink);
@@ -319,7 +319,9 @@ body {
 .site-footer a {
   color: var(--color-ink);
   text-decoration: none;
-  font-size: 0.9375rem;
+  /* Inherit the surrounding size so links match their context (the nav
+     columns are text-sm; the bottom copyright/legal bar is text-xs). */
+  font-size: inherit;
 }
 .site-footer a:hover {
   color: var(--color-purple);
@@ -423,6 +425,30 @@ body {
   color: var(--color-purple);
 }
 
+/* Logo wall — member / founder logos on a steady light chip so colored or
+   dark-ink logos always read, in both themes ----------------------------- */
+.logo-wall-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 6rem;
+  padding: 1.5rem 2rem;
+  background: #ffffff;
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+.logo-wall-item:hover {
+  border-color: var(--color-purple);
+  transform: translateY(-2px);
+}
+.logo-wall-item img {
+  max-height: 2.25rem;
+  width: auto;
+  max-width: 100%;
+  display: block;
+}
+
 /* Contributor avatar (placeholder) -------------------------------- */
 .avatar {
   width: 2.75rem;
@@ -438,12 +464,38 @@ body {
   border: 2px solid var(--color-surface);
 }
 
-/* Stat / metric pill --------------------------------------------- */
+/* Real contributor avatar (image) -------------------------------- */
+.avatar-img {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+  border: 2px solid var(--color-surface);
+  background: var(--color-rule);
+}
+
+/* Stat / metric tile --------------------------------------------- */
 .stat {
   font-family: var(--font-mono);
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 500;
+  line-height: 1;
   color: var(--color-ink);
+}
+.stat-tile {
+  background: var(--color-card);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+}
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-top: 0.4rem;
 }
 
 /* Form fields ----------------------------------------------------- */
