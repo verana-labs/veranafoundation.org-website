@@ -81,6 +81,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      // The inline themeInitScript sets data-theme on <html> before React
+      // hydrates, so the attribute intentionally differs from the server HTML.
+      // Scope hydration-mismatch suppression to this element only.
+      suppressHydrationWarning
       className={`${inter.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
     >
       <head>
