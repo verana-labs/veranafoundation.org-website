@@ -108,7 +108,7 @@ export default function ContributePage() {
               <a
                 href="https://github.com/verana-labs"
                 rel="noopener"
-                className="text-sm text-purple hover:underline"
+                className="text-sm text-purple hover:underline mt-auto self-end"
               >
                 github.com/verana-labs ↗
               </a>
@@ -123,7 +123,7 @@ export default function ContributePage() {
               <a
                 href="https://verana-labs.github.io/verifiable-trust-spec/"
                 rel="noopener"
-                className="text-sm text-purple hover:underline"
+                className="text-sm text-purple hover:underline mt-auto self-end"
               >
                 Read the specs ↗
               </a>
@@ -136,7 +136,10 @@ export default function ContributePage() {
                 Recurring technical work joins as a{" "}
                 <strong className="text-ink">Contributor Member</strong> (free).
               </p>
-              <Link href="/join" className="text-sm text-purple hover:underline">
+              <Link
+                href="/join"
+                className="text-sm text-purple hover:underline mt-auto self-end"
+              >
                 Join the Foundation →
               </Link>
             </div>
