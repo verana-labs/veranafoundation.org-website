@@ -7,6 +7,26 @@ export const metadata: Metadata = {
     "How the Verana Foundation grows the open trust layer: grants, developer relations, partnerships and integrations, and adoption in the wild.",
 };
 
+const PARTNERS = [
+  { name: "2060", href: "https://2060.io", logo: "/assets/img/logo_2060.svg" },
+  { name: "Intexus", href: "https://intexus.la/", logo: "/assets/img/logo_intexus.svg" },
+  { name: "MOSIP", href: "https://www.mosip.io/", logo: "/assets/img/logo_mosip.png" },
+  {
+    name: "Orchestrating Identity",
+    href: "https://www.oidentity.com/",
+    logo: "/assets/img/logo_oidentity.svg",
+  },
+  { name: "Mobai", href: "https://www.mobai.bio/", logo: "/assets/img/logo_mobai.png" },
+  { name: "TotalNot", href: "https://www.totalnot.mx/", logo: "/assets/img/logo_totalnot.png" },
+  { name: "EAFIT", href: "https://www.eafit.edu.co/", logo: "/assets/img/logo_eafit.svg" },
+  { name: "Bitel", href: "https://bitel.com.pe/", logo: "/assets/img/logo_bitel.png" },
+  {
+    name: "Claro",
+    href: "https://www.claro.com.pe/personas/",
+    logo: "/assets/img/logo_claro.svg",
+  },
+];
+
 export default function EcosystemPage() {
   return (
     <>
@@ -65,10 +85,18 @@ export default function EcosystemPage() {
           <h2 className="display text-3xl">Adopting the open trust layer</h2>
           <div className="accent-line mt-4 mb-10" />
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {["Partner", "Partner", "Partner", "Your org?"].map((p, i) => (
-              <div key={i} className="logo-tile text-muted">
-                {p}
-              </div>
+            {PARTNERS.map((p) => (
+              <a
+                key={p.name}
+                href={p.href}
+                rel="noopener"
+                className="logo-wall-item"
+                title={p.name}
+                aria-label={p.name}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.logo} alt={`${p.name} logo`} loading="lazy" />
+              </a>
             ))}
           </div>
           <p className="text-sm text-muted mt-6">
