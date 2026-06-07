@@ -372,6 +372,15 @@ export async function submitInquiry(inq: Inquiry): Promise<CrmResult> {
     const status = findField(cf, ["status"], /status/i);
     const todo = optionValue(status, /^to.?do$|todo/i);
     if (status && todo) fields[status.code] = todo;
+    const priority = findField(cf, ["priority"], /priority/i);
+    const low = optionValue(priority, /^low$/i);
+    if (priority && low) fields[priority.code] = low;
+    const dueField = findField(cf, ["due_date", "due"], /due/i);
+    if (dueField) {
+      // Due in 3 days, ISO-8601 (e.g. 2026-06-10T23:36:03Z).
+      const due = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+      fields[dueField.code] = due.toISOString().replace(/\.\d{3}Z$/, "Z");
+    }
     const userId = await connectedUserId();
     const task = await createWithFallback(
       "/tasks",
