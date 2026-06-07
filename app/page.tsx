@@ -45,9 +45,30 @@ const SOFTWARE = [
 ];
 
 const WORKING_GROUPS = [
-  { name: "Verifiable Trust spec WG", desc: "Authors and maintains the Verifiable Trust specification." },
-  { name: "VPR spec WG", desc: "Authors and maintains the Verifiable Public Registry specification." },
-  { name: "Software WGs", desc: "Maintain the open-source code: VPR, Indexer, VS-Agent, Frontend." },
+  {
+    name: "Specification WG",
+    desc: "Authors and maintains the specifications.",
+    requires: "Associate or Contributor",
+    associateOnly: false,
+  },
+  {
+    name: "Reference Implementations WG",
+    desc: "Maintains the open-source software.",
+    requires: "Associate or Contributor",
+    associateOnly: false,
+  },
+  {
+    name: "Interop WG",
+    desc: "Cross-implementation interoperability and conformance.",
+    requires: "Associate or Contributor",
+    associateOnly: false,
+  },
+  {
+    name: "Business Cases WG",
+    desc: "Use cases, business models, and adoption patterns.",
+    requires: "Associate only",
+    associateOnly: true,
+  },
 ];
 
 const FOUNDERS = [
@@ -335,7 +356,16 @@ export default async function HomePage() {
               <div className="space-y-3">
                 {WORKING_GROUPS.map((wg) => (
                   <div key={wg.name} className="wg-tile">
-                    <p className="font-medium text-ink">{wg.name}</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-medium text-ink">{wg.name}</p>
+                      <span
+                        className={`badge flex-shrink-0 ${
+                          wg.associateOnly ? "badge-purple" : ""
+                        }`}
+                      >
+                        {wg.requires}
+                      </span>
+                    </div>
                     <p className="text-sm text-muted mt-1">{wg.desc}</p>
                   </div>
                 ))}
