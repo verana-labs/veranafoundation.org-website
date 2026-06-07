@@ -160,35 +160,77 @@ export default function Nav() {
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setMenuOpen((open) => !open)}
-              aria-expanded={menuOpen}
-              aria-controls="mobile-menu"
-              className="md:hidden p-2 -mr-2 text-ink"
-              aria-label="Open menu"
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                aria-hidden="true"
+            <div className="flex items-center gap-1 md:hidden">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="theme-toggle"
+                aria-label="Switch theme"
+                aria-pressed={theme === "dark"}
               >
-                <path d="M3 6h18M3 12h18M3 18h18" />
-              </svg>
-            </button>
+                <svg
+                  className="icon-moon"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+                <svg
+                  className="icon-sun"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((open) => !open)}
+                aria-expanded={menuOpen}
+                aria-controls="mobile-menu"
+                className="p-2 -mr-2 text-ink"
+                aria-label="Open menu"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  aria-hidden="true"
+                >
+                  <path d="M3 6h18M3 12h18M3 18h18" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {menuOpen && (
-            <div id="mobile-menu" className="md:hidden pb-4 space-y-2">
+            <div
+              id="mobile-menu"
+              className="md:hidden pb-4 flex flex-col items-start"
+            >
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="block py-2 nav-link"
+                  className="block w-full py-2 nav-link"
                   aria-current={isActive(link.href) ? "page" : undefined}
                 >
                   {link.label}
@@ -196,7 +238,7 @@ export default function Nav() {
               ))}
               <Link
                 href="/join"
-                className="block py-2 nav-link font-medium text-purple"
+                className="block w-full py-2 nav-link font-medium text-purple"
               >
                 Join →
               </Link>
