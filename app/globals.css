@@ -74,9 +74,9 @@ body {
   font-weight: 600;
 }
 
-/* Wordmark -------------------------------------------------------- */
+/* Wordmark — Inter, the proper typeface for the Verana logo lockup ------- */
 .wordmark {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--color-ink);
