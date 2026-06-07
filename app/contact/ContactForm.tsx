@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const TOPICS = [
   { value: "membership-associate", label: "Membership — Associate" },
@@ -15,13 +15,19 @@ const TOPICS = [
 const MIN_MESSAGE = 50;
 const MAX_MESSAGE = 4000;
 
+const VALIDATION_MSG = `Please complete the required fields — a valid email and a message of at least ${MIN_MESSAGE} characters — then try again.`;
+const SUBMIT_MSG =
+  "Sorry, we couldn't send your message just now. Please try again in a moment.";
+
 export default function ContactForm() {
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<
     "idle" | "submitting" | "success" | "error"
   >("idle");
+  const [errorMsg, setErrorMsg] = useState("");
   const [renderedAt, setRenderedAt] = useState("");
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   // Preselect inquiry type from ?topic= (set by the Join page buttons) and
   // record render time for a server-side time-to-submit check.
@@ -31,6 +37,14 @@ export default function ContactForm() {
     const t = params.get("topic");
     if (t && TOPICS.some((o) => o.value === t)) setTopic(t);
   }, []);
+
+  // Make the outcome visible — especially on mobile — by scrolling the banner
+  // into view whenever we reach a success or error state.
+  useEffect(() => {
+    if (status === "success" || status === "error") {
+      bannerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [status]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,6 +60,7 @@ export default function ContactForm() {
 
     if (!form.checkValidity() || message.trim().length < MIN_MESSAGE) {
       form.reportValidity();
+      setErrorMsg(VALIDATION_MSG);
       setStatus("error");
       return;
     }
@@ -57,7 +72,8 @@ export default function ContactForm() {
       email: fd.get("email"),
       organization: fd.get("organization"),
       role: fd.get("role"),
-      website: fd.get("website"),
+      linkedin: fd.get("linkedin"),
+      company_website: fd.get("company_website"),
       message: fd.get("message"),
       source: fd.get("source"),
       consent: (form.elements.namedItem("consent") as HTMLInputElement)?.checked,
@@ -78,33 +94,87 @@ export default function ContactForm() {
       setTopic("");
       setMessage("");
     } catch {
+      setErrorMsg(SUBMIT_MSG);
       setStatus("error");
     }
   }
 
+  // Success — replace the form with a prominent confirmation banner.
   if (status === "success") {
     return (
-      <div className="card" role="status" aria-live="polite">
-        <h3 className="display text-lg">Thank you.</h3>
-        <p className="text-sm text-muted leading-relaxed">
-          We received your message and will route it to the right person. We
-          reply within a few business days.
+      <div
+        ref={bannerRef}
+        role="status"
+        aria-live="polite"
+        className="card scroll-mt-24"
+        style={{
+          borderColor: "var(--color-green)",
+          borderLeftWidth: 4,
+          background: "color-mix(in srgb, var(--color-green) 8%, var(--color-card))",
+        }}
+      >
+        <h3 className="display text-xl flex items-center gap-2">
+          <span aria-hidden="true" style={{ color: "var(--color-green-dark)" }}>
+            ✓
+          </span>
+          Message sent
+        </h3>
+        <p className="text-muted leading-relaxed">
+          Thank you — we received your message and will route it to the right
+          person. We reply within a few business days.
         </p>
         <button
           type="button"
-          className="btn btn-ghost text-sm self-start"
+          className="btn btn-secondary text-sm self-start"
           onClick={() => setStatus("idle")}
         >
-          Send another →
+          Send another message
         </button>
       </div>
     );
   }
 
   const submitting = status === "submitting";
+  const errored = status === "error";
 
   return (
     <form className="space-y-1" onSubmit={handleSubmit} noValidate>
+      {/* Error banner — prominent, keeps the form so it can be re-submitted. */}
+      {errored && (
+        <div
+          ref={bannerRef}
+          role="alert"
+          aria-live="assertive"
+          className="scroll-mt-24"
+          style={{
+            border: "1px solid #e5484d",
+            borderLeftWidth: 4,
+            background: "color-mix(in srgb, #e5484d 10%, var(--color-card))",
+            borderRadius: 10,
+            padding: "1rem 1.25rem",
+            marginBottom: "1rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.5rem",
+          }}
+        >
+          <strong
+            className="display"
+            style={{ color: "#c0392b", fontSize: "1.05rem" }}
+          >
+            Couldn&rsquo;t send your message
+          </strong>
+          <span className="text-sm text-muted">{errorMsg}</span>
+          <button
+            type="submit"
+            className="btn btn-primary text-sm self-start"
+            disabled={submitting}
+          >
+            {submitting ? "Sending…" : "Try again"}
+          </button>
+        </div>
+      )}
+
       {/* Honeypot — hidden from users */}
       <div
         aria-hidden="true"
@@ -162,6 +232,22 @@ export default function ContactForm() {
             autoComplete="email"
           />
         </div>
+      </div>
+
+      <div className="form-field">
+        <label htmlFor="linkedin">
+          Your LinkedIn <span className="opt">(optional)</span>
+        </label>
+        <input
+          id="linkedin"
+          name="linkedin"
+          type="url"
+          autoComplete="url"
+          placeholder="https://www.linkedin.com/in/…"
+        />
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-x-5">
         <div className="form-field">
           <label htmlFor="organization">
             Organization{" "}
@@ -183,10 +269,15 @@ export default function ContactForm() {
       </div>
 
       <div className="form-field">
-        <label htmlFor="website">
-          Website or LinkedIn <span className="opt">(optional)</span>
+        <label htmlFor="company_website">
+          Company Website <span className="opt">(optional)</span>
         </label>
-        <input id="website" name="website" type="url" placeholder="https://…" />
+        <input
+          id="company_website"
+          name="company_website"
+          type="url"
+          placeholder="https://…"
+        />
       </div>
 
       <div className="form-field">
@@ -235,13 +326,6 @@ export default function ContactForm() {
           . <span className="req">*</span>
         </label>
       </div>
-
-      {status === "error" && (
-        <p className="text-sm" style={{ color: "#c0392b" }} role="alert">
-          Please complete the required fields (message must be at least{" "}
-          {MIN_MESSAGE} characters), then try again.
-        </p>
-      )}
 
       <div className="pt-2 flex flex-wrap items-center gap-4">
         <button type="submit" className="btn btn-primary" disabled={submitting}>
