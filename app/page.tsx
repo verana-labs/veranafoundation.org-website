@@ -190,7 +190,7 @@ export default async function HomePage() {
                 key={s.name}
                 href={`https://github.com/${s.repo}`}
                 rel="noopener"
-                className="repo-card block"
+                className="repo-card flex flex-col h-full"
               >
                 <span className="repo-name">
                   <svg
@@ -208,7 +208,7 @@ export default async function HomePage() {
                   {s.desc}
                 </p>
                 <span
-                  className={`badge mt-3 self-start ${
+                  className={`badge mt-auto self-end ${
                     s.license === "Apache-2.0" ? "badge-green" : "badge-purple"
                   }`}
                 >
@@ -389,7 +389,7 @@ export default async function HomePage() {
             <div className="card">
               <div className="flex items-center justify-between">
                 <h3 className="display text-xl">Contributor Member</h3>
-                <span className="badge badge-green">€0 — free</span>
+                <span className="badge badge-green">free</span>
               </div>
               <p className="text-sm text-muted leading-relaxed">
                 Organizations contributing technical &amp; standards work through
