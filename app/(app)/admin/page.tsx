@@ -15,8 +15,18 @@ export default async function AdminPage() {
       <h1 className="display text-3xl">Admin</h1>
       <ul className="mt-6 grid gap-2">
         <li>
+          <Link href="/admin/members" className="hover:underline">
+            Members
+          </Link>
+        </li>
+        <li>
           <Link href="/admin/working-groups" className="hover:underline">
             Working groups
+          </Link>
+        </li>
+        <li>
+          <Link href="/admin/admins" className="hover:underline">
+            Admins
           </Link>
         </li>
         <li>
@@ -24,10 +34,14 @@ export default async function AdminPage() {
             Settings (Membership Agreement)
           </Link>
         </li>
+        <li>
+          <Link href="/admin/audit" className="hover:underline">
+            Audit log
+          </Link>
+        </li>
       </ul>
       <p className="text-muted mt-4 text-sm">
-        Members, invoices, the admin allowlist and the audit log land in later
-        phases.
+        Invoices land with Associate (paid) membership in Phase 3.
       </p>
     </div>
   );
