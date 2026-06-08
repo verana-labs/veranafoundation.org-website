@@ -1,11 +1,12 @@
 import nodemailer from "nodemailer";
+import { smtpServer, mailFrom } from "@/app/lib/smtp";
 
 type Attachment = { filename: string; content: Buffer };
 
 /**
- * Best-effort transactional email over SMTP (EMAIL_SERVER connection string,
- * e.g. a Gmail/Workspace account). No-ops (logs) when EMAIL_SERVER is absent,
- * so flows that send mail don't fail in environments without it.
+ * Best-effort transactional email over SMTP (MAIL_* env, e.g. a Gmail/Workspace
+ * account). No-ops (logs) when SMTP isn't configured, so flows that send mail
+ * don't fail in environments without it.
  */
 export async function sendEmail(opts: {
   to: string;
@@ -13,14 +14,14 @@ export async function sendEmail(opts: {
   html: string;
   attachments?: Attachment[];
 }): Promise<void> {
-  const server = process.env.EMAIL_SERVER;
+  const server = smtpServer();
   if (!server) {
-    console.warn(`[email] EMAIL_SERVER not set — skipping email to ${opts.to}`);
+    console.warn(`[email] SMTP not configured — skipping email to ${opts.to}`);
     return;
   }
   const transporter = nodemailer.createTransport(server);
   await transporter.sendMail({
-    from: process.env.EMAIL_FROM ?? "no-reply@veranafoundation.org",
+    from: mailFrom(),
     to: opts.to,
     subject: opts.subject,
     html: opts.html,
