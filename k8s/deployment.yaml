@@ -86,11 +86,11 @@ spec:
                   name: veranafoundation-website-secrets
                   key: AUTH_GITHUB_SECRET
                   optional: true
-            - name: RESEND_API_KEY
+            - name: EMAIL_SERVER
               valueFrom:
                 secretKeyRef:
                   name: veranafoundation-website-secrets
-                  key: RESEND_API_KEY
+                  key: EMAIL_SERVER
                   optional: true
             - name: EMAIL_FROM
               value: no-reply@veranafoundation.org
