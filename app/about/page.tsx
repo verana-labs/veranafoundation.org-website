@@ -61,9 +61,9 @@ export default function AboutPage() {
           <li>
             <strong>Open-source software</strong> — the Foundation{" "}
             <strong>hosts, stewards and maintains</strong> the reference
-            implementations. Released under <strong>Apache 2.0 and AGPL-3.0</strong>;
-            copyright is held by the contributors, so the Foundation stewards
-            rather than owns the code. See{" "}
+            implementations, released as open source; copyright is held by the
+            contributors, so the Foundation stewards rather than owns the code.
+            See{" "}
             <a href="https://github.com/verana-labs" rel="noopener">
               github.com/verana-labs
             </a>
@@ -90,8 +90,9 @@ export default function AboutPage() {
         <h2>Membership</h2>
         <p>
           There are two membership classes — <strong>Associate Member</strong>{" "}
-          and <strong>Contributor Member</strong>. Founding members are 2060 OÜ,
-          Mobiera, and Orchestrating Identity.{" "}
+          and <strong>Contributor Member</strong> — the latter open to both
+          organizations and individuals. Founding members are 2060 OÜ, Mobiera,
+          and Orchestrating Identity.{" "}
           <Link href="/join">Compare membership and join →</Link> To participate
           in the working groups, see <Link href="/contribute">Contribute</Link>.
         </p>

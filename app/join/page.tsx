@@ -13,7 +13,7 @@ const ROWS: { label: string; assoc: string; contrib: string }[] = [
     assoc:
       "Organizations that support and align with the mission — strategic engagement, advisory input, ecosystem development, research, public-interest participation. Non-technical.",
     contrib:
-      "Organizations contributing technical & standards work — software, specifications, credential schemas, registry artifacts, documentation — on a recurring or substantial basis.",
+      "Organizations and individuals contributing technical & standards work — software, specifications, credential schemas, registry artifacts, documentation — on a recurring or substantial basis.",
   },
   {
     label: "How you participate",
@@ -27,7 +27,7 @@ const ROWS: { label: string; assoc: string; contrib: string }[] = [
     assoc:
       "Code of Conduct; cooperative posture; respect IP, licensing & confidentiality. Technical contributions optional.",
     contrib:
-      "Materially greater: follow coding/schema standards & WG procedures; license all contributions per the IP rules (Apache 2.0 / MIT / AGPL for code; W3C Royalty-Free for specs; CC0 / CC-BY-4.0 for schemas); disclose essential patents.",
+      "Materially greater: follow coding/schema standards & WG procedures; license all contributions per the IP rules (open-source licenses for code, e.g. Apache 2.0 / MIT / AGPL; CC BY-SA 4.0 plus a W3C Royalty-Free patent commitment for specs; CC0 / CC-BY-4.0 for schemas); disclose essential patents.",
   },
   {
     label: "Annual dues",
@@ -54,7 +54,8 @@ export default function JoinPage() {
           </h1>
           <div className="accent-line mt-6" />
           <p className="mt-8 text-lg text-muted max-w-3xl leading-relaxed">
-            Pick the class that matches how your organization participates.{" "}
+            Pick the class that matches how you or your organization
+            participates.{" "}
             <strong className="text-ink">
               Membership (either class) is required to participate in the working
               groups
@@ -88,7 +89,9 @@ export default function JoinPage() {
                 <h2 className="display text-2xl">Contributor Member</h2>
                 <span className="badge badge-green">free</span>
               </div>
-              <p className="text-sm text-muted">Technical &amp; standards contributors.</p>
+              <p className="text-sm text-muted">
+                Technical &amp; standards contributors — organizations or individuals.
+              </p>
             </div>
           </div>
 
@@ -128,9 +131,10 @@ export default function JoinPage() {
           <div className="card">
             <h2 className="display text-2xl">Become a member</h2>
             <p className="text-sm text-muted leading-relaxed max-w-2xl">
-              Tell us which class fits and a little about your organization.
-              Submissions are confidential pre-incorporation; the formal
-              onboarding process follows once the Foundation is incorporated.
+              Tell us which class fits and a little about you or your
+              organization. You can join and start participating in the working
+              groups now, while the Foundation is in formation; full membership
+              rights vest once it is incorporated and ratifies the agreement.
             </p>
             <div className="mt-2 flex flex-wrap gap-4">
               <Link
