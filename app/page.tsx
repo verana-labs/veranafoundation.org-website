@@ -19,15 +19,15 @@ const SPECS = [
 
 const SOFTWARE = [
   {
-    repo: "verana-labs/vpr",
-    name: "Verifiable Public Registry",
-    desc: "Cosmos-SDK Layer-1 reference implementation.",
+    repo: "verana-labs/verana",
+    name: "Verana Ledger",
+    desc: "Cosmos-SDK Layer-1 reference implementation of the VPR spec, with council-based governance.",
     license: "AGPL-3.0",
   },
   {
-    repo: "verana-labs/indexer",
-    name: "Indexer",
-    desc: "Trust Resolver / query surface.",
+    repo: "verana-labs/verana-indexer",
+    name: "Verana Indexer",
+    desc: "Trust Resolver / query surface. With ToIP TRQP (Trust Registry Query Protocol) v2 endpoint.",
     license: "Apache-2.0",
   },
   {
@@ -37,8 +37,8 @@ const SOFTWARE = [
     license: "Apache-2.0",
   },
   {
-    repo: "verana-labs/frontend",
-    name: "Frontend",
+    repo: "verana-labs/verana-frontend",
+    name: "Verana Frontend",
     desc: "Reference web frontend.",
     license: "Apache-2.0",
   },
@@ -374,7 +374,6 @@ export default async function HomePage() {
                 <Link href="/contribute" className="text-purple hover:underline">
                   Join a working group →
                 </Link>{" "}
-                (membership required)
               </p>
             </div>
           </div>

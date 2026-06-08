@@ -49,7 +49,7 @@ export default function Footer() {
                   <Link href="/join">Join the Foundation</Link>
                 </li>
                 <li>
-                  <Link href="/contribute">Working groups</Link>
+                  <Link href="/contribute">Working Groups</Link>
                 </li>
                 <li>
                   <a href="https://discord.gg/edjaFn252q" rel="noopener">
@@ -97,17 +97,12 @@ export default function Footer() {
                 </li>
                 <li>
                   <a href="https://verana.io" rel="noopener">
-                    Verana network ↗
+                    Verana.io ↗
                   </a>
                 </li>
                 <li>
                   <a href="https://docs.verana.io" rel="noopener">
-                    Verana docs ↗
-                  </a>
-                </li>
-                <li>
-                  <a href="https://2060.io" rel="noopener">
-                    2060 ↗
+                    Documentation ↗
                   </a>
                 </li>
               </ul>
