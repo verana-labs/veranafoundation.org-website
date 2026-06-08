@@ -122,7 +122,8 @@ jobs:
           AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
           AUTH_GITHUB_ID: ${{ secrets.AUTH_GITHUB_ID }}
           AUTH_GITHUB_SECRET: ${{ secrets.AUTH_GITHUB_SECRET }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           SELLER_VAT_NUMBER: ${{ secrets.SELLER_VAT_NUMBER }}
@@ -143,7 +144,8 @@ jobs:
             --from-literal=AUTH_GOOGLE_SECRET="${AUTH_GOOGLE_SECRET}" \
             --from-literal=AUTH_GITHUB_ID="${AUTH_GITHUB_ID}" \
             --from-literal=AUTH_GITHUB_SECRET="${AUTH_GITHUB_SECRET}" \
-            --from-literal=RESEND_API_KEY="${RESEND_API_KEY}" \
+            --from-literal=MAIL_USERNAME="${MAIL_USERNAME}" \
+            --from-literal=MAIL_PASSWORD="${MAIL_PASSWORD}" \
             --from-literal=STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY}" \
             --from-literal=STRIPE_WEBHOOK_SECRET="${STRIPE_WEBHOOK_SECRET}" \
             --from-literal=SELLER_VAT_NUMBER="${SELLER_VAT_NUMBER}" \

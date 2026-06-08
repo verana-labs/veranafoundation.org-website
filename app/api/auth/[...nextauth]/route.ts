@@ -10,7 +10,7 @@ export const { GET } = handlers;
 const MAX_ACTIVE_LINKS = 3;
 
 export async function POST(req: NextRequest) {
-  if (new URL(req.url).pathname.endsWith("/signin/resend")) {
+  if (new URL(req.url).pathname.endsWith("/signin/nodemailer")) {
     try {
       const email = String((await req.clone().formData()).get("email") ?? "")
         .trim()

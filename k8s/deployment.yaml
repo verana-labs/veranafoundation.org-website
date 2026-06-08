@@ -86,14 +86,27 @@ spec:
                   name: veranafoundation-website-secrets
                   key: AUTH_GITHUB_SECRET
                   optional: true
-            - name: RESEND_API_KEY
+            # SMTP — host/port + from are plain; username + app password are secrets.
+            - name: MAIL_HOST
+              value: smtp.gmail.com
+            - name: MAIL_PORT
+              value: "587"
+            - name: MAIL_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: veranafoundation-website-secrets
-                  key: RESEND_API_KEY
+                  key: MAIL_USERNAME
                   optional: true
-            - name: EMAIL_FROM
+            - name: MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: MAIL_PASSWORD
+                  optional: true
+            - name: MAIL_FROM_ADDRESS
               value: no-reply@veranafoundation.org
+            - name: MAIL_FROM_NAME
+              value: Verana Foundation
             - name: STRIPE_SECRET_KEY
               valueFrom:
                 secretKeyRef:

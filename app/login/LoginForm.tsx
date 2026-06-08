@@ -41,7 +41,7 @@ export default function LoginForm({ callbackUrl }: { callbackUrl: string }) {
           onSubmit={async (e) => {
             e.preventDefault();
             setPending(true);
-            await signIn("resend", { email, callbackUrl, redirect: false });
+            await signIn("nodemailer", { email, callbackUrl, redirect: false });
             setPending(false);
             setSent(true);
           }}

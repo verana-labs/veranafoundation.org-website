@@ -1,7 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
-import Resend from "next-auth/providers/resend";
 import {
   pickGithubVerifiedEmail,
   isGoogleEmailVerified,
@@ -20,8 +19,9 @@ export default {
       allowDangerousEmailAccountLinking: true,
       authorization: { params: { scope: "read:user user:email" } },
     }),
-    // Magic link — verified by construction (they click a link to that address).
-    Resend({ apiKey: process.env.RESEND_API_KEY, from: process.env.EMAIL_FROM }),
+    // The SMTP magic-link (Nodemailer) provider is added in auth.ts — it pulls
+    // the Node-only `nodemailer` lib, which must stay out of the edge middleware
+    // bundle (this config is shared with middleware).
   ],
   callbacks: {
     // ADR-0002 safety rule: the identity key is a *verified* email. Account
@@ -31,7 +31,7 @@ export default {
       switch (account.provider) {
         case "google":
           return isGoogleEmailVerified(profile as { email_verified?: boolean });
-        case "resend":
+        case "nodemailer":
           return true;
         case "github": {
           // GitHub's profile email may be public/unverified — fetch the primary
