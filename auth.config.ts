@@ -2,6 +2,11 @@ import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
 import Resend from "next-auth/providers/resend";
+import {
+  pickGithubVerifiedEmail,
+  isGoogleEmailVerified,
+  type GithubEmail,
+} from "@/app/lib/verified-email";
 
 // Edge-safe Auth.js config (no database adapter) shared by the route handler and
 // middleware. The DB-backed adapter lives in auth.ts (Node runtime only).
@@ -25,7 +30,7 @@ export default {
       if (!account) return false;
       switch (account.provider) {
         case "google":
-          return (profile as { email_verified?: boolean })?.email_verified === true;
+          return isGoogleEmailVerified(profile as { email_verified?: boolean });
         case "resend":
           return true;
         case "github": {
@@ -39,16 +44,11 @@ export default {
             },
           });
           if (!res.ok) return false;
-          const emails = (await res.json()) as Array<{
-            email: string;
-            primary: boolean;
-            verified: boolean;
-          }>;
-          const verified =
-            emails.find((e) => e.primary && e.verified) ??
-            emails.find((e) => e.verified);
+          const verified = pickGithubVerifiedEmail(
+            (await res.json()) as GithubEmail[],
+          );
           if (!verified) return false;
-          user.email = verified.email;
+          user.email = verified;
           return true;
         }
         default:
