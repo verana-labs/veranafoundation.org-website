@@ -4,7 +4,13 @@ import ApplyForm from "./ApplyForm";
 
 export const metadata: Metadata = { title: "Join the Foundation" };
 
-export default async function ApplyPage() {
+export default async function ApplyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ class?: string }>;
+}) {
+  const { class: cls } = await searchParams;
+  const initialClass = cls === "associate" ? "associate" : "contributor";
   const agreement = await getActiveAgreement();
 
   return (
@@ -21,6 +27,7 @@ export default async function ApplyPage() {
           <ApplyForm
             agreementUrl={agreement.url}
             agreementVersion={agreement.version}
+            initialClass={initialClass}
           />
         </div>
       ) : (

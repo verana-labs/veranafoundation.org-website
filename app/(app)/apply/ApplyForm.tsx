@@ -9,11 +9,13 @@ const input = "rounded border border-rule bg-surface px-3 py-2 text-sm w-full";
 export default function ApplyForm({
   agreementUrl,
   agreementVersion,
+  initialClass = "contributor",
 }: {
   agreementUrl: string;
   agreementVersion: string;
+  initialClass?: "contributor" | "associate";
 }) {
-  const [cls, setCls] = useState<"contributor" | "associate">("contributor");
+  const [cls, setCls] = useState<"contributor" | "associate">(initialClass);
   const [type, setType] = useState<"individual" | "organization">("individual");
   const [state, formAction, pending] = useActionState<ApplyState, FormData>(
     applyMember,
