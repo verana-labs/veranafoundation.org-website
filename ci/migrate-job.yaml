@@ -1,0 +1,34 @@
+# One-off DB migration Job — runs `prisma migrate deploy` from the app image.
+# Applied by CI (delete + apply + wait) AFTER Postgres is up and BEFORE the app
+# rollout. Not part of `kubectl apply -f k8s/` (Jobs are immutable; CI recreates
+# it each deploy). Uses :latest with imagePullPolicy: Always — the same image CI
+# just pushed.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrate
+  namespace: web
+  labels:
+    app.kubernetes.io/name: veranafoundation-website-migrate
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: veranafoundation-website-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          # Dedicated migrator image (Dockerfile `migrator` stage) — full deps +
+          # Prisma CLI + schema. Built and pushed by CI alongside the app image.
+          image: veranalabs/veranafoundation.org-website:migrate
+          imagePullPolicy: Always
+          command: ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: DATABASE_URL

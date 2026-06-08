@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import Nav from "./components/Nav";
-import Footer from "./components/Footer";
-import Reveal from "./components/Reveal";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -90,12 +87,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="bg-surface text-ink">
-        <Nav />
-        <main>{children}</main>
-        <Footer />
-        <Reveal />
-      </body>
+      <body className="bg-surface text-ink">{children}</body>
     </html>
   );
 }

@@ -69,7 +69,7 @@ jobs:
             type=semver,pattern=v{{major}}.{{minor}}
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push
+      - name: Build and push (app)
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -80,6 +80,17 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Build and push (migrator)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          target: migrator
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.DOCKER_HUB_NAMESPACE }}/${{ env.IMAGE_NAME }}:migrate
+          cache-from: type=gha
 
   # ---------------------------------------------------------------------------
   # Deploy to Kubernetes (OVH) on push to main only.
@@ -131,6 +142,13 @@ jobs:
             --from-literal=STRIPE_WEBHOOK_SECRET="${STRIPE_WEBHOOK_SECRET}" \
             --dry-run=client -o yaml | kubectl apply -f -
           kubectl apply -f k8s/
+          # Wait for Postgres, then apply DB migrations as a one-off Job before
+          # the app rollout (Jobs are immutable, so delete + recreate each deploy).
+          kubectl -n web rollout status statefulset/postgres --timeout=180s
+          kubectl -n web delete job db-migrate --ignore-not-found
+          kubectl -n web apply -f ci/migrate-job.yaml
+          kubectl -n web wait --for=condition=complete job/db-migrate --timeout=180s \
+            || { echo "migration failed:"; kubectl -n web logs job/db-migrate; exit 1; }
           # imagePullPolicy: Always + restart => new pods repull the :latest tag.
           kubectl rollout restart deployment/veranafoundation-website -n web
           kubectl rollout status deployment/veranafoundation-website -n web --timeout=120s
