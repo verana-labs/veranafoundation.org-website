@@ -1,0 +1,25 @@
+# Local development only — Postgres for the membership/billing features.
+# Not used in production (in-cluster Postgres is managed via k8s/postgres.yaml).
+# Bring up:  docker compose up -d
+# Then:      npm run db:migrate
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: verana-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: verana
+      POSTGRES_PASSWORD: verana # local dev only — never used in production
+      POSTGRES_DB: verana
+    ports:
+      - "5432:5432"
+    volumes:
+      - verana_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verana"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  verana_pgdata:

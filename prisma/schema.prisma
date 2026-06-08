@@ -1,0 +1,390 @@
+// Verana Foundation — membership, billing & accounts
+// Implements the data model in docs/: ADR-0002 (auth/roles/access),
+// verana-invoicing-spec (memberships/invoices/agreement), ADR-0001 (entitlements/seller).
+//
+// Conventions: cuid() ids, UTC DateTimes, explicit enums for closed sets.
+
+generator client {
+  provider      = "prisma-client-js"
+  // "native" for local dev; the musl/openssl-3 target is for the node:22-alpine runtime.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Auth.js (NextAuth v5) standard models — field names are required by the adapter
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique // the verified email is the identity key (ADR-0002)
+  emailVerified DateTime?
+  image         String?
+
+  accounts      Account[]
+  sessions      Session[]
+  memberships   UserMember[] // orgs/individuals this user can act for
+  adminActions  AdminAction[]
+  notifications Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String // "google" | "github" | "email" (magic link)
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String // email magic-link / OTP
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Foundation admin allowlist (ADR-0002) — the only grant of Foundation-admin rights
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AdminAllowlistEntry {
+  id            String   @id @default(cuid())
+  email         String   @unique // verified email granted `admin`
+  addedByUserId String?
+  addedAt       DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Members (contracting party) — org or individual
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Member {
+  id   String     @id @default(cuid())
+  type MemberType
+
+  legalName String
+
+  // organization-only
+  entityType         String?
+  jurisdiction       String?
+  registeredAddress  String?
+  noticeBillingEmail String?
+  logoUri            String? // URL or inline SVG — optional; for future homepage display
+
+  // individual-only
+  countryOfResidence String?
+
+  // consent
+  socialAnnouncementConsent Boolean @default(false) // ok to announce their membership on our social networks
+
+  // billing / tax
+  primaryEmail     String
+  vatNumber        String?
+  vatStatus        VatStatus @default(none)
+  stripeCustomerId String?
+
+  memberships      Membership[]
+  access           MemberAccess[]
+  userLinks        UserMember[]
+  signatureRecords SignatureRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Membership {
+  id       String @id @default(cuid())
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  class       MembershipClass
+  tier        String? // Associate only — e.g. "tier_3" (Annex D bands); dues resolved in code
+  status      MembershipStatus @default(pending)
+  provisional Boolean          @default(false) // pre-incorporation participation (Agreement §2.4(c))
+
+  periodStart DateTime?
+  periodEnd   DateTime?
+
+  invoices Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([memberId])
+  @@index([status])
+}
+
+// Who can act for a Member, and how. Derived from MemberAccess on first verified login.
+model UserMember {
+  id       String     @id @default(cuid())
+  userId   String
+  memberId String
+  role     MemberRole
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, memberId])
+  @@index([memberId])
+}
+
+// Org-managed email allowlist (ADR-0002). Admins (`manager`) maintain both lists.
+model MemberAccess {
+  id            String       @id @default(cuid())
+  memberId      String
+  member        Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  email         String
+  role          MemberRole
+  status        AccessStatus @default(invited)
+  addedByUserId String?
+  addedAt       DateTime     @default(now())
+
+  @@unique([memberId, email])
+  @@index([email])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Billing (ADR-0001 + invoicing spec)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// One invoicing entity for now (the Foundation / 2060 OÜ). Centralizes VAT + branding.
+model SellerEntity {
+  id               String  @id @default(cuid())
+  legalName        String
+  vatNumber        String?
+  country          String // "EE"
+  address          String?
+  invoicePrefix    String // "VF-"
+  // provider account refs (e.g. { "stripe": "acct_..." })
+  providerAccounts Json?
+
+  invoices Invoice[]
+}
+
+model Invoice {
+  id             String       @id @default(cuid())
+  membershipId   String
+  membership     Membership   @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  sellerEntityId String
+  sellerEntity   SellerEntity @relation(fields: [sellerEntityId], references: [id])
+
+  number   String @unique // e.g. "VF-2026-0001"
+  currency String @default("EUR")
+
+  netAmount   Int // minor units (cents)
+  vatAmount   Int @default(0)
+  grossAmount Int
+
+  vatTreatment VatTreatment
+  status       InvoiceStatus @default(draft)
+  payMethod    PayMethod?
+  providerRef  String? // Stripe invoice id, etc.
+
+  dueDate  DateTime?
+  issuedAt DateTime?
+  paidAt   DateTime?
+
+  payments Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([membershipId])
+  @@index([status])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  provider    String // "stripe" | "offline_bank_transfer"
+  providerRef String?
+  amount      Int // minor units
+  currency    String   @default("EUR")
+  receivedAt  DateTime @default(now())
+  raw         Json? // raw provider payload for audit
+
+  @@index([invoiceId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Membership Agreement (admin-configurable PDF) + e-signature record
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AgreementDocument {
+  id            String   @id @default(cuid())
+  version       String // "v1" / doc ref "LG-EE..."
+  url           String // PDF URL — admin-editable; swap to publish a new version
+  hash          String? // optional integrity hash of the PDF
+  active        Boolean  @default(false)
+  effectiveFrom DateTime @default(now())
+  createdAt     DateTime @default(now())
+}
+
+model SignatureRecord {
+  id       String @id @default(cuid())
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  signerName    String
+  signerTitle   String?
+  emailVerified Boolean @default(false)
+
+  // the AgreementDocument that was accepted (snapshot — survives later config changes)
+  agreementVersion String
+  agreementUrl     String
+  agreementHash    String?
+
+  signedAt  DateTime @default(now())
+  ip        String?
+  userAgent String?
+
+  @@index([memberId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Working Groups (ADR-0002) — admin-managed; access is computed, not stored
+// ─────────────────────────────────────────────────────────────────────────────
+
+model WorkingGroup {
+  id            String        @id @default(cuid())
+  name          String
+  description   String?
+  requiredClass RequiredClass @default(any)
+  link          String // external URL to the WG's space
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Audit + notifications
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AdminAction {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  actor       User?    @relation(fields: [actorUserId], references: [id])
+  actorEmail  String
+  action      String // e.g. "invoice.void", "access.remove", "agreement.update"
+  targetType  String?
+  targetId    String?
+  before      Json?
+  after       Json?
+  at          DateTime @default(now())
+  ip          String?
+
+  @@index([actorUserId])
+  @@index([targetType, targetId])
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // "added_to_org" | "invoice_due" | "membership_expiring" | ...
+  channel   NotificationChannel @default(in_app)
+  payload   Json?
+  readAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  @@index([userId, readAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum MemberType {
+  organization
+  individual
+}
+
+enum MembershipClass {
+  associate
+  contributor
+}
+
+enum MembershipStatus {
+  pending
+  active
+  past_due
+  suspended
+  expired
+}
+
+enum MemberRole {
+  manager // org admin: manage profile, billing, access list
+  representative // WG access only
+}
+
+enum AccessStatus {
+  invited // email allowlisted, no account yet
+  active // linked to a signed-in user
+  removed
+}
+
+enum VatStatus {
+  none
+  pending
+  verified // VIES-valid → reverse charge eligible
+  unverified
+}
+
+enum VatTreatment {
+  domestic
+  reverse_charge
+  outside_scope
+}
+
+enum InvoiceStatus {
+  draft
+  issued
+  paid
+  void
+}
+
+enum PayMethod {
+  card
+  bank_transfer
+}
+
+enum RequiredClass {
+  any
+  associate
+}
+
+enum NotificationChannel {
+  in_app
+  email
+}

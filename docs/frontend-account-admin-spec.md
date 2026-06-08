@@ -37,6 +37,7 @@ Principles:
 | `/admin/invoices` | `admin` | All invoices; reconcile bank transfers |
 | `/admin/working-groups` | `admin` | CRUD working groups (`requiredClass`, external link, description) |
 | `/admin/admins` | `admin` | Manage the Foundation admin allowlist |
+| `/admin/settings` | `admin` | App settings — incl. the **Membership Agreement** PDF URL + version |
 | `/admin/audit` | `admin` | Admin/manager action log |
 
 ## Onboarding entry (`/apply`, public — summary)
@@ -44,7 +45,9 @@ Principles:
 Not part of the authenticated areas but the path that *creates* accounts (full detail in the invoicing spec):
 
 - Branch **individual** vs **organization**, and class (Contributor / Associate).
-- Email OTP verify → fill fields → tick acceptances → type name to sign (`SignatureRecord`).
+- **Displays the Membership Agreement** inline — the **PDF at the admin-configured URL** (active `AgreementDocument`); the user must view it and explicitly accept. The signature records the agreement **version + URL + hash**, so swapping the config to a new PDF only affects future signatures.
+- Email OTP verify → fill fields → accept the agreement → type name to sign (`SignatureRecord`).
+- **Optional consent** — a checkbox to let the Foundation announce the membership on its social networks (`socialAnnouncementConsent`). Organizations may also provide an optional **logo** (`logoUri`) for future homepage display.
 - Creates `Member` (+ `Membership`), seeds the signer as first `MemberAccess{ role: manager }`, signs them in, emails the executed PDF.
 - Associate → continues to invoice/payment before activation.
 
@@ -127,6 +130,11 @@ A switcher lets a user managing multiple orgs pick which one. All pages 403 unle
 ### `/admin/admins`
 
 - Manage the **admin allowlist** (emails). Add/remove; cannot remove the last admin. Audited. (This is the *only* grant of Foundation-admin rights — ADR-0002.)
+
+### `/admin/settings`
+
+- **Membership Agreement** — set the active `AgreementDocument`: **PDF URL** + **version** (and optional hash). Updating the URL **publishes a new version** for future applicants; existing `SignatureRecord`s keep the version they signed. Audited.
+- Home for other app-level settings as they arise.
 
 ### `/admin/audit`
 
