@@ -3,6 +3,9 @@ import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { isAdmin } from "@/app/lib/authz";
 
+// The whole authenticated area is per-request (auth + DB); never prerender it.
+export const dynamic = "force-dynamic";
+
 // Authenticated app shell for /account and /admin. Middleware already requires a
 // session; this also resolves the admin link and renders the app chrome.
 export default async function AppLayout({
