@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getOrgStats, formatCount, formatRelative } from "./lib/github";
+import { getOrgStats, formatCount, formatRelative } from "@/app/lib/github";
 
 // Revalidate the live GitHub stats roughly once a day (ISR).
 export const revalidate = 86400;

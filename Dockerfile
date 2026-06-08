@@ -53,3 +53,22 @@ USER nextjs
 EXPOSE 3000
 
 CMD ["node", "server.js"]
+
+# -----------------------------------------------------------------------------
+# Stage 4 — migration runner (used only by the one-off k8s migrate Job)
+# Full dependency tree + Prisma CLI + schema/migrations. Kept out of the lean
+# runtime image above; built/pushed under a separate :migrate tag.
+# -----------------------------------------------------------------------------
+FROM node:22-alpine AS migrator
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY prisma ./prisma
+COPY package.json ./
+
+USER node
+
+CMD ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
