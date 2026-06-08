@@ -51,6 +51,9 @@ export default async function OrgPage({
         <Link href={`/account/org/${memberId}/access`} className="btn btn-primary">
           Manage access list
         </Link>
+        <Link href={`/account/org/${memberId}/billing`} className="btn">
+          Billing
+        </Link>
       </div>
     </div>
   );
