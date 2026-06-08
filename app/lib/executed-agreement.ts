@@ -1,0 +1,65 @@
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { sendEmail, escapeHtml } from "@/app/lib/email";
+
+export type ExecutionDetails = {
+  to: string;
+  memberName: string;
+  membershipClass: string;
+  signerName: string;
+  signedAt: Date;
+  agreementVersion: string;
+  agreementUrl: string;
+  agreementHash: string | null;
+};
+
+/** A one-page "Certificate of Execution" capturing who signed what, when. */
+export async function buildExecutionCertificate(d: ExecutionDetails): Promise<Buffer> {
+  const pdf = await PDFDocument.create();
+  const page = pdf.addPage([595, 842]); // A4
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+
+  let y = 790;
+  const line = (text: string, size = 11, f = font) => {
+    page.drawText(text, { x: 50, y, size, font: f, color: rgb(0.1, 0.1, 0.1) });
+    y -= size + 8;
+  };
+
+  line("Verana Foundation — Membership Agreement", 16, bold);
+  line("Certificate of Execution", 13, bold);
+  y -= 10;
+  line(`Member: ${d.memberName}`);
+  line(`Membership class: ${d.membershipClass}`);
+  line(`Signed by: ${d.signerName}`);
+  line(`Date: ${d.signedAt.toISOString()}`);
+  line(`Agreement version: ${d.agreementVersion}`);
+  if (d.agreementHash) line(`Agreement hash: ${d.agreementHash}`, 9);
+  y -= 10;
+  line("The full Membership Agreement is available at:", 10);
+  line(d.agreementUrl, 9);
+
+  return Buffer.from(await pdf.save());
+}
+
+/** Email the signer a confirmation + the execution certificate PDF. */
+export async function sendExecutedAgreementEmail(d: ExecutionDetails): Promise<void> {
+  const pdf = await buildExecutionCertificate(d);
+  const html = `
+    <p>Thank you for joining the Verana Foundation.</p>
+    <p>This confirms that <strong>${escapeHtml(d.signerName)}</strong> signed the
+    Membership Agreement (version ${escapeHtml(d.agreementVersion)}) for
+    <strong>${escapeHtml(d.memberName)}</strong> as a
+    ${escapeHtml(d.membershipClass)} member on
+    ${d.signedAt.toISOString().slice(0, 10)}.</p>
+    <p>A certificate of execution is attached. The full agreement is available
+    <a href="${escapeHtml(d.agreementUrl)}">here</a>.</p>
+  `;
+  await sendEmail({
+    to: d.to,
+    subject: "Your Verana Foundation membership — executed agreement",
+    html,
+    attachments: [
+      { filename: `verana-membership-${d.agreementVersion}.pdf`, content: pdf },
+    ],
+  });
+}

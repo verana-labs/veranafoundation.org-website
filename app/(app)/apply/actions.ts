@@ -7,8 +7,18 @@ import { currentUser } from "@/app/lib/authz";
 import { getActiveAgreement } from "@/app/lib/agreement";
 import { tierAmount } from "@/app/lib/dues";
 import { createMembershipInvoice } from "@/app/lib/invoices";
+import { sendExecutedAgreementEmail } from "@/app/lib/executed-agreement";
 
 export type ApplyState = { error?: string };
+
+/** Best-effort: never block a successful signup on email delivery. */
+async function emailExecutedCopy(d: Parameters<typeof sendExecutedAgreementEmail>[0]) {
+  try {
+    await sendExecutedAgreementEmail(d);
+  } catch (e) {
+    console.error("[apply] executed-agreement email failed", e);
+  }
+}
 
 const base = {
   legalName: z.string().trim().min(1, "Required"),
@@ -109,6 +119,16 @@ export async function applyMember(
       });
       await tx.userMember.create({ data: { userId: user.id!, memberId: member.id, role: "manager" } });
     });
+    await emailExecutedCopy({
+      to: user.email!,
+      memberName: d.legalName,
+      membershipClass: "Contributor",
+      signerName: d.signerName,
+      signedAt: new Date(),
+      agreementVersion: agreement.version,
+      agreementUrl: agreement.url,
+      agreementHash: agreement.hash,
+    });
     redirect("/account");
   }
 
@@ -157,6 +177,17 @@ export async function applyMember(
       });
       await tx.userMember.create({ data: { userId: user.id!, memberId: member.id, role: "manager" } });
       return { memberId: member.id, membershipId: member.memberships[0].id };
+    });
+
+    await emailExecutedCopy({
+      to: user.email!,
+      memberName: d.legalName,
+      membershipClass: "Associate",
+      signerName: d.signerName,
+      signedAt: new Date(),
+      agreementVersion: agreement.version,
+      agreementUrl: agreement.url,
+      agreementHash: agreement.hash,
     });
 
     const { hostedPayUrl } = await createMembershipInvoice({

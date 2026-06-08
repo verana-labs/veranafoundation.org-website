@@ -131,22 +131,16 @@ export default function JoinPage() {
           <div className="card">
             <h2 className="display text-2xl">Become a member</h2>
             <p className="text-sm text-muted leading-relaxed max-w-2xl">
-              Tell us which class fits and a little about you or your
-              organization. You can join and start participating in the working
-              groups now, while the Foundation is in formation; full membership
-              rights vest once it is incorporated and ratifies the agreement.
+              Sign in and apply online: review and sign the Membership Agreement,
+              and you can start participating in the working groups now, while the
+              Foundation is in formation. Full membership rights vest once it is
+              incorporated and ratifies the agreement.
             </p>
             <div className="mt-2 flex flex-wrap gap-4">
-              <Link
-                href="/contact?topic=membership-associate"
-                className="btn btn-primary"
-              >
+              <Link href="/apply?class=associate" className="btn btn-primary">
                 Apply as Associate
               </Link>
-              <Link
-                href="/contact?topic=membership-contributor"
-                className="btn btn-green"
-              >
+              <Link href="/apply?class=contributor" className="btn btn-green">
                 Apply as Contributor
               </Link>
             </div>
