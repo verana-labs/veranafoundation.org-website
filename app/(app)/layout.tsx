@@ -30,6 +30,9 @@ export default async function AppLayout({
             <Link href="/account" className="hover:underline">
               Account
             </Link>
+            <Link href="/account/working-groups" className="hover:underline">
+              Working groups
+            </Link>
             {admin && (
               <Link href="/admin" className="hover:underline">
                 Admin
