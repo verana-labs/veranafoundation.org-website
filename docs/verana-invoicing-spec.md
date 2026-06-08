@@ -27,10 +27,12 @@ Member {
   legalName
   // org only:
   entityType, jurisdiction, registeredAddress, vatNumber?
+  logoUri?                // URL or inline SVG — optional; future homepage display
   // individual only:
   countryOfResidence
-  primaryEmail            // verified
-  noticeBillingEmail?     // org: cc for invoices/receipts
+  primaryEmail               // verified
+  noticeBillingEmail?        // org: cc for invoices/receipts
+  socialAnnouncementConsent  // ok to announce their membership on our social networks
   createdAt
 }
 
@@ -65,7 +67,15 @@ Payment {
 
 SignatureRecord {              // ties to the application/e-sign flow
   id, memberId, signerName, signerTitle?, emailVerified,
-  agreementVersion, agreementHash, signedAt, ip, userAgent
+  agreementVersion, agreementUrl, agreementHash,   // the AgreementDocument that was accepted
+  signedAt, ip, userAgent
+}
+
+AgreementDocument {            // admin-configured; the agreement shown at /apply
+  id, version,                 // e.g. "v1" / doc ref "LG-EE..."
+  url,                         // PDF URL — admin-editable; swap to publish a new version
+  hash?,                       // optional integrity hash of the PDF
+  active, effectiveFrom
 }
 ```
 
@@ -80,8 +90,9 @@ SignatureRecord {              // ties to the application/e-sign flow
 ```text
 verify email (OTP)
   → enter name + country of residence
-  → tick: legal age & capacity (§3.10a) + accept Agreement & Code of Conduct
-  → type name to sign  ──► SignatureRecord
+  → view & accept the Membership Agreement PDF (active AgreementDocument, incl. Code of Conduct)
+  → tick: legal age & capacity (§3.10a)
+  → type name to sign  ──► SignatureRecord (records agreement version + url + hash)
   → Membership{class:contributor, status:active, provisional:true}
   → emit entitlement.changed (active)
   → email executed PDF
@@ -96,7 +107,7 @@ Same as A plus org fields (legal name, entity type, jurisdiction, address) and *
 ```text
 org fields + signer (name, title, verified work email) + notice/billing email
   → select headcount tier (UI shows dues)
-  → attest authorized-to-bind + accept Agreement & CoC + type name ──► SignatureRecord
+  → attest authorized-to-bind + view & accept the Membership Agreement PDF (active AgreementDocument) + type name ──► SignatureRecord
   → Membership{class:associate, tier, status:pending}
   → compute VAT treatment (see below)
   → Invoice issued via provider (hosted pay page: card or bank transfer)

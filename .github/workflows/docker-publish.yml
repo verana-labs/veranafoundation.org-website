@@ -99,14 +99,36 @@ jobs:
       - name: Deploy
         env:
           KUBECONFIG_DATA: ${{ secrets.OVH_KUBECONFIG }}
+          # All values come from GitHub Actions secrets — nothing in cleartext.
           RELATICLE_API_TOKEN: ${{ secrets.RELATICLE_API_TOKEN }}
+          # Postgres password must match the password embedded in DATABASE_URL.
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
+          AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
+          AUTH_GITHUB_ID: ${{ secrets.AUTH_GITHUB_ID }}
+          AUTH_GITHUB_SECRET: ${{ secrets.AUTH_GITHUB_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
         run: |
           echo "$KUBECONFIG_DATA" > /tmp/kubeconfig
           export KUBECONFIG=/tmp/kubeconfig
-          # Upsert the app secret consumed by the contact route (Relaticle CRM
-          # token). Idempotent: re-applied on every deploy.
+          # Upsert the app secret from GitHub Actions secrets. Idempotent:
+          # re-applied on every deploy. Empty values are simply blank keys.
           kubectl -n web create secret generic veranafoundation-website-secrets \
             --from-literal=RELATICLE_API_TOKEN="${RELATICLE_API_TOKEN}" \
+            --from-literal=POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
+            --from-literal=DATABASE_URL="${DATABASE_URL}" \
+            --from-literal=AUTH_SECRET="${AUTH_SECRET}" \
+            --from-literal=AUTH_GOOGLE_ID="${AUTH_GOOGLE_ID}" \
+            --from-literal=AUTH_GOOGLE_SECRET="${AUTH_GOOGLE_SECRET}" \
+            --from-literal=AUTH_GITHUB_ID="${AUTH_GITHUB_ID}" \
+            --from-literal=AUTH_GITHUB_SECRET="${AUTH_GITHUB_SECRET}" \
+            --from-literal=RESEND_API_KEY="${RESEND_API_KEY}" \
+            --from-literal=STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY}" \
+            --from-literal=STRIPE_WEBHOOK_SECRET="${STRIPE_WEBHOOK_SECRET}" \
             --dry-run=client -o yaml | kubectl apply -f -
           kubectl apply -f k8s/
           # imagePullPolicy: Always + restart => new pods repull the :latest tag.

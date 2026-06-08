@@ -43,6 +43,69 @@ spec:
                   # Optional so the pod still starts if the secret is absent;
                   # the contact route degrades to best-effort (logs only).
                   optional: true
+            # ── Membership / billing / accounts ──────────────────────────────
+            # Secrets come from veranafoundation-website-secrets (CI-injected
+            # from GitHub Actions secrets). optional:true keeps the pod bootable
+            # before a secret exists; DATABASE_URL becomes required once Phase 1
+            # code reads the DB.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: DATABASE_URL
+                  optional: true
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: AUTH_SECRET
+                  optional: true
+            - name: AUTH_URL
+              value: https://veranafoundation.org
+            - name: AUTH_GOOGLE_ID
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: AUTH_GOOGLE_ID
+                  optional: true
+            - name: AUTH_GOOGLE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: AUTH_GOOGLE_SECRET
+                  optional: true
+            - name: AUTH_GITHUB_ID
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: AUTH_GITHUB_ID
+                  optional: true
+            - name: AUTH_GITHUB_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: AUTH_GITHUB_SECRET
+                  optional: true
+            - name: RESEND_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: RESEND_API_KEY
+                  optional: true
+            - name: EMAIL_FROM
+              value: no-reply@veranafoundation.org
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: STRIPE_SECRET_KEY
+                  optional: true
+            - name: STRIPE_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: STRIPE_WEBHOOK_SECRET
+                  optional: true
           resources:
             requests:
               cpu: "50m"
