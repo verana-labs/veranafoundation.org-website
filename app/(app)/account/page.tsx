@@ -18,7 +18,7 @@ export default async function AccountPage() {
       {links.length === 0 ? (
         <p className="text-muted mt-4">
           You&rsquo;re not part of any membership yet. Ask your organization&rsquo;s
-          admin to add your email, or <Link href="/join">apply</Link>.
+          admin to add your email, or <Link href="/apply">apply</Link>.
         </p>
       ) : (
         <div className="mt-6 grid gap-6">
