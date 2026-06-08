@@ -21,4 +21,22 @@ for (const email of emails) {
 
 console.log(`Seeded ${emails.length} admin allowlist entr${emails.length === 1 ? "y" : "ies"}.`);
 
+// Optional: seed the active Membership Agreement from env (admins can also set
+// it in /admin/settings). Only creates a version that doesn't already exist.
+const agreementUrl = process.env.AGREEMENT_PDF_URL;
+if (agreementUrl) {
+  const version = process.env.AGREEMENT_VERSION ?? "v1";
+  const existing = await db.agreementDocument.findFirst({ where: { version } });
+  if (!existing) {
+    await db.agreementDocument.updateMany({
+      where: { active: true },
+      data: { active: false },
+    });
+    await db.agreementDocument.create({
+      data: { version, url: agreementUrl, active: true },
+    });
+    console.log(`Seeded active Membership Agreement ${version}.`);
+  }
+}
+
 await db.$disconnect();
