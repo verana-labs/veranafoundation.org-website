@@ -34,11 +34,13 @@ Each phase is independently shippable; value lands before money does.
 - `prisma/schema.prisma` (full model) + first migration; `app/lib/db.ts` (HMR-safe client).
 - Local Postgres via `docker-compose.yml`; `DATABASE_URL` + new keys in `.env.example`.
 - k8s: Postgres manifest (StatefulSet + Service + Secret) + env wired into `deployment.yaml`.
-- Restructure `app/` into route groups: `(marketing)` (static, unchanged) vs `(app)` (dynamic).
-- **Exit:** migrations run locally and in-cluster; app boots with a DB connection.
+- (Route groups `(marketing)`/`(app)` and in-cluster migration execution land in **Phase 1**, alongside the first `/account` + `/admin` routes — doing them now is churn with no benefit.)
+- **Exit:** migrations run locally; app boots with a DB connection.
 
 ### Phase 1 — Auth (ADR-0002)
 
+- Restructure `app/` into `(marketing)` (static, unchanged) and `(app)` (dynamic) route groups.
+- **DB migrations on deploy:** a one-off **k8s Job** runs `prisma migrate deploy` (app image) in the CI deploy step, awaited before the rollout. Requires the runtime image to carry the Prisma CLI + schema + migrations (Dockerfile update).
 - Auth.js v5: Google + GitHub + email magic link; Prisma adapter; **verified-email linking** with the safety rule + GitHub primary-verified handling.
 - Admin allowlist; member-scoped roles via `UserMember`; **middleware route guards** (`/account/**`, `/account/org/**`, `/admin/**`).
 - `/login`, app shell + org switcher, rate-limited magic-link endpoint.
