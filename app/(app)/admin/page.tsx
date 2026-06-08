@@ -20,6 +20,11 @@ export default async function AdminPage() {
           </Link>
         </li>
         <li>
+          <Link href="/admin/invoices" className="hover:underline">
+            Invoices
+          </Link>
+        </li>
+        <li>
           <Link href="/admin/working-groups" className="hover:underline">
             Working groups
           </Link>
@@ -40,9 +45,6 @@ export default async function AdminPage() {
           </Link>
         </li>
       </ul>
-      <p className="text-muted mt-4 text-sm">
-        Invoices land with Associate (paid) membership in Phase 3.
-      </p>
     </div>
   );
 }
