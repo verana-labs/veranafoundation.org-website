@@ -79,8 +79,11 @@ export default function AboutPage() {
         <h2>Status</h2>
         <p>
           The Foundation is a non-profit structured so that no single party can
-          capture it. It is <strong>in formation</strong>; 2060 OÜ acts as its
-          organizer and steward pre-incorporation. The final entity map and
+          capture it. It is <strong>in formation</strong>;{" "}
+          <a href="https://2060.io" rel="noopener">
+            2060 OÜ
+          </a>{" "}
+          acts as its organizer and steward pre-incorporation. The final entity map and
           jurisdiction are being confirmed.
         </p>
 

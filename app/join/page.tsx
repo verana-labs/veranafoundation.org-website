@@ -118,12 +118,7 @@ export default function JoinPage() {
             </table>
           </div>
 
-          <p className="text-sm text-muted mt-6 max-w-3xl">
-            Admission becomes effective on the Foundation&rsquo;s incorporation
-            and ratification of the agreement (it is in formation, stewarded by
-            2060 OÜ); the binding IP, confidentiality, fee, and conduct terms
-            apply on signature.
-          </p>
+          
         </div>
       </section>
 
