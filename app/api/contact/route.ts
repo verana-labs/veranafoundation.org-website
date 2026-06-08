@@ -113,7 +113,8 @@ export async function POST(req: NextRequest) {
         err
       ).slice(0, 300)}`
     );
-    // Still report success to the user (best-effort + alert).
+    // Surface the failure so the user sees an error and can resubmit.
+    return NextResponse.json({ ok: false, error: "crm" }, { status: 502 });
   }
 
   return NextResponse.json({ ok: true });
