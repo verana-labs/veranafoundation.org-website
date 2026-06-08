@@ -15,9 +15,6 @@
     "db:seed": "node prisma/seed.mjs",
     "db:studio": "prisma studio"
   },
-  "prisma": {
-    "seed": "node prisma/seed.mjs"
-  },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
     "@prisma/client": "^6.19.3",
