@@ -32,7 +32,7 @@ Each phase is independently shippable; value lands before money does.
 
 - Add deps: `prisma`, `@prisma/client`, `next-auth@beta`, `@auth/prisma-adapter`, `resend`, `zod`.
 - `prisma/schema.prisma` (full model) + first migration; `app/lib/db.ts` (HMR-safe client).
-- Local Postgres via `docker-compose.yml`; `DATABASE_URL` + new keys in `.env.example`.
+- Local Postgres via `docker/compose.yaml` (`npm run db:up`); `DATABASE_URL` + new keys in `.env.example`.
 - k8s: Postgres manifest (StatefulSet + Service + Secret) + env wired into `deployment.yaml`.
 - (Route groups `(marketing)`/`(app)` and in-cluster migration execution land in **Phase 1**, alongside the first `/account` + `/admin` routes — doing them now is churn with no benefit.)
 - **Exit:** migrations run locally; app boots with a DB connection.
