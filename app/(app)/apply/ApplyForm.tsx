@@ -11,14 +11,19 @@ const input = "rounded border border-rule bg-surface px-3 py-2 text-sm w-full";
 export default function ApplyForm({
   agreementVersion,
   initialClass = "contributor",
+  hasIndividual = false,
 }: {
   agreementVersion: string;
   initialClass?: "contributor" | "associate";
+  /** The signed-in user already holds an individual membership. */
+  hasIndividual?: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [step, setStep] = useState<1 | 2>(1);
   const [cls, setCls] = useState<"contributor" | "associate">(initialClass);
-  const [type, setType] = useState<"individual" | "organization">("individual");
+  const [type, setType] = useState<"individual" | "organization">(
+    hasIndividual ? "organization" : "individual",
+  );
   const [accepted, setAccepted] = useState(false);
   const [preview, setPreview] = useState<string>("");
   const [previewError, setPreviewError] = useState<string>("");
@@ -54,8 +59,11 @@ export default function ApplyForm({
     const has = (k: string) => !!(fd.get(k) as string)?.trim();
     if (!has("legalName")) return "Enter the legal name.";
     if (!has("signerName")) return "Enter the signatory's name.";
-    if (cls === "contributor" && type === "individual" && !has("countryOfResidence"))
-      return "Select the country of residence.";
+    if (cls === "contributor") {
+      if (type === "individual" && !has("countryOfResidence"))
+        return "Select the country of residence.";
+      if (type === "organization" && !has("jurisdiction")) return "Select the country.";
+    }
     if (cls === "associate") {
       if (!has("country")) return "Select the country.";
       if (!has("tier")) return "Choose an annual dues tier.";
@@ -116,12 +124,25 @@ export default function ApplyForm({
           </div>
           {cls === "contributor" && (
             <div className="flex gap-4 text-sm mt-1">
-              {(["individual", "organization"] as const).map((t) => (
-                <label key={t} className="flex items-center gap-2">
-                  <input type="radio" checked={type === t} onChange={() => setType(t)} />
-                  {t === "individual" ? "An individual" : "An organization"}
-                </label>
-              ))}
+              {(["individual", "organization"] as const).map((t) => {
+                const disabled = t === "individual" && hasIndividual;
+                return (
+                  <label
+                    key={t}
+                    className={`flex items-center gap-2 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                    title={disabled ? "You already have an individual membership." : undefined}
+                  >
+                    <input
+                      type="radio"
+                      checked={type === t}
+                      disabled={disabled}
+                      onChange={() => setType(t)}
+                    />
+                    {t === "individual" ? "An individual" : "An organization"}
+                    {disabled && <span className="text-xs text-muted">(already a member)</span>}
+                  </label>
+                );
+              })}
             </div>
           )}
         </fieldset>
@@ -140,8 +161,8 @@ export default function ApplyForm({
               {type === "organization" ? (
                 <>
                   <Field label="Entity type" name="entityType" placeholder="corporation / association / …" />
-                  <Labeled label="Jurisdiction of formation">
-                    <CountrySelect name="jurisdiction" />
+                  <Labeled label="Country" required>
+                    <CountrySelect name="jurisdiction" required />
                   </Labeled>
                   <Field label="Registered address" name="registeredAddress" />
                 </>

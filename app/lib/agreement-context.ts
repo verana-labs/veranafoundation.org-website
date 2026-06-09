@@ -42,7 +42,9 @@ export function toAgreementContext(i: ApplyInput): AgreementContext {
     memberLegalName: i.legalName ?? "",
     entityForm: isOrg ? i.entityType ?? null : null,
     jurisdiction,
-    memberAddress: isOrg ? i.registeredAddress ?? null : null,
+    // Organizations always show an address clause; fall back to the country
+    // when no registered address was given.
+    memberAddress: isOrg ? (i.registeredAddress?.trim() || jurisdiction) : null,
     signerName: i.signerName ?? "",
     signerTitle: isOrg ? i.signerTitle ?? null : null,
     memberEmail: i.email ?? null,
