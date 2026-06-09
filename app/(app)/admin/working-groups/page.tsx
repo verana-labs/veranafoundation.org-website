@@ -36,6 +36,7 @@ export default async function AdminWorkingGroupsPage() {
             showOnHome: g.showOnHome,
             state: g.state,
             priority: g.priority,
+            disabledAt: g.disabledAt?.toISOString() ?? null,
           }))}
         />
       </Section>

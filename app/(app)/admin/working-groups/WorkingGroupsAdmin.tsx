@@ -1,8 +1,20 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { createWg, type WgState } from "./actions";
 import WorkingGroupAdminCard, { type AdminWg } from "./WorkingGroupAdminCard";
+
+// A just-disabled WG stays visible in the list for this long even when
+// "Show disabled" is off, so disabling doesn't make it vanish instantly.
+const DISABLED_GRACE_MS = 5 * 60 * 1000;
+
+function inGrace(wg: AdminWg, now: number): boolean {
+  return (
+    wg.state === "disabled" &&
+    wg.disabledAt !== null &&
+    now - new Date(wg.disabledAt).getTime() < DISABLED_GRACE_MS
+  );
+}
 
 export default function WorkingGroupsAdmin({ groups }: { groups: AdminWg[] }) {
   const [state, createAction, pending] = useActionState<WgState, FormData>(
@@ -10,7 +22,23 @@ export default function WorkingGroupsAdmin({ groups }: { groups: AdminWg[] }) {
     {},
   );
   const [showDisabled, setShowDisabled] = useState(false);
-  const visible = groups.filter((g) => showDisabled || g.state === "enabled");
+  const [now, setNow] = useState(() => Date.now());
+
+  // When a grace window is open, re-render at its expiry so the WG drops off.
+  useEffect(() => {
+    if (showDisabled) return;
+    const remaining = groups
+      .filter((g) => g.state === "disabled" && g.disabledAt)
+      .map((g) => new Date(g.disabledAt!).getTime() + DISABLED_GRACE_MS - Date.now())
+      .filter((ms) => ms > 0);
+    if (remaining.length === 0) return;
+    const t = setTimeout(() => setNow(Date.now()), Math.min(...remaining) + 250);
+    return () => clearTimeout(t);
+  }, [groups, showDisabled, now]);
+
+  const visible = groups.filter(
+    (g) => showDisabled || g.state === "enabled" || inGrace(g, now),
+  );
 
   return (
     <div className="grid gap-10">
