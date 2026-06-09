@@ -41,8 +41,8 @@ export function lockReason(requiredClass: "any" | "associate"): string {
 export async function listHomeWorkingGroups() {
   try {
     return await db.workingGroup.findMany({
-      where: { showOnHome: true },
-      orderBy: { name: "asc" },
+      where: { showOnHome: true, state: "enabled" },
+      orderBy: [{ priority: "desc" }, { name: "asc" }],
     });
   } catch {
     return [];
@@ -67,7 +67,10 @@ export async function listWorkingGroupsWithAccess(
   userId: string | null,
 ): Promise<WorkingGroupCard[]> {
   const [groups, classes] = await Promise.all([
-    db.workingGroup.findMany({ orderBy: { name: "asc" } }),
+    db.workingGroup.findMany({
+      where: { state: "enabled" },
+      orderBy: [{ priority: "desc" }, { name: "asc" }],
+    }),
     userId ? userActiveClasses(userId) : Promise.resolve(new Set<WgClass>()),
   ]);
   return groups.map((wg) => ({

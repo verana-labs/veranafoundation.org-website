@@ -11,7 +11,7 @@ export default async function AdminWorkingGroupsPage() {
   const user = await currentUser();
   if (!user || !(await isAdmin(user.email))) notFound();
 
-  const groups = await db.workingGroup.findMany({ orderBy: { name: "asc" } });
+  const groups = await db.workingGroup.findMany({ orderBy: { createdAt: "desc" } });
 
   return (
     <>
@@ -34,6 +34,8 @@ export default async function AdminWorkingGroupsPage() {
             requiredClass: g.requiredClass,
             link: g.link,
             showOnHome: g.showOnHome,
+            state: g.state,
+            priority: g.priority,
           }))}
         />
       </Section>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getOrgStats, formatCount, formatRelative } from "@/app/lib/github";
-import { listHomeWorkingGroups } from "@/app/lib/working-groups";
+import HomeWorkingGroups from "@/app/components/HomeWorkingGroups";
 
 // Revalidate the live GitHub stats roughly once a day (ISR).
 export const revalidate = 86400;
@@ -66,7 +66,6 @@ const AVATAR_COLORS = ["#763EF0", "#1FB57A", "#2E2A8F", "#5b2fc9", "#178a5e"];
 
 export default async function HomePage() {
   const stats = await getOrgStats();
-  const workingGroups = await listHomeWorkingGroups();
   const lastActivity = formatRelative(stats?.lastActivity ?? null);
 
   return (
@@ -329,33 +328,7 @@ export default async function HomePage() {
             {/* Working-group board */}
             <div>
               <h3 className="display text-lg mb-4">Working groups</h3>
-              <div className="space-y-3">
-                {workingGroups.length === 0 ? (
-                  <p className="text-sm text-muted">
-                    Working groups will be announced soon.
-                  </p>
-                ) : (
-                  workingGroups.map((wg) => (
-                    <div key={wg.id} className="wg-tile">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-medium text-ink">{wg.name}</p>
-                        <span
-                          className={`badge flex-shrink-0 ${
-                            wg.requiredClass === "associate" ? "badge-purple" : ""
-                          }`}
-                        >
-                          {wg.requiredClass === "associate"
-                            ? "Associate only"
-                            : "Associate or Contributor"}
-                        </span>
-                      </div>
-                      {wg.description && (
-                        <p className="text-sm text-muted mt-1">{wg.description}</p>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
+              <HomeWorkingGroups />
               <p className="text-sm text-muted mt-4">
                 <Link href="/contribute" className="text-purple hover:underline">
                   Join a working group →
