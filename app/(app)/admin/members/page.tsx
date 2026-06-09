@@ -49,7 +49,7 @@ export default async function AdminMembersPage({
           name="q"
           defaultValue={q ?? ""}
           placeholder="Search name or email"
-          className="rounded border border-rule bg-surface px-3 py-2 text-sm w-64"
+          className="field w-64"
         />
         <button type="submit" className="btn">
           Search

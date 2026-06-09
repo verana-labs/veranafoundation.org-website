@@ -12,13 +12,14 @@ type Wg = {
   showOnHome: boolean;
 };
 
-const checkbox = "flex items-center gap-2 text-sm";
+const checkbox = "flex items-center gap-2 text-sm py-2";
 
-const input = "rounded border border-rule bg-surface px-3 py-2 text-sm w-full";
+// `.field` matches the input styling of the /contact form.
+const input = "field w-full";
 
-function ClassSelect({ value }: { value?: "any" | "associate" }) {
+function ClassSelect({ value, id }: { value?: "any" | "associate"; id?: string }) {
   return (
-    <select name="requiredClass" defaultValue={value ?? "any"} className={input}>
+    <select id={id} name="requiredClass" defaultValue={value ?? "any"} className={input}>
       <option value="any">Any active membership</option>
       <option value="associate">Active Associate only</option>
     </select>
@@ -35,11 +36,29 @@ export default function WorkingGroupsAdmin({ groups }: { groups: Wg[] }) {
     <div className="grid gap-8">
       <section>
         <h2 className="display text-xl">Add a working group</h2>
-        <form action={createAction} className="grid gap-2 max-w-xl mt-2">
-          <input name="name" required placeholder="Name" className={input} />
-          <input name="description" placeholder="Description (optional)" className={input} />
-          <input name="link" type="url" required placeholder="https://… (external space)" className={input} />
-          <ClassSelect />
+        <form action={createAction} className="space-y-1 max-w-xl mt-3">
+          <div className="form-field">
+            <label htmlFor="wg-name">
+              Name <span className="req">*</span>
+            </label>
+            <input id="wg-name" name="name" required placeholder="Working group name" />
+          </div>
+          <div className="form-field">
+            <label htmlFor="wg-description">
+              Description <span className="opt">(optional)</span>
+            </label>
+            <input id="wg-description" name="description" placeholder="Short description" />
+          </div>
+          <div className="form-field">
+            <label htmlFor="wg-link">
+              External link <span className="req">*</span>
+            </label>
+            <input id="wg-link" name="link" type="url" required placeholder="https://… (external space)" />
+          </div>
+          <div className="form-field">
+            <label htmlFor="wg-class">Required membership</label>
+            <ClassSelect id="wg-class" />
+          </div>
           <label className={checkbox}>
             <input type="checkbox" name="showOnHome" /> Show on home page
           </label>
