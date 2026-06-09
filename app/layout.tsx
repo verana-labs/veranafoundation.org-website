@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
+import { config } from "@fortawesome/fontawesome-svg-core";
+import "@fortawesome/fontawesome-svg-core/styles.css";
 import "./globals.css";
+import Nav from "./components/Nav";
+import Footer from "./components/Footer";
+
+// We import the Font Awesome CSS ourselves (above); stop it auto-injecting.
+config.autoAddCss = false;
 
 const inter = Inter({
   subsets: ["latin"],
@@ -87,7 +94,11 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="bg-surface text-ink">{children}</body>
+      <body className="bg-surface text-ink">
+        <Nav />
+        <main>{children}</main>
+        <Footer />
+      </body>
     </html>
   );
 }
