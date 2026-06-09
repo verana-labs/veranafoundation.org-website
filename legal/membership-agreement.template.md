@@ -4,7 +4,7 @@ MEMBERSHIP AGREEMENT
 
 ### **(ASSOCIATE MEMBERS AND CONTRIBUTOR MEMBERS)**
 
-This **Membership Agreement** (this **“Agreement”**) is entered into as of the \_\_\_ day of \_\_\_\_\_\_\_\_\_\_\_\_, 2026 (the **“Effective Date”**),
+This **Membership Agreement** (this **“Agreement”**) is entered into as of the {{effective_day}} day of {{effective_month}}, {{effective_year}} (the **“Effective Date”**),
 
 **BY AND BETWEEN:**
 
@@ -12,7 +12,7 @@ This **Membership Agreement** (this **“Agreement”**) is entered into as of t
 
 **AND**
 
-**(2)** **\[● INSERT FULL LEGAL NAME OF MEMBER\]**, \[**if an entity:** a \[corporation/association/other legal entity\] duly organized and validly existing under the laws of **\[● jurisdiction\]**, with its principal place of business located at **\[● address\]**\] \[**if a natural person:** an individual of legal age and full legal capacity, resident in **\[● jurisdiction\]**, with an address at **\[● address\]**\] (hereinafter, the **“Member”**).
+**(2)** **{{member_legal_name}}**, <!--IF:is_organization-->a {{entity_form}} duly organized and validly existing under the laws of **{{jurisdiction}}**, with its principal place of business located at **{{member_address}}**<!--ELSE-->an individual of legal age and full legal capacity, resident in **{{jurisdiction}}**<!--IF:has_member_address-->, with an address at **{{member_address}}**<!--ENDIF--><!--ENDIF--> (hereinafter, the **“Member”**).
 
 The Foundation (in Formation) and the Member are hereinafter referred to individually as a **“Party”** and collectively as the **“Parties.”**
 
@@ -610,9 +610,9 @@ All Notices shall be deemed effective upon actual receipt or, if received outsid
 
 **MEMBERSHIP CLASS SELECTED:**
 
-☐ **Associate Member**
+{{associate_checkbox}} **Associate Member**
 
-☐ **Contributor Member**
+{{contributor_checkbox}} **Contributor Member**
 
 ---
 
@@ -620,27 +620,26 @@ All Notices shall be deemed effective upon actual receipt or, if received outsid
 
 Represented by 2060 OÜ
 
-By: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+By:
 
-Name: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+Name: Fabrice Rochette
 
-Title: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+Title: Legal Representative
 
-Date: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+Date: {{effective_date}}
 
 ---
 
 ### **MEMBER**
 
-**\[INSERT FULL LEGAL NAME OF MEMBER — organization or individual\]**
+**{{member_legal_name}}**
 
-By: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
-
-Name: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
-
-Title: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
-
-Date: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+By:
+Name: {{signer_name}}
+<!--IF:is_organization-->
+Title: {{signer_title}}
+<!--ENDIF-->
+Date: {{effective_date}}
 
 # 
 

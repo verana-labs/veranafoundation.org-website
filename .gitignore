@@ -11,6 +11,9 @@ next-env.d.ts
 # production
 /build
 
+# local file storage (signed agreement PDFs, logos) — see app/lib/storage.ts
+/var
+
 # misc
 .DS_Store
 *.pem
