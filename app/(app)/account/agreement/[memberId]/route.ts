@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentUser, isAdmin } from "@/app/lib/authz";
+import { currentUser, isAdmin, isManagerOf } from "@/app/lib/authz";
 import { db } from "@/app/lib/db";
 import { getFile } from "@/app/lib/storage";
 
-/** Stream a member's signed Membership Agreement PDF to anyone who may act for them. */
+/**
+ * Stream a member's signed Membership Agreement PDF. Access is restricted to:
+ *   - a Foundation admin (the exception, for support/audit);
+ *   - otherwise, a `manager` of the member.
+ * The signer is always created as a manager at signing, and an individual member
+ * has exactly one manager (themselves), so "manager" means: individuals → only
+ * the signer; organizations → the signer or any manager (representatives cannot).
+ */
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ memberId: string }> },
@@ -12,11 +19,7 @@ export async function GET(
   const user = await currentUser();
   if (!user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
-  const allowed =
-    (await isAdmin(user.email)) ||
-    !!(await db.userMember.findUnique({
-      where: { userId_memberId: { userId: user.id, memberId } },
-    }));
+  const allowed = (await isAdmin(user.email)) || (await isManagerOf(user.id, memberId));
   if (!allowed) return new NextResponse("Forbidden", { status: 403 });
 
   const sig = await db.signatureRecord.findFirst({

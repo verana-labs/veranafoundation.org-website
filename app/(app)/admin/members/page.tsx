@@ -24,7 +24,15 @@ export default async function AdminMembersPage({
           ],
         }
       : undefined,
-    include: { memberships: { orderBy: { createdAt: "desc" }, take: 1 } },
+    include: {
+      memberships: { orderBy: { createdAt: "desc" }, take: 1 },
+      // Whether a signed agreement PDF exists, for the download link.
+      signatureRecords: {
+        where: { agreementPdfPath: { not: null } },
+        select: { id: true },
+        take: 1,
+      },
+    },
     orderBy: { createdAt: "desc" },
     take: 200,
   });
@@ -59,6 +67,7 @@ export default async function AdminMembersPage({
                 <th className="p-2">Type</th>
                 <th className="p-2">Membership</th>
                 <th className="p-2">Email</th>
+                <th className="p-2">Signed Agreement</th>
               </tr>
             </thead>
             <tbody>
@@ -76,6 +85,20 @@ export default async function AdminMembersPage({
                       {ms ? `${ms.class} · ${ms.status}` : "—"}
                     </td>
                     <td className="p-2 text-muted">{m.primaryEmail}</td>
+                    <td className="p-2">
+                      {m.signatureRecords.length > 0 ? (
+                        <a
+                          href={`/account/agreement/${m.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-purple hover:underline"
+                        >
+                          PDF ↓
+                        </a>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}

@@ -82,6 +82,19 @@ export default async function AdminMemberDetail({
           <li key={s.id}>
             {s.signerName} signed <strong>{s.agreementVersion}</strong> on{" "}
             {s.signedAt.toISOString().slice(0, 10)}
+            {s.agreementPdfPath && (
+              <>
+                {" — "}
+                <a
+                  href={`/account/agreement/${member.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-purple hover:underline"
+                >
+                  Signed PDF ↓
+                </a>
+              </>
+            )}
           </li>
         ))}
         {member.signatureRecords.length === 0 && (
