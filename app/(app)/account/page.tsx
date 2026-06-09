@@ -12,54 +12,94 @@ export default async function AccountPage() {
   const individual = links.find((l) => l.member.type === "individual");
 
   return (
-    <div className="prose-body">
-      <h1 className="display text-3xl">Your account</h1>
+    <>
+      {/* Hero */}
+      <section className="border-b border-rule">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <p className="tag mb-4">Account</p>
+          <h1 className="display text-4xl sm:text-5xl leading-tight max-w-3xl">
+            Your account
+          </h1>
+          <div className="accent-line mt-6" />
+          <p className="mt-8 text-lg text-muted max-w-2xl leading-relaxed">
+            {user?.name || user?.email ? (
+              <>
+                Signed in as{" "}
+                <strong className="text-ink">{user.name ?? user.email}</strong>.{" "}
+              </>
+            ) : null}
+            Your memberships and the organizations you act for, in one place.
+          </p>
+        </div>
+      </section>
 
       {links.length === 0 ? (
-        <p className="text-muted mt-4">
-          You&rsquo;re not part of any membership yet. Ask your organization&rsquo;s
-          admin to add your email, or <Link href="/apply">apply</Link>.
-        </p>
-      ) : (
-        <div className="mt-6 grid gap-6">
-          {individual && (
-            <section>
-              <h2 className="display text-xl">Your individual membership</h2>
-              <p className="text-muted text-sm">
-                {individual.member.legalName} —{" "}
-                {individual.member.memberships[0]?.class ?? "—"} ·{" "}
-                {individual.member.memberships[0]?.status ?? "—"}
+        <section>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="card max-w-2xl">
+              <h3>No membership yet</h3>
+              <p className="text-sm text-muted leading-relaxed">
+                You&rsquo;re not part of any membership yet. Ask your
+                organization&rsquo;s admin to add your email, or{" "}
+                <Link href="/apply" className="text-purple hover:underline">
+                  apply to join the Foundation →
+                </Link>
               </p>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <>
+          {individual && (
+            <section className="border-b border-rule">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <p className="tag mb-3">Individual membership</p>
+                <h2 className="display text-3xl">Your membership</h2>
+                <div className="accent-line mt-4 mb-8" />
+                <div className="card max-w-md">
+                  <span className="badge badge-green">
+                    {individual.member.memberships[0]?.class ?? "member"}
+                  </span>
+                  <h3>{individual.member.legalName}</h3>
+                  <p className="text-sm text-muted">
+                    {individual.member.memberships[0]?.status ?? "—"}
+                  </p>
+                </div>
+              </div>
             </section>
           )}
 
           {orgs.length > 0 && (
             <section>
-              <h2 className="display text-xl">Organizations you belong to</h2>
-              <ul className="mt-2 grid gap-2">
-                {orgs.map((l) => (
-                  <li key={l.id} className="card">
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="font-medium">{l.member.legalName}</span>
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <p className="tag mb-3">Organizations</p>
+                <h2 className="display text-3xl">Organizations you belong to</h2>
+                <div className="accent-line mt-4 mb-10" />
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {orgs.map((l) => (
+                    <div key={l.id} className="card">
                       <span className="badge">{l.role}</span>
-                    </div>
-                    <p className="text-sm text-muted">
-                      {l.member.memberships[0]?.class ?? "—"} ·{" "}
-                      {l.member.memberships[0]?.status ?? "—"}
+                      <h3>{l.member.legalName}</h3>
+                      <p className="text-sm text-muted">
+                        {l.member.memberships[0]?.class ?? "—"} ·{" "}
+                        {l.member.memberships[0]?.status ?? "—"}
+                      </p>
                       {l.role === "manager" && (
-                        <>
-                          {" · "}
-                          <Link href={`/account/org/${l.memberId}`}>Manage</Link>
-                        </>
+                        <Link
+                          href={`/account/org/${l.memberId}`}
+                          className="text-sm text-purple hover:underline mt-auto self-end"
+                        >
+                          Manage →
+                        </Link>
                       )}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </section>
           )}
-        </div>
+        </>
       )}
-    </div>
+    </>
   );
 }
