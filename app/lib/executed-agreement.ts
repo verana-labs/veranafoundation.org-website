@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { sendEmail, escapeHtml } from "@/app/lib/email";
+import { AgreementContext, renderAgreementPdf } from "@/app/lib/agreement-pdf";
 
 export type ExecutionDetails = {
   to: string;
@@ -10,6 +11,10 @@ export type ExecutionDetails = {
   agreementVersion: string;
   agreementUrl: string;
   agreementHash: string | null;
+  /** The signed agreement PDF to attach (already rendered by the caller). */
+  agreementPdf?: Buffer;
+  /** Fallback: render the agreement PDF from context if no buffer is provided. */
+  agreement?: AgreementContext;
 };
 
 /** A one-page "Certificate of Execution" capturing who signed what, when. */
@@ -43,7 +48,17 @@ export async function buildExecutionCertificate(d: ExecutionDetails): Promise<Bu
 
 /** Email the signer a confirmation + the execution certificate PDF. */
 export async function sendExecutedAgreementEmail(d: ExecutionDetails): Promise<void> {
-  const pdf = await buildExecutionCertificate(d);
+  const certificate = await buildExecutionCertificate(d);
+  const attachments = [
+    { filename: `verana-membership-certificate-${d.agreementVersion}.pdf`, content: certificate },
+  ];
+  const agreementPdf = d.agreementPdf ?? (d.agreement ? await renderAgreementPdf(d.agreement) : null);
+  if (agreementPdf) {
+    attachments.unshift({
+      filename: `verana-membership-agreement-${d.agreementVersion}.pdf`,
+      content: agreementPdf,
+    });
+  }
   const html = `
     <p>Thank you for joining the Verana Foundation.</p>
     <p>This confirms that <strong>${escapeHtml(d.signerName)}</strong> signed the
@@ -58,8 +73,6 @@ export async function sendExecutedAgreementEmail(d: ExecutionDetails): Promise<v
     to: d.to,
     subject: "Your Verana Foundation membership — executed agreement",
     html,
-    attachments: [
-      { filename: `verana-membership-${d.agreementVersion}.pdf`, content: pdf },
-    ],
+    attachments,
   });
 }

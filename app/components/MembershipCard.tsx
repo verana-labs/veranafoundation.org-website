@@ -17,6 +17,8 @@ export type MembershipCardData = {
   periodEnd?: Date | string | null;
   /** When set, a "Manage →" button links here (manager/admin only). */
   manageHref?: string | null;
+  /** When set, a "Download agreement" link to the signed PDF is shown. */
+  agreementHref?: string | null;
 };
 
 // Status → badge tone. Unmapped statuses fall back to the neutral badge.
@@ -41,6 +43,7 @@ export default function MembershipCard({
   country,
   periodEnd,
   manageHref,
+  agreementHref,
 }: MembershipCardData) {
   const flag = flagEmoji(country);
   const label = countryName(country);
@@ -86,13 +89,26 @@ export default function MembershipCard({
 
       {expiry && <p className="text-sm text-muted">Expire {expiry}</p>}
 
-      {manageHref && (
-        <Link
-          href={manageHref}
-          className="btn btn-secondary text-sm mt-auto self-end"
-        >
-          Manage →
-        </Link>
+      {(agreementHref || manageHref) && (
+        <div className="mt-auto flex items-center justify-between gap-3 pt-2">
+          {agreementHref ? (
+            <a
+              href={agreementHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-purple hover:underline"
+            >
+              Agreement PDF ↓
+            </a>
+          ) : (
+            <span />
+          )}
+          {manageHref && (
+            <Link href={manageHref} className="btn btn-secondary text-sm self-end">
+              Manage →
+            </Link>
+          )}
+        </div>
       )}
     </div>
   );

@@ -8,6 +8,9 @@ import { getActiveAgreement } from "@/app/lib/agreement";
 import { tierAmount } from "@/app/lib/dues";
 import { createMembershipInvoice } from "@/app/lib/invoices";
 import { sendExecutedAgreementEmail } from "@/app/lib/executed-agreement";
+import { toAgreementContext } from "@/app/lib/agreement-context";
+import { renderAgreementHtml } from "@/app/lib/agreement-html";
+import { persistSignedAgreement } from "@/app/lib/signed-agreement";
 
 export type ApplyState = { error?: string };
 
@@ -17,6 +20,44 @@ async function emailExecutedCopy(d: Parameters<typeof sendExecutedAgreementEmail
     await sendExecutedAgreementEmail(d);
   } catch (e) {
     console.error("[apply] executed-agreement email failed", e);
+  }
+}
+
+/**
+ * Render the personalised agreement to HTML for the wizard's review step, from
+ * the data entered so far. No persistence — the same mapping is used at signing,
+ * so the preview matches the PDF that gets signed.
+ */
+export async function previewAgreement(input: {
+  class?: string;
+  type?: string;
+  legalName?: string;
+  entityType?: string;
+  jurisdiction?: string;
+  registeredAddress?: string;
+  countryOfResidence?: string;
+  country?: string;
+  signerName?: string;
+  signerTitle?: string;
+}): Promise<{ html?: string; error?: string }> {
+  const ctx = toAgreementContext({
+    class: input.class === "associate" ? "associate" : "contributor",
+    type: input.type === "organization" ? "organization" : "individual",
+    legalName: input.legalName,
+    entityType: input.entityType,
+    jurisdiction: input.jurisdiction,
+    registeredAddress: input.registeredAddress,
+    countryOfResidence: input.countryOfResidence,
+    country: input.country,
+    signerName: input.signerName,
+    signerTitle: input.signerTitle,
+    effectiveDate: new Date(),
+  });
+  try {
+    return { html: await renderAgreementHtml(ctx) };
+  } catch (e) {
+    console.error("[apply] preview render failed", e);
+    return { error: "Could not render the agreement preview." };
   }
 }
 
@@ -60,16 +101,17 @@ export async function applyMember(
   const agreement = await getActiveAgreement();
   if (!agreement) return { error: "No active Membership Agreement is configured." };
 
+  const signedAt = new Date();
   const sig = {
     signerName: formData.get("signerName"),
     signerTitle: formData.get("signerTitle") || undefined,
     socialAnnouncementConsent: formData.get("socialAnnouncementConsent") === "on",
     accept: formData.get("accept") === "on",
   };
-  const agreementData = {
+  const signatureBase = {
     agreementVersion: agreement.version,
     agreementUrl: agreement.url,
-    agreementHash: agreement.hash,
+    emailVerified: true,
   };
 
   const cls = formData.get("class");
@@ -90,7 +132,7 @@ export async function applyMember(
     }
     const d = parsed.data;
     const isOrg = d.type === "organization";
-    await db.$transaction(async (tx) => {
+    const { memberId, signatureRecordId } = await db.$transaction(async (tx) => {
       const member = await tx.member.create({
         data: {
           type: d.type,
@@ -106,28 +148,51 @@ export async function applyMember(
               class: "contributor",
               status: "active",
               provisional: true,
-              periodStart: new Date(),
+              periodStart: signedAt,
             },
           },
           signatureRecords: {
-            create: { ...agreementData, signerName: d.signerName, signerTitle: d.signerTitle ?? null, emailVerified: true },
+            create: { ...signatureBase, signerName: d.signerName, signerTitle: d.signerTitle ?? null },
           },
           access: {
             create: { email: user.email!, role: "manager", status: "active", addedByUserId: user.id },
           },
         },
+        include: { signatureRecords: true },
       });
       await tx.userMember.create({ data: { userId: user.id!, memberId: member.id, role: "manager" } });
+      return { memberId: member.id, signatureRecordId: member.signatureRecords[0].id };
     });
+
+    const ctx = toAgreementContext({
+      class: "contributor",
+      type: d.type,
+      legalName: d.legalName,
+      entityType: d.entityType,
+      jurisdiction: d.jurisdiction,
+      registeredAddress: d.registeredAddress,
+      countryOfResidence: d.countryOfResidence,
+      signerName: d.signerName,
+      signerTitle: d.signerTitle,
+      effectiveDate: signedAt,
+    });
+    let pdf: Buffer | undefined;
+    try {
+      ({ pdf } = await persistSignedAgreement({ memberId, signatureRecordId, ctx }));
+    } catch (e) {
+      console.error("[apply] persist signed agreement failed", e);
+    }
     await emailExecutedCopy({
       to: user.email!,
       memberName: d.legalName,
       membershipClass: "Contributor",
       signerName: d.signerName,
-      signedAt: new Date(),
+      signedAt,
       agreementVersion: agreement.version,
       agreementUrl: agreement.url,
       agreementHash: agreement.hash,
+      agreementPdf: pdf,
+      agreement: pdf ? undefined : ctx,
     });
     redirect("/account");
   }
@@ -167,27 +232,52 @@ export async function applyMember(
             create: { class: "associate", tier: d.tier, status: "pending", provisional: true },
           },
           signatureRecords: {
-            create: { ...agreementData, signerName: d.signerName, signerTitle: d.signerTitle ?? null, emailVerified: true },
+            create: { ...signatureBase, signerName: d.signerName, signerTitle: d.signerTitle ?? null },
           },
           access: {
             create: { email: user.email!, role: "manager", status: "active", addedByUserId: user.id },
           },
         },
-        include: { memberships: true },
+        include: { memberships: true, signatureRecords: true },
       });
       await tx.userMember.create({ data: { userId: user.id!, memberId: member.id, role: "manager" } });
-      return { memberId: member.id, membershipId: member.memberships[0].id };
+      return {
+        memberId: member.id,
+        membershipId: member.memberships[0].id,
+        signatureRecordId: member.signatureRecords[0].id,
+      };
     });
 
+    const ctx = toAgreementContext({
+      class: "associate",
+      legalName: d.legalName,
+      country: d.country,
+      registeredAddress: d.registeredAddress,
+      signerName: d.signerName,
+      signerTitle: d.signerTitle,
+      effectiveDate: signedAt,
+    });
+    let pdf: Buffer | undefined;
+    try {
+      ({ pdf } = await persistSignedAgreement({
+        memberId: created.memberId,
+        signatureRecordId: created.signatureRecordId,
+        ctx,
+      }));
+    } catch (e) {
+      console.error("[apply] persist signed agreement failed", e);
+    }
     await emailExecutedCopy({
       to: user.email!,
       memberName: d.legalName,
       membershipClass: "Associate",
       signerName: d.signerName,
-      signedAt: new Date(),
+      signedAt,
       agreementVersion: agreement.version,
       agreementUrl: agreement.url,
       agreementHash: agreement.hash,
+      agreementPdf: pdf,
+      agreement: pdf ? undefined : ctx,
     });
 
     const { hostedPayUrl } = await createMembershipInvoice({

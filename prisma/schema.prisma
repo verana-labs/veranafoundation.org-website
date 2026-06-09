@@ -263,7 +263,12 @@ model SignatureRecord {
   // the AgreementDocument that was accepted (snapshot — survives later config changes)
   agreementVersion String
   agreementUrl     String
-  agreementHash    String?
+  agreementHash    String? // sha256 of the signed PDF
+
+  // Storage key (path under STORAGE_DIR volume) of the exact personalised PDF
+  // that was signed, kept verbatim so the member can re-download it and so later
+  // template edits never alter a signed copy.
+  agreementPdfPath String?
 
   signedAt  DateTime @default(now())
   ip        String?

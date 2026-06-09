@@ -36,7 +36,6 @@ export default async function ApplyPage({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {agreement ? (
             <ApplyForm
-              agreementUrl={agreement.url}
               agreementVersion={agreement.version}
               initialClass={initialClass}
             />

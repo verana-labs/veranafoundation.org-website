@@ -4,6 +4,14 @@ const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
 
+  // The Membership Agreement template is read from disk at runtime when a
+  // member signs (app/lib/agreement-template.ts). `output: "standalone"` only
+  // ships traced files, so include legal/ for the routes that render it.
+  outputFileTracingIncludes: {
+    "/apply": ["./legal/**"],
+    "/account/**": ["./legal/**"],
+  },
+
   // Lint and type-check are run separately in CI; don't fail the
   // production/container build on them.
   eslint: { ignoreDuringBuilds: true },

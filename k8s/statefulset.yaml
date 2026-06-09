@@ -1,5 +1,10 @@
+# StatefulSet (not Deployment) because the pod owns a ReadWriteOnce data volume
+# (signed agreement PDFs, future org logos). On OVH (Cinder RWO) a volume mounts
+# to one node at a time; the StatefulSet's per-ordinal PVC + delete-before-create
+# rollout guarantees a single mounter, where a Deployment's RollingUpdate would
+# spin up a second pod and deadlock on the mount.
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: veranafoundation-website
   namespace: web
@@ -7,6 +12,7 @@ metadata:
     app.kubernetes.io/name: veranafoundation-website
 spec:
   replicas: 1
+  serviceName: veranafoundation-website
   selector:
     matchLabels:
       app.kubernetes.io/name: veranafoundation-website
@@ -32,6 +38,10 @@ spec:
               value: "3000"
             - name: HOSTNAME
               value: 0.0.0.0
+            # Persistent volume for member-generated files (signed agreement
+            # PDFs today, org logos later). Mounted from the data PVC below.
+            - name: STORAGE_DIR
+              value: /data
             # Relaticle CRM (in-cluster). The contact form posts inquiries here.
             - name: RELATICLE_API_URL
               value: http://relaticle.relaticle.svc.cluster.local
@@ -165,3 +175,16 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  # Per-pod persistent storage for member-generated files (signed agreement
+  # PDFs, future org logos). RWO: only ever mounted by this single replica.
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

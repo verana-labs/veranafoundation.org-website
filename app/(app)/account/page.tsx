@@ -65,6 +65,7 @@ export default async function AccountPage() {
                     status={individual.member.memberships[0]?.status}
                     country={individual.member.countryOfResidence}
                     periodEnd={individual.member.memberships[0]?.periodEnd}
+                    agreementHref={`/account/agreement/${individual.memberId}`}
                   />
                 </div>
               </div>
@@ -88,6 +89,7 @@ export default async function AccountPage() {
                       role={l.role}
                       country={l.member.jurisdiction}
                       periodEnd={l.member.memberships[0]?.periodEnd}
+                      agreementHref={`/account/agreement/${l.memberId}`}
                       manageHref={
                         l.role === "manager"
                           ? `/account/org/${l.memberId}`
