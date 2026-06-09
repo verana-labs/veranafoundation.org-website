@@ -162,6 +162,12 @@ jobs:
           kubectl -n web apply -f ci/migrate-job.yaml
           kubectl -n web wait --for=condition=complete job/db-migrate --timeout=180s \
             || { echo "migration failed:"; kubectl -n web logs job/db-migrate; exit 1; }
+          # Ensure the bootstrap admins exist (ADMIN_BOOTSTRAP_EMAILS) — idempotent
+          # upsert; never removes admins added later in /admin/admins.
+          kubectl -n web delete job seed --ignore-not-found
+          kubectl -n web apply -f ci/seed-job.yaml
+          kubectl -n web wait --for=condition=complete job/seed --timeout=120s \
+            || { echo "admin seed failed:"; kubectl -n web logs job/seed; exit 1; }
           # imagePullPolicy: Always + restart => new pods repull the :latest tag.
           kubectl rollout restart deployment/veranafoundation-website -n web
           kubectl rollout status deployment/veranafoundation-website -n web --timeout=120s

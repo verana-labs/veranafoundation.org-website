@@ -9,7 +9,12 @@ export async function currentUser() {
 /** Foundation-admin grant = verified email present in the admin allowlist (ADR-0002). */
 export async function isAdmin(email?: string | null) {
   if (!email) return false;
-  return !!(await db.adminAllowlistEntry.findUnique({ where: { email } }));
+  // Allowlist entries are stored lowercased (seed + /admin/admins); match case-insensitively.
+  return !!(
+    await db.adminAllowlistEntry.findUnique({
+      where: { email: email.toLowerCase() },
+    })
+  );
 }
 
 /**
