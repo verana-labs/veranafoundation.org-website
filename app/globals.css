@@ -235,6 +235,16 @@ body {
 .btn-secondary:hover {
   border-color: var(--color-ink);
 }
+/* OAuth provider buttons: thin grey border, Verana green on hover. */
+.btn-oauth {
+  background: transparent;
+  color: var(--color-ink);
+  border-color: var(--color-rule);
+}
+.btn-oauth:hover {
+  border-color: var(--color-green);
+  color: var(--color-green);
+}
 .btn-inverse {
   background: #fff;
   color: var(--color-purple);

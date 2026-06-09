@@ -39,14 +39,14 @@ export default function LoginForm({ callbackUrl }: { callbackUrl: string }) {
       <button
         type="button"
         onClick={() => signIn("google", { callbackUrl })}
-        className="btn btn-secondary w-full flex items-center justify-center gap-2.5"
+        className="btn btn-oauth w-full flex items-center justify-center gap-2.5"
       >
         <GoogleLogo /> Continue with Google
       </button>
       <button
         type="button"
         onClick={() => signIn("github", { callbackUrl })}
-        className="btn btn-secondary w-full flex items-center justify-center gap-2.5"
+        className="btn btn-oauth w-full flex items-center justify-center gap-2.5"
       >
         <FontAwesomeIcon icon={faGithub} className="text-base" /> Continue with GitHub
       </button>
