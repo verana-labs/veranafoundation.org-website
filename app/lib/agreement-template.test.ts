@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { resolveTemplate, renderAgreementMarkdown, AgreementContext } from "./agreement-template";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { resolveTemplate, AgreementContext } from "./agreement-template";
 import { markdownToPdf, renderAgreementPdf } from "./agreement-pdf";
+
+const TEMPLATE = readFileSync(
+  path.join(process.cwd(), "legal", "membership-agreement-v1.md"),
+  "utf8",
+);
 
 const TPL = [
   "Party: **{{member_legal_name}}**, <!--IF:is_organization-->a {{entity_form}} under {{jurisdiction}}, at **{{member_address}}**<!--ELSE-->an individual resident in **{{jurisdiction}}**<!--IF:has_member_address-->, at **{{member_address}}**<!--ENDIF--><!--ENDIF-->.",
@@ -79,8 +86,8 @@ describe("resolveTemplate", () => {
 });
 
 describe("real template + PDF", () => {
-  it("personalises the on-disk template with no leftover tokens", async () => {
-    const md = await renderAgreementMarkdown(orgAssociate);
+  it("personalises the on-disk template with no leftover tokens", () => {
+    const md = resolveTemplate(TEMPLATE, orgAssociate);
     expect(md).not.toMatch(/\{\{|<!--(?:IF:|ELSE|ENDIF)/);
     expect(md).toContain("Acme OÜ");
     expect(md).toContain("☒ **Associate Member**");
@@ -94,13 +101,13 @@ describe("real template + PDF", () => {
   });
 
   it("renders a valid multi-page PDF", async () => {
-    const buf = await markdownToPdf(await renderAgreementMarkdown(orgAssociate));
+    const buf = await markdownToPdf(resolveTemplate(TEMPLATE, orgAssociate));
     expect(buf.subarray(0, 5).toString()).toBe("%PDF-");
     expect(buf.length).toBeGreaterThan(5000);
   });
 
   it("renderAgreementPdf works end-to-end for the individual case", async () => {
-    const buf = await renderAgreementPdf(individual);
+    const buf = await renderAgreementPdf(individual, TEMPLATE);
     expect(buf.subarray(0, 5).toString()).toBe("%PDF-");
   });
 });

@@ -4,13 +4,14 @@ import { z } from "zod";
 import { redirect } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser } from "@/app/lib/authz";
-import { getActiveAgreement } from "@/app/lib/agreement";
 import { tierAmount } from "@/app/lib/dues";
 import { createMembershipInvoice } from "@/app/lib/invoices";
 import { sendExecutedAgreementEmail } from "@/app/lib/executed-agreement";
 import { toAgreementContext } from "@/app/lib/agreement-context";
 import { renderAgreementHtml } from "@/app/lib/agreement-html";
 import { persistSignedAgreement } from "@/app/lib/signed-agreement";
+import { loadActiveAgreement, type ActiveAgreement } from "@/app/lib/agreement-versions";
+import { sendEmail, escapeHtml } from "@/app/lib/email";
 
 export type ApplyState = { error?: string };
 
@@ -23,10 +24,36 @@ async function emailExecutedCopy(d: Parameters<typeof sendExecutedAgreementEmail
   }
 }
 
+/** Alert the admin allowlist that the active agreement file failed its hash check. */
+async function notifyAdminsIntegrityFailure(active: ActiveAgreement) {
+  try {
+    const admins = await db.adminAllowlistEntry.findMany({ select: { email: true } });
+    const to = admins.map((a) => a.email).join(",");
+    if (!to) return;
+    await sendEmail({
+      to,
+      subject: "⚠ Membership Agreement integrity check failed — signing blocked",
+      html: `
+        <p>The active Membership Agreement file no longer matches the hash it was
+        published with, so new signatures are blocked until it is resolved.</p>
+        <ul>
+          <li>Version: ${escapeHtml(active.version)}</li>
+          <li>File: ${escapeHtml(active.filename)}</li>
+          <li>Expected: ${escapeHtml(active.pinnedHash)}</li>
+          <li>Found: ${escapeHtml(active.currentHash ?? "(file missing)")}</li>
+        </ul>
+        <p>Restore the original file, or publish a new version in
+        <code>/admin/settings</code>.</p>`,
+    });
+  } catch (e) {
+    console.error("[apply] admin integrity alert failed", e);
+  }
+}
+
 /**
  * Render the personalised agreement to HTML for the wizard's review step, from
- * the data entered so far. No persistence — the same mapping is used at signing,
- * so the preview matches the PDF that gets signed.
+ * the data entered so far + the active version. Blocks if the active file failed
+ * its integrity check (the signing step would block anyway).
  */
 export async function previewAgreement(input: {
   class?: string;
@@ -40,6 +67,11 @@ export async function previewAgreement(input: {
   signerName?: string;
   signerTitle?: string;
 }): Promise<{ html?: string; error?: string }> {
+  const active = await loadActiveAgreement();
+  if (!active) return { error: "No active Membership Agreement is configured." };
+  if (!active.intact) {
+    return { error: "The Membership Agreement is temporarily unavailable. Please try again later." };
+  }
   const user = await currentUser();
   const ctx = toAgreementContext({
     class: input.class === "associate" ? "associate" : "contributor",
@@ -56,7 +88,7 @@ export async function previewAgreement(input: {
     effectiveDate: new Date(),
   });
   try {
-    return { html: await renderAgreementHtml(ctx) };
+    return { html: renderAgreementHtml(ctx, active.content) };
   } catch (e) {
     console.error("[apply] preview render failed", e);
     return { error: "Could not render the agreement preview." };
@@ -100,8 +132,12 @@ export async function applyMember(
   const user = await currentUser();
   if (!user?.email || !user.id) redirect("/login?callbackUrl=/apply");
 
-  const agreement = await getActiveAgreement();
-  if (!agreement) return { error: "No active Membership Agreement is configured." };
+  const active = await loadActiveAgreement();
+  if (!active) return { error: "No active Membership Agreement is configured." };
+  if (!active.intact) {
+    await notifyAdminsIntegrityFailure(active);
+    return { error: "The Membership Agreement is temporarily unavailable. Please try again later." };
+  }
 
   const signedAt = new Date();
   const sig = {
@@ -111,8 +147,8 @@ export async function applyMember(
     accept: formData.get("accept") === "on",
   };
   const signatureBase = {
-    agreementVersion: agreement.version,
-    agreementUrl: agreement.url,
+    agreementVersion: active.version,
+    agreementUrl: active.filename, // the version file that was signed
     emailVerified: true,
   };
 
@@ -181,7 +217,7 @@ export async function applyMember(
     });
     let pdf: Buffer | undefined;
     try {
-      ({ pdf } = await persistSignedAgreement({ memberId, signatureRecordId, ctx }));
+      ({ pdf } = await persistSignedAgreement({ memberId, signatureRecordId, ctx, template: active.content }));
     } catch (e) {
       console.error("[apply] persist signed agreement failed", e);
     }
@@ -191,11 +227,10 @@ export async function applyMember(
       membershipClass: "Contributor",
       signerName: d.signerName,
       signedAt,
-      agreementVersion: agreement.version,
-      agreementUrl: agreement.url,
-      agreementHash: agreement.hash,
+      agreementVersion: active.version,
+      agreementSource: active.filename,
+      agreementHash: active.pinnedHash,
       agreementPdf: pdf,
-      agreement: pdf ? undefined : ctx,
     });
     redirect("/account");
   }
@@ -267,6 +302,7 @@ export async function applyMember(
         memberId: created.memberId,
         signatureRecordId: created.signatureRecordId,
         ctx,
+        template: active.content,
       }));
     } catch (e) {
       console.error("[apply] persist signed agreement failed", e);
@@ -277,11 +313,10 @@ export async function applyMember(
       membershipClass: "Associate",
       signerName: d.signerName,
       signedAt,
-      agreementVersion: agreement.version,
-      agreementUrl: agreement.url,
-      agreementHash: agreement.hash,
+      agreementVersion: active.version,
+      agreementSource: active.filename,
+      agreementHash: active.pinnedHash,
       agreementPdf: pdf,
-      agreement: pdf ? undefined : ctx,
     });
 
     const { hostedPayUrl } = await createMembershipInvoice({

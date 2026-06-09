@@ -241,11 +241,15 @@ model Payment {
 // Membership Agreement (admin-configurable PDF) + e-signature record
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Catalog of agreement template versions. One row per version file in legal/.
+// The hash is pinned at first activation: a filename, once activated, is bound to
+// that hash forever, so members who signed "vN" can trust it never changed.
 model AgreementDocument {
   id            String   @id @default(cuid())
-  version       String // "v1" / doc ref "LG-EE..."
-  url           String // PDF URL — admin-editable; swap to publish a new version
-  hash          String? // optional integrity hash of the PDF
+  filename      String   @unique // version file in legal/, e.g. "membership-agreement-v1.md"
+  version       String // label derived from filename, e.g. "v1"
+  hash          String // pinned sha384 of the file, SRI form ("sha384-…")
+  hashAlgo      String   @default("sha384")
   active        Boolean  @default(false)
   effectiveFrom DateTime @default(now())
   createdAt     DateTime @default(now())

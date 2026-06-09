@@ -1,11 +1,9 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
-
 /**
- * Personalises the Membership Agreement template (legal/membership-agreement.template.md)
- * for a specific signer. One template serves all three use cases — individual
- * contributor, organization contributor, organization associate — driven by two
- * facts: the member type and the membership class.
+ * Personalises a Membership Agreement template (a file in legal/) for a specific
+ * signer. One template serves all three use cases — individual contributor,
+ * organization contributor, organization associate — driven by two facts: the
+ * member type and the membership class. The template content is supplied by the
+ * caller (the active version is resolved in agreement-versions.ts).
  *
  * Template syntax:
  *   {{value}}                          — substituted with a context value
@@ -33,12 +31,6 @@ export type AgreementContext = {
   memberEmail?: string | null;
   effectiveDate: Date;
 };
-
-const TEMPLATE_PATH = path.join(
-  process.cwd(),
-  "legal",
-  "membership-agreement.template.md",
-);
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -124,14 +116,4 @@ export function resolveTemplate(template: string, ctx: AgreementContext): string
   const leftover = out.match(/\{\{[^}]+\}\}|<!--(?:IF:|ELSE|ENDIF)/);
   if (leftover) throw new Error(`agreement template: unresolved token "${leftover[0]}"`);
   return out;
-}
-
-/** Read the on-disk template (shipped into the standalone build via next.config). */
-export async function loadAgreementTemplate(): Promise<string> {
-  return fs.readFile(TEMPLATE_PATH, "utf8");
-}
-
-/** Load the template and personalise it for one signer. */
-export async function renderAgreementMarkdown(ctx: AgreementContext): Promise<string> {
-  return resolveTemplate(await loadAgreementTemplate(), ctx);
 }

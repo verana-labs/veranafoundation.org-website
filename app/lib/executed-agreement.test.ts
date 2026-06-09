@@ -10,7 +10,7 @@ describe("buildExecutionCertificate", () => {
       signerName: "Jane Doe",
       signedAt: new Date("2026-06-08T10:00:00Z"),
       agreementVersion: "v1",
-      agreementUrl: "https://example.com/agreement.pdf",
+      agreementSource: "membership-agreement-v1.md",
       agreementHash: null,
     });
     expect(buf.subarray(0, 5).toString()).toBe("%PDF-");

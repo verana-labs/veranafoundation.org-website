@@ -38,9 +38,7 @@ spec:
                   name: veranafoundation-website-secrets
                   key: ADMIN_BOOTSTRAP_EMAILS
                   optional: true
-            # Optional: also set the active Membership Agreement PDF here instead
-            # of /admin/settings.
-            # - name: AGREEMENT_PDF_URL
-            #   value: "https://…/membership-agreement.pdf"
-            # - name: AGREEMENT_VERSION
-            #   value: "v1"
+            # Optional: which legal/ version file to activate as the Membership
+            # Agreement (defaults to membership-agreement-v1.md).
+            # - name: AGREEMENT_FILENAME
+            #   value: "membership-agreement-v1.md"

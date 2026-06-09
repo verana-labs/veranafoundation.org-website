@@ -1,4 +1,4 @@
-import { AgreementContext, renderAgreementMarkdown } from "@/app/lib/agreement-template";
+import { AgreementContext, resolveTemplate } from "@/app/lib/agreement-template";
 
 /**
  * Renders the personalised agreement markdown to semantic HTML for the on-screen
@@ -79,7 +79,17 @@ export function markdownToHtml(markdown: string): string {
   return html.join("\n");
 }
 
-/** Load the template, personalise it, and return review-ready HTML. */
-export async function renderAgreementHtml(ctx: AgreementContext): Promise<string> {
-  return markdownToHtml(await renderAgreementMarkdown(ctx));
+/** Personalise the given template for a signer and return review-ready HTML. */
+export function renderAgreementHtml(ctx: AgreementContext, template: string): string {
+  return markdownToHtml(resolveTemplate(template, ctx));
+}
+
+/**
+ * Render a template "uncustomized" for the admin preview: placeholders are kept
+ * literal (e.g. {{member_legal_name}}) but the <!--IF/ELSE/ENDIF--> markers are
+ * stripped so both branches show and the comments don't leak as text.
+ */
+export function renderTemplateHtml(template: string): string {
+  const stripped = template.replace(/<!--(?:IF:\w+|ELSE|ENDIF)-->/g, "");
+  return markdownToHtml(stripped);
 }

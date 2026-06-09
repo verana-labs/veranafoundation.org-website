@@ -1,5 +1,5 @@
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
-import { AgreementContext, renderAgreementMarkdown } from "@/app/lib/agreement-template";
+import { AgreementContext, resolveTemplate } from "@/app/lib/agreement-template";
 
 export type { AgreementContext } from "@/app/lib/agreement-template";
 
@@ -253,7 +253,10 @@ export async function markdownToPdf(markdown: string): Promise<Buffer> {
   return Buffer.from(await pdf.save());
 }
 
-/** One call: personalise the template for a signer and render the PDF. */
-export async function renderAgreementPdf(ctx: AgreementContext): Promise<Buffer> {
-  return markdownToPdf(await renderAgreementMarkdown(ctx));
+/** One call: personalise the given template for a signer and render the PDF. */
+export async function renderAgreementPdf(
+  ctx: AgreementContext,
+  template: string,
+): Promise<Buffer> {
+  return markdownToPdf(resolveTemplate(template, ctx));
 }
