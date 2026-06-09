@@ -11,8 +11,8 @@ export function agreementKey(memberId: string): string {
 
 /**
  * Render the personalised agreement PDF, write it to the storage volume, and
- * record its path + sha256 on the SignatureRecord. Returns the in-memory bytes
- * so the caller can also attach them to the confirmation email without re-render.
+ * record its path + sha384 (SRI form) on the SignatureRecord. Returns the bytes
+ * and that hash so the caller can attach the PDF and report it without re-render.
  */
 export async function persistSignedAgreement(opts: {
   memberId: string;
@@ -21,7 +21,7 @@ export async function persistSignedAgreement(opts: {
   template: string;
 }): Promise<{ pdf: Buffer; hash: string; key: string }> {
   const pdf = await renderAgreementPdf(opts.ctx, opts.template);
-  const hash = crypto.createHash("sha256").update(pdf).digest("hex");
+  const hash = "sha384-" + crypto.createHash("sha384").update(pdf).digest("base64");
   const key = agreementKey(opts.memberId);
   await putFile(key, pdf);
   await db.signatureRecord.update({

@@ -216,8 +216,14 @@ export async function applyMember(
       effectiveDate: signedAt,
     });
     let pdf: Buffer | undefined;
+    let documentHash: string | undefined;
     try {
-      ({ pdf } = await persistSignedAgreement({ memberId, signatureRecordId, ctx, template: active.content }));
+      ({ pdf, hash: documentHash } = await persistSignedAgreement({
+        memberId,
+        signatureRecordId,
+        ctx,
+        template: active.content,
+      }));
     } catch (e) {
       console.error("[apply] persist signed agreement failed", e);
     }
@@ -229,7 +235,8 @@ export async function applyMember(
       signedAt,
       agreementVersion: active.version,
       agreementSource: active.filename,
-      agreementHash: active.pinnedHash,
+      versionHash: active.pinnedHash,
+      documentHash: documentHash ?? null,
       agreementPdf: pdf,
     });
     redirect("/account");
@@ -297,8 +304,9 @@ export async function applyMember(
       effectiveDate: signedAt,
     });
     let pdf: Buffer | undefined;
+    let documentHash: string | undefined;
     try {
-      ({ pdf } = await persistSignedAgreement({
+      ({ pdf, hash: documentHash } = await persistSignedAgreement({
         memberId: created.memberId,
         signatureRecordId: created.signatureRecordId,
         ctx,
@@ -315,7 +323,8 @@ export async function applyMember(
       signedAt,
       agreementVersion: active.version,
       agreementSource: active.filename,
-      agreementHash: active.pinnedHash,
+      versionHash: active.pinnedHash,
+      documentHash: documentHash ?? null,
       agreementPdf: pdf,
     });
 

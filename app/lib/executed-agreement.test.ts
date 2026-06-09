@@ -11,7 +11,8 @@ describe("buildExecutionCertificate", () => {
       signedAt: new Date("2026-06-08T10:00:00Z"),
       agreementVersion: "v1",
       agreementSource: "membership-agreement-v1.md",
-      agreementHash: null,
+      versionHash: "sha384-template",
+      documentHash: "sha384-pdf",
     });
     expect(buf.subarray(0, 5).toString()).toBe("%PDF-");
     expect(buf.length).toBeGreaterThan(500);

@@ -10,7 +10,10 @@ export type ExecutionDetails = {
   agreementVersion: string;
   /** The version file that was signed, e.g. "membership-agreement-v1.md". */
   agreementSource: string;
-  agreementHash: string | null;
+  /** sha384 of the template version that was signed. */
+  versionHash: string | null;
+  /** sha384 of the exact signed PDF. */
+  documentHash: string | null;
   /** The signed agreement PDF to attach (already rendered by the caller). */
   agreementPdf?: Buffer;
 };
@@ -36,8 +39,9 @@ export async function buildExecutionCertificate(d: ExecutionDetails): Promise<Bu
   line(`Signed by: ${d.signerName}`);
   line(`Date: ${d.signedAt.toISOString()}`);
   line(`Agreement version: ${d.agreementVersion}`);
-  if (d.agreementHash) line(`Agreement hash: ${d.agreementHash}`, 9);
   line(`Source: ${d.agreementSource}`, 9);
+  if (d.versionHash) line(`Template hash (sha384): ${d.versionHash}`, 8);
+  if (d.documentHash) line(`Signed document hash (sha384): ${d.documentHash}`, 8);
   y -= 10;
   line("The signed Membership Agreement is attached to this email.", 10);
 
