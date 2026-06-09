@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
+import { PageHero, Section } from "@/app/components/PageHero";
 import { suspendMembership, reinstateMembership } from "./actions";
 
 export const metadata: Metadata = { title: "Member · Admin" };
@@ -27,13 +27,10 @@ export default async function AdminMemberDetail({
   if (!member) notFound();
 
   return (
-    <div className="prose-body max-w-3xl">
-      <p className="text-sm text-muted">
-        <Link href="/admin/members">← Members</Link>
-      </p>
-      <h1 className="display text-3xl">{member.legalName}</h1>
-
-      <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
+    <>
+      <PageHero back={{ href: "/admin/members", label: "Members" }} title={member.legalName} />
+      <Section bordered={false}>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
         <dt className="text-muted">Type</dt>
         <dd>{member.type}</dd>
         <dt className="text-muted">Primary email</dt>
@@ -101,6 +98,7 @@ export default async function AdminMemberDetail({
           <li className="text-muted">None.</li>
         )}
       </ul>
-    </div>
+      </Section>
+    </>
   );
 }

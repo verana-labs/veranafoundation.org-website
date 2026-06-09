@@ -6,7 +6,6 @@ import { ASSOCIATE_TIERS, formatEur } from "@/app/lib/dues";
 import CountrySelect from "@/app/components/CountrySelect";
 import { applyMember, previewAgreement, type ApplyState } from "./actions";
 
-const input = "rounded border border-rule bg-surface px-3 py-2 text-sm w-full";
 
 export default function ApplyForm({
   agreementVersion,
@@ -147,7 +146,7 @@ export default function ApplyForm({
           )}
         </fieldset>
 
-        <fieldset className="grid gap-5 border-t border-rule pt-6">
+        <fieldset className="grid gap-1 border-t border-rule pt-6">
           <legend className="tag mb-2">Your details</legend>
 
           {cls === "contributor" ? (
@@ -181,7 +180,7 @@ export default function ApplyForm({
               <Field label="Registered address" name="registeredAddress" />
               <Field label="VAT number (EU — enables reverse charge)" name="vatNumber" />
               <Labeled label="Annual dues tier" required>
-                <select name="tier" required defaultValue="" className={input}>
+                <select name="tier" required defaultValue="">
                   <option value="" disabled>
                     Choose by headcount…
                   </option>
@@ -307,12 +306,12 @@ function Labeled({
   children: React.ReactNode;
 }) {
   return (
-    <label className="grid gap-1 text-sm">
-      <span className="font-medium">
+    <div className="form-field">
+      <label>
         {label} {required && <Req />}
-      </span>
+      </label>
       {children}
-    </label>
+    </div>
   );
 }
 
@@ -328,11 +327,11 @@ function Field({
   placeholder?: string;
 }) {
   return (
-    <label className="grid gap-1 text-sm">
-      <span className="font-medium">
+    <div className="form-field">
+      <label htmlFor={name}>
         {label} {required && <Req />}
-      </span>
-      <input name={name} required={required} placeholder={placeholder} className={input} />
-    </label>
+      </label>
+      <input id={name} name={name} required={required} placeholder={placeholder} />
+    </div>
   );
 }

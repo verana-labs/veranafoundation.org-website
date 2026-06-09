@@ -105,9 +105,7 @@ export default function CountrySelect({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          className={`rounded border border-rule bg-surface py-2 pr-3 text-sm w-full ${
-            flag ? "pl-9" : "pl-3"
-          }`}
+          className={`field w-full ${flag ? "pl-9" : ""}`}
         />
       </div>
 

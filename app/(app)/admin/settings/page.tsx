@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { currentUser, isAdmin } from "@/app/lib/authz";
 import { listVersions, readVersionFile } from "@/app/lib/agreement-versions";
 import { renderTemplateHtml } from "@/app/lib/agreement-html";
+import { PageHero, Section } from "@/app/components/PageHero";
 import VersionSelector from "./VersionSelector";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -28,10 +29,14 @@ export default async function SettingsPage() {
   const activeDrifted = !!active && active.currentHash !== active.pinnedHash;
 
   return (
-    <div className="prose-body max-w-3xl">
-      <h1 className="display text-3xl">Settings</h1>
-
-      <h2 className="display text-xl mt-8">Membership Agreement</h2>
+    <>
+      <PageHero
+        back={{ href: "/admin", label: "Admin" }}
+        title="Settings"
+        lead="The active Membership Agreement shown to applicants, and the version catalog."
+      />
+      <Section bordered={false}>
+      <h2 className="display text-xl">Membership Agreement</h2>
       <p className="text-muted text-sm">
         Versions live as Markdown files in <code>legal/</code>. Each new version is a
         new file; never edit a published one. The active version is shown to
@@ -79,6 +84,7 @@ export default async function SettingsPage() {
           note: STATUS_NOTE[v.status] ?? v.status,
         }))}
       />
-    </div>
+      </Section>
+    </>
   );
 }

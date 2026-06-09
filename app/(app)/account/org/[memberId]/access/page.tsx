@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser, isManagerOf } from "@/app/lib/authz";
+import { PageHero, Section } from "@/app/components/PageHero";
 import AccessManager from "./AccessManager";
 
 export const metadata: Metadata = { title: "Access list" };
@@ -28,17 +28,18 @@ export default async function AccessPage({
   const lastAdminId = admins.length === 1 ? admins[0].id : null;
 
   return (
-    <div className="prose-body max-w-2xl">
-      <p className="text-sm text-muted">
-        <Link href={`/account/org/${memberId}`}>← {member.legalName}</Link>
-      </p>
-      <h1 className="display text-3xl">Access list</h1>
-      <p className="text-muted mt-2">
-        Manage who can act for <strong>{member.legalName}</strong>. Admins manage
-        this list; representatives get working-group access.
-      </p>
-
-      <div className="mt-8">
+    <>
+      <PageHero
+        back={{ href: `/account/org/${memberId}`, label: member.legalName }}
+        title="Access list"
+        lead={
+          <>
+            Manage who can act for <strong>{member.legalName}</strong>. Admins
+            manage this list; representatives get working-group access.
+          </>
+        }
+      />
+      <Section bordered={false}>
         <AccessManager
           memberId={memberId}
           admins={admins.map((e) => ({
@@ -55,7 +56,7 @@ export default async function AccessPage({
           }))}
           lastAdminId={lastAdminId}
         />
-      </div>
-    </div>
+      </Section>
+    </>
   );
 }

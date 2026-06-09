@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser, isManagerOf } from "@/app/lib/authz";
+import { PageHero, Section } from "@/app/components/PageHero";
 import MembershipCard from "@/app/components/MembershipCard";
 
 export const metadata: Metadata = { title: "Organization" };
@@ -24,13 +25,10 @@ export default async function OrgPage({
   const membership = member.memberships[0];
 
   return (
-    <div className="prose-body max-w-2xl">
-      <p className="text-sm text-muted">
-        <Link href="/account">← Account</Link>
-      </p>
-      <h1 className="display text-3xl">{member.legalName}</h1>
-
-      <div className="mt-6 max-w-md">
+    <>
+      <PageHero back={{ href: "/account", label: "Account" }} title={member.legalName} />
+      <Section bordered={false}>
+      <div className="max-w-md">
         <MembershipCard
           name={member.legalName}
           type="organization"
@@ -61,6 +59,7 @@ export default async function OrgPage({
           Billing
         </Link>
       </div>
-    </div>
+      </Section>
+    </>
   );
 }

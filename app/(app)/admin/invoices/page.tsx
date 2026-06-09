@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
 import { formatEur } from "@/app/lib/dues";
+import { PageHero, Section } from "@/app/components/PageHero";
 import { markPaid, voidInvoice } from "./actions";
 
 export const metadata: Metadata = { title: "Invoices · Admin" };
@@ -19,16 +19,13 @@ export default async function AdminInvoicesPage() {
   });
 
   return (
-    <div className="prose-body max-w-4xl">
-      <p className="text-sm text-muted">
-        <Link href="/admin">← Admin</Link>
-      </p>
-      <h1 className="display text-3xl">Invoices</h1>
-
-      {invoices.length === 0 ? (
-        <p className="text-muted mt-6">No invoices yet.</p>
-      ) : (
-        <div className="overflow-x-auto mt-6">
+    <>
+      <PageHero back={{ href: "/admin", label: "Admin" }} title="Invoices" />
+      <Section bordered={false}>
+        {invoices.length === 0 ? (
+          <p className="text-muted">No invoices yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm min-w-[760px]">
             <thead>
               <tr className="text-left text-muted">
@@ -76,8 +73,9 @@ export default async function AdminInvoicesPage() {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+      </Section>
+    </>
   );
 }

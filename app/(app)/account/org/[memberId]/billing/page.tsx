@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser, isManagerOf } from "@/app/lib/authz";
 import { formatEur } from "@/app/lib/dues";
+import { PageHero, Section } from "@/app/components/PageHero";
 import { openBillingPortal } from "./actions";
 
 export const metadata: Metadata = { title: "Billing" };
@@ -31,14 +31,14 @@ export default async function BillingPage({
   const bankDetails = process.env.BANK_TRANSFER_DETAILS;
 
   return (
-    <div className="prose-body max-w-2xl">
-      <p className="text-sm text-muted">
-        <Link href={`/account/org/${memberId}`}>← {member.legalName}</Link>
-      </p>
-      <h1 className="display text-3xl">Billing</h1>
-
+    <>
+      <PageHero
+        back={{ href: `/account/org/${memberId}`, label: member.legalName }}
+        title="Billing"
+      />
+      <Section bordered={false}>
       {member.stripeCustomerId && (
-        <form action={openBillingPortal} className="mt-4">
+        <form action={openBillingPortal} className="mb-6">
           <input type="hidden" name="memberId" value={memberId} />
           <button type="submit" className="btn btn-primary">
             Manage billing &amp; payment ↗
@@ -96,6 +96,7 @@ export default async function BillingPage({
           )}
         </div>
       )}
-    </div>
+      </Section>
+    </>
   );
 }
