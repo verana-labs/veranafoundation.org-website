@@ -134,7 +134,7 @@ export default function Nav() {
                 <UserMenu user={me.user} actions={me.actions} />
               ) : (
                 <Link href="/login" className="nav-link text-sm">
-                  Log in
+                  Sign in
                 </Link>
               )}
               <Link href="/join" className="btn btn-primary text-sm px-4 py-2">
@@ -286,7 +286,7 @@ export default function Nav() {
                 </>
               ) : (
                 <Link href="/login" className="block w-full py-2 nav-link">
-                  Log in
+                  Sign in
                 </Link>
               )}
             </div>
