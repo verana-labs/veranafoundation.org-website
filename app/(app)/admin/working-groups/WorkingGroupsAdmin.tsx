@@ -1,39 +1,19 @@
 "use client";
 
-import { useActionState } from "react";
-import { createWg, updateWg, deleteWg, type WgState } from "./actions";
+import { useActionState, useState } from "react";
+import { createWg, type WgState } from "./actions";
+import WorkingGroupAdminCard, { type AdminWg } from "./WorkingGroupAdminCard";
 
-type Wg = {
-  id: string;
-  name: string;
-  description: string | null;
-  requiredClass: "any" | "associate";
-  link: string;
-  showOnHome: boolean;
-};
-
-const checkbox = "flex items-center gap-2 text-sm py-2";
-
-// `.field` matches the input styling of the /contact form.
-const input = "field w-full";
-
-function ClassSelect({ value, id }: { value?: "any" | "associate"; id?: string }) {
-  return (
-    <select id={id} name="requiredClass" defaultValue={value ?? "any"} className={input}>
-      <option value="any">Any active membership</option>
-      <option value="associate">Active Associate only</option>
-    </select>
-  );
-}
-
-export default function WorkingGroupsAdmin({ groups }: { groups: Wg[] }) {
+export default function WorkingGroupsAdmin({ groups }: { groups: AdminWg[] }) {
   const [state, createAction, pending] = useActionState<WgState, FormData>(
     createWg,
     {},
   );
+  const [showDisabled, setShowDisabled] = useState(false);
+  const visible = groups.filter((g) => showDisabled || g.state === "enabled");
 
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-10">
       <section>
         <h2 className="display text-xl">Add a working group</h2>
         <form action={createAction} className="space-y-1 max-w-xl mt-3">
@@ -57,9 +37,25 @@ export default function WorkingGroupsAdmin({ groups }: { groups: Wg[] }) {
           </div>
           <div className="form-field">
             <label htmlFor="wg-class">Required membership</label>
-            <ClassSelect id="wg-class" />
+            <select id="wg-class" name="requiredClass" defaultValue="any">
+              <option value="any">Any active membership</option>
+              <option value="associate">Active Associate only</option>
+            </select>
           </div>
-          <label className={checkbox}>
+          <div className="grid sm:grid-cols-2 gap-x-5">
+            <div className="form-field">
+              <label htmlFor="wg-state">State</label>
+              <select id="wg-state" name="state" defaultValue="enabled">
+                <option value="enabled">Enabled</option>
+                <option value="disabled">Disabled</option>
+              </select>
+            </div>
+            <div className="form-field">
+              <label htmlFor="wg-priority">Priority</label>
+              <input id="wg-priority" name="priority" type="number" defaultValue={0} />
+            </div>
+          </div>
+          <label className="flex items-center gap-2 text-sm py-2">
             <input type="checkbox" name="showOnHome" /> Show on home page
           </label>
           {state.error && <p className="text-sm text-red-600">{state.error}</p>}
@@ -71,36 +67,28 @@ export default function WorkingGroupsAdmin({ groups }: { groups: Wg[] }) {
       </section>
 
       <section>
-        <h2 className="display text-xl">Working groups</h2>
-        {groups.length === 0 ? (
-          <p className="text-sm text-muted mt-2">None yet.</p>
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="display text-xl">Working groups</h2>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={showDisabled}
+              onChange={(e) => setShowDisabled(e.target.checked)}
+            />
+            Show disabled
+          </label>
+        </div>
+
+        {visible.length === 0 ? (
+          <p className="text-sm text-muted mt-3">
+            {groups.length === 0 ? "None yet." : "No enabled working groups."}
+          </p>
         ) : (
-          <ul className="mt-2 grid gap-3">
-            {groups.map((wg) => (
-              <li key={wg.id} className="card grid gap-2">
-                <form action={updateWg} className="grid gap-2 max-w-xl">
-                  <input type="hidden" name="id" value={wg.id} />
-                  <input name="name" required defaultValue={wg.name} className={input} />
-                  <input name="description" defaultValue={wg.description ?? ""} placeholder="Description (optional)" className={input} />
-                  <input name="link" type="url" required defaultValue={wg.link} className={input} />
-                  <ClassSelect value={wg.requiredClass} />
-                  <label className={checkbox}>
-                    <input
-                      type="checkbox"
-                      name="showOnHome"
-                      defaultChecked={wg.showOnHome}
-                    />{" "}
-                    Show on home page
-                  </label>
-                  <button type="submit" className="btn text-xs w-fit">Save</button>
-                </form>
-                <form action={deleteWg}>
-                  <input type="hidden" name="id" value={wg.id} />
-                  <button type="submit" className="btn text-xs w-fit">Delete</button>
-                </form>
-              </li>
+          <div className="mt-4 space-y-4">
+            {visible.map((wg) => (
+              <WorkingGroupAdminCard key={wg.id} wg={wg} />
             ))}
-          </ul>
+          </div>
         )}
       </section>
     </div>
