@@ -60,23 +60,21 @@ export default function AccessManager({
 
       <section>
         <h2 className="display text-xl">Add someone</h2>
-        <form action={addAction} className="flex flex-wrap items-end gap-2 mt-2">
+        <form action={addAction} className="space-y-1 mt-3 max-w-md">
           <input type="hidden" name="memberId" value={memberId} />
-          <input
-            name="email"
-            type="email"
-            required
-            placeholder="person@org.com"
-            className="rounded border border-rule bg-surface px-3 py-2 text-sm"
-          />
-          <select
-            name="role"
-            className="rounded border border-rule bg-surface px-3 py-2 text-sm"
-            defaultValue="representative"
-          >
-            <option value="representative">Representative</option>
-            <option value="manager">Admin</option>
-          </select>
+          <div className="form-field">
+            <label htmlFor="access-email">
+              Email <span className="req">*</span>
+            </label>
+            <input id="access-email" name="email" type="email" required placeholder="person@org.com" />
+          </div>
+          <div className="form-field">
+            <label htmlFor="access-role">Role</label>
+            <select id="access-role" name="role" defaultValue="representative">
+              <option value="representative">Representative</option>
+              <option value="manager">Admin</option>
+            </select>
+          </div>
           <button type="submit" className="btn btn-primary" disabled={pending}>
             {pending ? "Adding…" : "Add"}
           </button>

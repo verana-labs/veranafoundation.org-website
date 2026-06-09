@@ -15,19 +15,24 @@ export default function AdminAllowlist({
 
   return (
     <div className="grid gap-6">
-      <form action={addAction} className="flex flex-wrap items-end gap-2">
-        <input
-          name="email"
-          type="email"
-          required
-          placeholder="admin@veranafoundation.org"
-          className="rounded border border-rule bg-surface px-3 py-2 text-sm w-72"
-        />
+      <form action={addAction} className="space-y-1 max-w-md">
+        <div className="form-field">
+          <label htmlFor="admin-email">
+            Admin email <span className="req">*</span>
+          </label>
+          <input
+            id="admin-email"
+            name="email"
+            type="email"
+            required
+            placeholder="admin@veranafoundation.org"
+          />
+        </div>
         <button type="submit" className="btn btn-primary" disabled={pending}>
           {pending ? "Adding…" : "Add admin"}
         </button>
-        {state.error && <p className="text-sm text-red-600 w-full">{state.error}</p>}
-        {state.ok && <p className="text-sm text-green-600 w-full">Added.</p>}
+        {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+        {state.ok && <p className="text-sm text-green-600">Added.</p>}
       </form>
 
       <ul className="grid gap-2">
