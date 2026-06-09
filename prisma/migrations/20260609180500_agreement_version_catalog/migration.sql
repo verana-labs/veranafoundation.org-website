@@ -1,5 +1,7 @@
 -- Rework AgreementDocument from a PDF-URL pointer into a version-file catalog.
--- (Pre-existing rows were config-only and removed; the seed re-activates a file.)
+-- Pre-existing rows are obsolete PDF-URL config; clear them so the NOT NULL
+-- columns below can be added. The seed re-activates a legal/ file afterwards.
+DELETE FROM "AgreementDocument";
 ALTER TABLE "AgreementDocument" DROP COLUMN "url";
 ALTER TABLE "AgreementDocument" ADD COLUMN "filename" TEXT NOT NULL;
 ALTER TABLE "AgreementDocument" ADD COLUMN "hashAlgo" TEXT NOT NULL DEFAULT 'sha384';
