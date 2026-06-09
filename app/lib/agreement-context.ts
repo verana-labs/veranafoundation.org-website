@@ -18,6 +18,7 @@ export type ApplyInput = {
   country?: string | null; // associate (country code)
   signerName?: string;
   signerTitle?: string | null;
+  email?: string | null;
   effectiveDate: Date;
 };
 
@@ -44,6 +45,7 @@ export function toAgreementContext(i: ApplyInput): AgreementContext {
     memberAddress: isOrg ? i.registeredAddress ?? null : null,
     signerName: i.signerName ?? "",
     signerTitle: isOrg ? i.signerTitle ?? null : null,
+    memberEmail: i.email ?? null,
     effectiveDate: i.effectiveDate,
   };
 }

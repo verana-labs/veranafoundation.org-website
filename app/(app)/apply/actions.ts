@@ -40,6 +40,7 @@ export async function previewAgreement(input: {
   signerName?: string;
   signerTitle?: string;
 }): Promise<{ html?: string; error?: string }> {
+  const user = await currentUser();
   const ctx = toAgreementContext({
     class: input.class === "associate" ? "associate" : "contributor",
     type: input.type === "organization" ? "organization" : "individual",
@@ -51,6 +52,7 @@ export async function previewAgreement(input: {
     country: input.country,
     signerName: input.signerName,
     signerTitle: input.signerTitle,
+    email: user?.email,
     effectiveDate: new Date(),
   });
   try {
@@ -174,6 +176,7 @@ export async function applyMember(
       countryOfResidence: d.countryOfResidence,
       signerName: d.signerName,
       signerTitle: d.signerTitle,
+      email: user.email,
       effectiveDate: signedAt,
     });
     let pdf: Buffer | undefined;
@@ -255,6 +258,7 @@ export async function applyMember(
       registeredAddress: d.registeredAddress,
       signerName: d.signerName,
       signerTitle: d.signerTitle,
+      email: user.email,
       effectiveDate: signedAt,
     });
     let pdf: Buffer | undefined;

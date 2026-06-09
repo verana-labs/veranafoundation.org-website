@@ -639,6 +639,7 @@ Name: {{signer_name}}
 <!--IF:is_organization-->
 Title: {{signer_title}}
 <!--ENDIF-->
+Email: {{member_email}}
 Date: {{effective_date}}
 
 # 
@@ -742,6 +743,40 @@ The Foundation reserves the right, in its sole discretion, to modify or eliminat
 A.12 **Survival.**
 
 All obligations applicable to Associate Members that, by their nature, are intended to survive termination—including obligations related to intellectual property licensing (Section 4), confidentiality (Section 5), compliance with the Code of Conduct (Section 6), and fee obligations accrued prior to termination (Section 7)—shall survive in accordance with their terms.
+
+---
+
+## **ANNEX A — SIGNATURES**
+
+By signing below, the Parties acknowledge and agree to be bound by the terms of this Annex A.
+
+### **VERANA FOUNDATION (IN FORMATION)**
+
+Represented by 2060 OÜ
+
+By:
+
+Name: Fabrice Rochette
+
+Title: Legal Representative
+
+Date: {{effective_date}}
+
+---
+
+### **MEMBER**
+
+**{{member_legal_name}}**
+
+By:
+Name: {{signer_name}}
+<!--IF:is_organization-->
+Title: {{signer_title}}
+<!--ENDIF-->
+Email: {{member_email}}
+Date: {{effective_date}}
+
+# 
 
 # **ANNEX B**
 
@@ -857,6 +892,40 @@ All obligations that, by their nature, are intended to survive termination—inc
 
 # 
 
+---
+
+## **ANNEX B — SIGNATURES**
+
+By signing below, the Parties acknowledge and agree to be bound by the terms of this Annex B.
+
+### **VERANA FOUNDATION (IN FORMATION)**
+
+Represented by 2060 OÜ
+
+By:
+
+Name: Fabrice Rochette
+
+Title: Legal Representative
+
+Date: {{effective_date}}
+
+---
+
+### **MEMBER**
+
+**{{member_legal_name}}**
+
+By:
+Name: {{signer_name}}
+<!--IF:is_organization-->
+Title: {{signer_title}}
+<!--ENDIF-->
+Email: {{member_email}}
+Date: {{effective_date}}
+
+# 
+
 # **ANNEX C**
 
 ## **CODE OF CONDUCT**
@@ -959,6 +1028,40 @@ All obligations stated in this Annex C that, by their nature, are intended to su
 
 # 
 
+---
+
+## **ANNEX C — SIGNATURES**
+
+By signing below, the Parties acknowledge and agree to be bound by the terms of this Annex C.
+
+### **VERANA FOUNDATION (IN FORMATION)**
+
+Represented by 2060 OÜ
+
+By:
+
+Name: Fabrice Rochette
+
+Title: Legal Representative
+
+Date: {{effective_date}}
+
+---
+
+### **MEMBER**
+
+**{{member_legal_name}}**
+
+By:
+Name: {{signer_name}}
+<!--IF:is_organization-->
+Title: {{signer_title}}
+<!--ENDIF-->
+Email: {{member_email}}
+Date: {{effective_date}}
+
+# 
+
 # **ANNEX D**
 
 ## FEE SCHEDULE
@@ -1011,4 +1114,36 @@ This Fee Schedule shall take effect upon its adoption by the Foundation (in Form
 D.9 **Survival.**
 
 The Member’s obligation to pay any annual dues that have accrued prior to termination of membership shall survive termination of the Membership Agreement and shall remain enforceable until fully satisfied.
+
+---
+
+## **ANNEX D — SIGNATURES**
+
+By signing below, the Parties acknowledge and agree to be bound by the terms of this Annex D.
+
+### **VERANA FOUNDATION (IN FORMATION)**
+
+Represented by 2060 OÜ
+
+By:
+
+Name: Fabrice Rochette
+
+Title: Legal Representative
+
+Date: {{effective_date}}
+
+---
+
+### **MEMBER**
+
+**{{member_legal_name}}**
+
+By:
+Name: {{signer_name}}
+<!--IF:is_organization-->
+Title: {{signer_title}}
+<!--ENDIF-->
+Email: {{member_email}}
+Date: {{effective_date}}
 

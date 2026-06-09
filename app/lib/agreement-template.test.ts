@@ -6,7 +6,7 @@ const TPL = [
   "Party: **{{member_legal_name}}**, <!--IF:is_organization-->a {{entity_form}} under {{jurisdiction}}, at **{{member_address}}**<!--ELSE-->an individual resident in **{{jurisdiction}}**<!--IF:has_member_address-->, at **{{member_address}}**<!--ENDIF--><!--ENDIF-->.",
   "{{associate_checkbox}} Associate / {{contributor_checkbox}} Contributor",
   "Name: {{signer_name}}",
-  "<!--IF:is_organization-->Title: {{signer_title}}\n<!--ENDIF-->Date: {{effective_date}}",
+  "<!--IF:is_organization-->Title: {{signer_title}}\n<!--ENDIF-->Email: {{member_email}}\nDate: {{effective_date}}",
 ].join("\n");
 
 const orgAssociate: AgreementContext = {
@@ -18,6 +18,7 @@ const orgAssociate: AgreementContext = {
   memberAddress: "Tallinn",
   signerName: "Jane Doe",
   signerTitle: "CEO",
+  memberEmail: "jane@acme.example",
   effectiveDate: new Date("2026-06-09T10:00:00Z"),
 };
 
@@ -42,6 +43,7 @@ describe("resolveTemplate", () => {
     expect(out).toContain("a private limited company under Estonia, at **Tallinn**");
     expect(out).toContain("☒ Associate / ☐ Contributor");
     expect(out).toContain("Title: CEO");
+    expect(out).toContain("Email: jane@acme.example");
     expect(out).toContain("Date: 9 June 2026");
   });
 
@@ -82,6 +84,13 @@ describe("real template + PDF", () => {
     expect(md).not.toMatch(/\{\{|<!--(?:IF:|ELSE|ENDIF)/);
     expect(md).toContain("Acme OÜ");
     expect(md).toContain("☒ **Associate Member**");
+    // Member email appears in every signature block: main + 4 annexes = 5.
+    expect(md.match(/Email: jane@acme\.example/g)).toHaveLength(5);
+    // A signature block per annex (A–D) plus the main one.
+    expect(md.match(/### \*\*MEMBER\*\*/g)).toHaveLength(5);
+    for (const x of ["A", "B", "C", "D"]) {
+      expect(md).toContain(`## **ANNEX ${x} — SIGNATURES**`);
+    }
   });
 
   it("renders a valid multi-page PDF", async () => {
