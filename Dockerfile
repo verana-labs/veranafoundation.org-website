@@ -69,6 +69,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY prisma ./prisma
 COPY package.json ./
 
+# Generate the Prisma client so this image can also run the seed
+# (node prisma/seed.mjs uses @prisma/client), not just `migrate deploy`.
+RUN node node_modules/prisma/build/index.js generate
+
 USER node
 
 CMD ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]

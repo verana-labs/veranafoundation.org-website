@@ -1,0 +1,42 @@
+# One-off seed Job — bootstrap the admin allowlist (and optionally the active
+# Membership Agreement) in-cluster. NOT run by CI: it's manual and idempotent
+# (upsert), so it won't undo admins later removed in /admin/admins.
+#
+# Usage:
+#   1. Edit ADMIN_BOOTSTRAP_EMAILS below (comma-separated).
+#   2. kubectl -n web delete job seed --ignore-not-found
+#      kubectl -n web apply -f ci/seed-job.yaml
+#      kubectl -n web wait --for=condition=complete job/seed --timeout=120s
+#      kubectl -n web logs job/seed
+#   3. Sign in with that email — you're now an admin; manage the rest in /admin/admins.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed
+  namespace: web
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: seed
+          image: veranalabs/veranafoundation.org-website:migrate
+          imagePullPolicy: Always
+          command: ["node", "prisma/seed.mjs"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: DATABASE_URL
+            # Comma-separated admin emails to seed. Edit before applying.
+            - name: ADMIN_BOOTSTRAP_EMAILS
+              value: "fabrice@verana.io"
+            # Optional: also set the active Membership Agreement PDF here instead
+            # of /admin/settings.
+            # - name: AGREEMENT_PDF_URL
+            #   value: "https://…/membership-agreement.pdf"
+            # - name: AGREEMENT_VERSION
+            #   value: "v1"
