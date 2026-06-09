@@ -11,7 +11,7 @@ export async function GET() {
   const session = await auth();
   const user = session?.user;
   if (!user?.email) {
-    return NextResponse.json({ user: null, actions: [] });
+    return NextResponse.json({ user: null, actions: [], isMember: false });
   }
 
   const [admin, links] = await Promise.all([
@@ -37,5 +37,8 @@ export async function GET() {
       image: user.image ?? null,
     },
     actions,
+    // Whether the user already belongs to / acts for any member — used to hide
+    // the header "Join" button.
+    isMember: links.length > 0,
   });
 }
