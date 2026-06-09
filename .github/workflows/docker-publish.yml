@@ -78,7 +78,9 @@ jobs:
           context: .
           file: ./Dockerfile
           target: runner
-          platforms: linux/amd64,linux/arm64
+          # amd64 only: the OVH cluster is x86_64, and cross-building the Next.js
+          # app for arm64 under QEMU crashes the build worker with SIGILL.
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -91,7 +93,7 @@ jobs:
           context: .
           file: ./Dockerfile
           target: migrator
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ env.DOCKER_HUB_NAMESPACE }}/${{ env.IMAGE_NAME }}:migrate
           cache-from: type=gha
