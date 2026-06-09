@@ -9,7 +9,10 @@ type Wg = {
   description: string | null;
   requiredClass: "any" | "associate";
   link: string;
+  showOnHome: boolean;
 };
+
+const checkbox = "flex items-center gap-2 text-sm";
 
 const input = "rounded border border-rule bg-surface px-3 py-2 text-sm w-full";
 
@@ -37,6 +40,9 @@ export default function WorkingGroupsAdmin({ groups }: { groups: Wg[] }) {
           <input name="description" placeholder="Description (optional)" className={input} />
           <input name="link" type="url" required placeholder="https://… (external space)" className={input} />
           <ClassSelect />
+          <label className={checkbox}>
+            <input type="checkbox" name="showOnHome" /> Show on home page
+          </label>
           {state.error && <p className="text-sm text-red-600">{state.error}</p>}
           {state.ok && <p className="text-sm text-green-600">Created.</p>}
           <button type="submit" className="btn btn-primary w-fit" disabled={pending}>
@@ -59,6 +65,14 @@ export default function WorkingGroupsAdmin({ groups }: { groups: Wg[] }) {
                   <input name="description" defaultValue={wg.description ?? ""} placeholder="Description (optional)" className={input} />
                   <input name="link" type="url" required defaultValue={wg.link} className={input} />
                   <ClassSelect value={wg.requiredClass} />
+                  <label className={checkbox}>
+                    <input
+                      type="checkbox"
+                      name="showOnHome"
+                      defaultChecked={wg.showOnHome}
+                    />{" "}
+                    Show on home page
+                  </label>
                   <button type="submit" className="btn text-xs w-fit">Save</button>
                 </form>
                 <form action={deleteWg}>

@@ -33,6 +33,22 @@ export function lockReason(requiredClass: "any" | "associate"): string {
     : "Requires an active membership.";
 }
 
+/**
+ * Working groups featured on the public home page (admin-flagged). Resilient:
+ * the home is ISR-prerendered (incl. at build where there's no DB), so a DB
+ * failure degrades to an empty board rather than breaking the build.
+ */
+export async function listHomeWorkingGroups() {
+  try {
+    return await db.workingGroup.findMany({
+      where: { showOnHome: true },
+      orderBy: { name: "asc" },
+    });
+  } catch {
+    return [];
+  }
+}
+
 export type WorkingGroupCard = {
   id: string;
   name: string;

@@ -31,6 +31,7 @@ export default async function AdminWorkingGroupsPage() {
             description: g.description,
             requiredClass: g.requiredClass,
             link: g.link,
+            showOnHome: g.showOnHome,
           }))}
         />
       </div>

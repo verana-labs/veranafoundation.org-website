@@ -18,6 +18,7 @@ const wgSchema = z.object({
   description: z.string().trim().optional(),
   requiredClass: z.enum(["any", "associate"]),
   link: z.string().trim().url(),
+  showOnHome: z.boolean(),
 });
 
 function parse(formData: FormData) {
@@ -26,6 +27,7 @@ function parse(formData: FormData) {
     description: formData.get("description") || undefined,
     requiredClass: formData.get("requiredClass"),
     link: formData.get("link"),
+    showOnHome: formData.get("showOnHome") === "on",
   });
 }
 
@@ -53,6 +55,7 @@ export async function createWg(
     },
   });
   revalidatePath("/admin/working-groups");
+  revalidatePath("/"); // home page board (showOnHome) is ISR
   return { ok: true };
 }
 
@@ -76,6 +79,7 @@ export async function updateWg(formData: FormData) {
     },
   });
   revalidatePath("/admin/working-groups");
+  revalidatePath("/"); // home page board (showOnHome) is ISR
 }
 
 export async function deleteWg(formData: FormData) {
@@ -92,4 +96,5 @@ export async function deleteWg(formData: FormData) {
     },
   });
   revalidatePath("/admin/working-groups");
+  revalidatePath("/"); // home page board (showOnHome) is ISR
 }
