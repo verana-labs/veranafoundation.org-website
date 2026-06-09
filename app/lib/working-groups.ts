@@ -32,3 +32,34 @@ export function lockReason(requiredClass: "any" | "associate"): string {
     ? "Requires an active Associate membership."
     : "Requires an active membership.";
 }
+
+export type WorkingGroupCard = {
+  id: string;
+  name: string;
+  description: string | null;
+  requiredClass: "any" | "associate";
+  link: string;
+  accessible: boolean;
+};
+
+/**
+ * All working groups (always the full list), with per-user clickability:
+ * `accessible` is true only for a signed-in user whose memberships satisfy the
+ * group's requiredClass. Pass null for a signed-out visitor (nothing clickable).
+ */
+export async function listWorkingGroupsWithAccess(
+  userId: string | null,
+): Promise<WorkingGroupCard[]> {
+  const [groups, classes] = await Promise.all([
+    db.workingGroup.findMany({ orderBy: { name: "asc" } }),
+    userId ? userActiveClasses(userId) : Promise.resolve(new Set<WgClass>()),
+  ]);
+  return groups.map((wg) => ({
+    id: wg.id,
+    name: wg.name,
+    description: wg.description,
+    requiredClass: wg.requiredClass,
+    link: wg.link,
+    accessible: !!userId && canAccessWg(wg.requiredClass, classes),
+  }));
+}
