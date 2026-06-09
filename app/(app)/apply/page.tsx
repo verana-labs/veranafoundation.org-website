@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { getActiveAgreement } from "@/app/lib/agreement";
+import { currentUser } from "@/app/lib/authz";
+import { db } from "@/app/lib/db";
 import ApplyForm from "./ApplyForm";
 
 export const metadata: Metadata = { title: "Join the Foundation" };
@@ -12,6 +14,16 @@ export default async function ApplyPage({
   const { class: cls } = await searchParams;
   const initialClass = cls === "associate" ? "associate" : "contributor";
   const agreement = await getActiveAgreement();
+
+  // A user may hold at most one individual membership — if they already do, the
+  // "individual" contributor option is disabled.
+  const user = await currentUser();
+  const hasIndividual = user
+    ? (await db.userMember.findFirst({
+        where: { userId: user.id, member: { type: "individual" } },
+        select: { id: true },
+      })) != null
+    : false;
 
   return (
     <>
@@ -38,6 +50,7 @@ export default async function ApplyPage({
             <ApplyForm
               agreementVersion={agreement.version}
               initialClass={initialClass}
+              hasIndividual={hasIndividual}
             />
           ) : (
             <p className="text-muted">

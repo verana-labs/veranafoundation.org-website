@@ -178,6 +178,16 @@ export async function applyMember(
     }
     const d = parsed.data;
     const isOrg = d.type === "organization";
+    // A user may hold at most one individual membership.
+    if (d.type === "individual") {
+      const existingIndividual = await db.userMember.findFirst({
+        where: { userId: user.id, member: { type: "individual" } },
+        select: { id: true },
+      });
+      if (existingIndividual) {
+        return { error: "You already have an individual membership." };
+      }
+    }
     const { memberId, signatureRecordId } = await db.$transaction(async (tx) => {
       const member = await tx.member.create({
         data: {
