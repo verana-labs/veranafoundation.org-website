@@ -12,6 +12,9 @@ import { renderAgreementHtml } from "@/app/lib/agreement-html";
 import { persistSignedAgreement } from "@/app/lib/signed-agreement";
 import { loadActiveAgreement, type ActiveAgreement } from "@/app/lib/agreement-versions";
 import { sendEmail, escapeHtml } from "@/app/lib/email";
+import { emailLayout } from "@/app/lib/email-layout";
+
+const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
 
 export type ApplyState = { error?: string };
 
@@ -33,17 +36,22 @@ async function notifyAdminsIntegrityFailure(active: ActiveAgreement) {
     await sendEmail({
       to,
       subject: "⚠ Membership Agreement integrity check failed — signing blocked",
-      html: `
-        <p>The active Membership Agreement file no longer matches the hash it was
-        published with, so new signatures are blocked until it is resolved.</p>
-        <ul>
+      html: emailLayout({
+        heading: "Agreement integrity check failed",
+        bodyHtml: `
+        <p style="margin:0 0 12px;">The active Membership Agreement file no longer
+        matches the hash it was published with, so new signatures are blocked
+        until it is resolved.</p>
+        <ul style="margin:0 0 12px;padding-left:18px;">
           <li>Version: ${escapeHtml(active.version)}</li>
           <li>File: ${escapeHtml(active.filename)}</li>
           <li>Expected: ${escapeHtml(active.pinnedHash)}</li>
           <li>Found: ${escapeHtml(active.currentHash ?? "(file missing)")}</li>
         </ul>
-        <p>Restore the original file, or publish a new version in
-        <code>/admin/settings</code>.</p>`,
+        <p style="margin:0;">Restore the original file, or publish a new version
+        in Settings.</p>`,
+        button: { label: "Open Settings", href: `${SITE_URL}/admin/settings` },
+      }),
     });
   } catch (e) {
     console.error("[apply] admin integrity alert failed", e);

@@ -4,6 +4,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/app/lib/db";
 import { linkMemberAccess } from "@/app/lib/access";
 import { smtpServer, mailFrom } from "@/app/lib/smtp";
+import { sendEmail } from "@/app/lib/email";
+import { emailLayout } from "@/app/lib/email-layout";
 import authConfig from "@/auth.config";
 
 const emailServer = smtpServer();
@@ -18,7 +20,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     ...authConfig.providers,
     ...(emailServer
-      ? [Nodemailer({ server: emailServer, from: mailFrom() })]
+      ? [
+          Nodemailer({
+            server: emailServer,
+            from: mailFrom(),
+            // Branded magic-link email (Verana logo + themed button).
+            async sendVerificationRequest({ identifier, url }) {
+              await sendEmail({
+                to: identifier,
+                subject: "Sign in to the Verana Foundation",
+                html: emailLayout({
+                  heading: "Sign in to the Verana Foundation",
+                  bodyHtml: `
+                    <p style="margin:0 0 12px;">Use the button below to sign in.
+                    This link expires shortly and can only be used once.</p>
+                    <p style="margin:0;color:#5b5b5b;font-size:12px;">If you didn't
+                    request this, you can safely ignore this email.</p>`,
+                  button: { label: "Sign in", href: url },
+                }),
+              });
+            },
+          }),
+        ]
       : []),
   ],
   adapter: PrismaAdapter(db),
