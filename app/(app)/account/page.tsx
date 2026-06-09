@@ -89,7 +89,13 @@ export default async function AccountPage() {
                       role={l.role}
                       country={l.member.jurisdiction}
                       periodEnd={l.member.memberships[0]?.periodEnd}
-                      agreementHref={`/account/agreement/${l.memberId}`}
+                      agreementHref={
+                        // Only managers (incl. the signer) may download the
+                        // signed agreement — not representatives.
+                        l.role === "manager"
+                          ? `/account/agreement/${l.memberId}`
+                          : null
+                      }
                       manageHref={
                         l.role === "manager"
                           ? `/account/org/${l.memberId}`
