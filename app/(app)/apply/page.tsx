@@ -14,7 +14,8 @@ export default async function ApplyPage({
   const agreement = await getActiveAgreement();
 
   return (
-    <div className="prose-body max-w-2xl">
+    <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      <div className="prose-body max-w-2xl">
       <h1 className="display text-3xl">Join the Foundation</h1>
       <p className="text-muted mt-2">
         Contributor membership is free; Associate (supporting) membership pays
@@ -36,6 +37,7 @@ export default async function ApplyPage({
           is configured.
         </p>
       )}
+      </div>
     </div>
   );
 }
