@@ -282,6 +282,7 @@ model WorkingGroup {
   description   String?
   requiredClass RequiredClass @default(any)
   link          String // external URL to the WG's space
+  showOnHome    Boolean       @default(false) // featured on the public home page
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

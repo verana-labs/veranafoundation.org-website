@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getOrgStats, formatCount, formatRelative } from "@/app/lib/github";
+import { listHomeWorkingGroups } from "@/app/lib/working-groups";
 
 // Revalidate the live GitHub stats roughly once a day (ISR).
 export const revalidate = 86400;
@@ -44,32 +45,6 @@ const SOFTWARE = [
   },
 ];
 
-const WORKING_GROUPS = [
-  {
-    name: "Specification WG",
-    desc: "Authors and maintains the specifications.",
-    requires: "Associate or Contributor",
-    associateOnly: false,
-  },
-  {
-    name: "Reference Implementations WG",
-    desc: "Maintains the open-source software.",
-    requires: "Associate or Contributor",
-    associateOnly: false,
-  },
-  {
-    name: "Interop WG",
-    desc: "Cross-implementation interoperability and conformance.",
-    requires: "Associate or Contributor",
-    associateOnly: false,
-  },
-  {
-    name: "Business Cases WG",
-    desc: "Use cases, business models, and adoption patterns.",
-    requires: "Associate only",
-    associateOnly: true,
-  },
-];
 
 const FOUNDERS = [
   { name: "2060 OÜ", href: "https://2060.io", logo: "/assets/img/logo_2060.svg" },
@@ -91,6 +66,7 @@ const AVATAR_COLORS = ["#763EF0", "#1FB57A", "#2E2A8F", "#5b2fc9", "#178a5e"];
 
 export default async function HomePage() {
   const stats = await getOrgStats();
+  const workingGroups = await listHomeWorkingGroups();
   const lastActivity = formatRelative(stats?.lastActivity ?? null);
 
   return (
@@ -354,21 +330,31 @@ export default async function HomePage() {
             <div>
               <h3 className="display text-lg mb-4">Working groups</h3>
               <div className="space-y-3">
-                {WORKING_GROUPS.map((wg) => (
-                  <div key={wg.name} className="wg-tile">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-medium text-ink">{wg.name}</p>
-                      <span
-                        className={`badge flex-shrink-0 ${
-                          wg.associateOnly ? "badge-purple" : ""
-                        }`}
-                      >
-                        {wg.requires}
-                      </span>
+                {workingGroups.length === 0 ? (
+                  <p className="text-sm text-muted">
+                    Working groups will be announced soon.
+                  </p>
+                ) : (
+                  workingGroups.map((wg) => (
+                    <div key={wg.id} className="wg-tile">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-medium text-ink">{wg.name}</p>
+                        <span
+                          className={`badge flex-shrink-0 ${
+                            wg.requiredClass === "associate" ? "badge-purple" : ""
+                          }`}
+                        >
+                          {wg.requiredClass === "associate"
+                            ? "Associate only"
+                            : "Associate or Contributor"}
+                        </span>
+                      </div>
+                      {wg.description && (
+                        <p className="text-sm text-muted mt-1">{wg.description}</p>
+                      )}
                     </div>
-                    <p className="text-sm text-muted mt-1">{wg.desc}</p>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
               <p className="text-sm text-muted mt-4">
                 <Link href="/contribute" className="text-purple hover:underline">
