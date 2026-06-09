@@ -38,7 +38,7 @@ docker run --rm -p 3000:3000 veranalabs/veranafoundation.org-website:local
 ## CI/CD
 
 - **`docker-publish.yml`** — type-check + build on every PR/push; on push to `main`
-  and on `v*` tags, builds and pushes the multi-arch image to Docker Hub
+  and on `v*` tags, builds and pushes the `linux/amd64` image to Docker Hub
   (`veranalabs/veranafoundation.org-website`) and rolls out to the OVH Kubernetes
   cluster (namespace `web`).
 - **`release-please.yml`** — maintains a release PR from Conventional Commits; merging
