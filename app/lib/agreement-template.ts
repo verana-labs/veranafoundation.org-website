@@ -29,6 +29,8 @@ export type AgreementContext = {
   signerName: string;
   /** Organization only — the signer's role. */
   signerTitle?: string | null;
+  /** The member's email (the signed-in user's verified email). */
+  memberEmail?: string | null;
   effectiveDate: Date;
 };
 
@@ -79,6 +81,7 @@ export function buildAgreementValues(ctx: AgreementContext): {
     member_address: address,
     signer_name: ctx.signerName.trim(),
     signer_title: (ctx.signerTitle ?? "").trim(),
+    member_email: (ctx.memberEmail ?? "").trim(),
     effective_day: ordinal(d.getUTCDate()),
     effective_month: MONTHS[d.getUTCMonth()],
     effective_year: String(d.getUTCFullYear()),
