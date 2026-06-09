@@ -128,6 +128,7 @@ jobs:
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           SELLER_VAT_NUMBER: ${{ secrets.SELLER_VAT_NUMBER }}
           BANK_TRANSFER_DETAILS: ${{ secrets.BANK_TRANSFER_DETAILS }}
+          ADMIN_BOOTSTRAP_EMAILS: ${{ secrets.ADMIN_BOOTSTRAP_EMAILS }}
         run: |
           echo "$KUBECONFIG_DATA" > /tmp/kubeconfig
           export KUBECONFIG=/tmp/kubeconfig
@@ -150,6 +151,7 @@ jobs:
             --from-literal=STRIPE_WEBHOOK_SECRET="${STRIPE_WEBHOOK_SECRET}" \
             --from-literal=SELLER_VAT_NUMBER="${SELLER_VAT_NUMBER}" \
             --from-literal=BANK_TRANSFER_DETAILS="${BANK_TRANSFER_DETAILS}" \
+            --from-literal=ADMIN_BOOTSTRAP_EMAILS="${ADMIN_BOOTSTRAP_EMAILS}" \
             --dry-run=client -o yaml | kubectl apply -f -
           kubectl apply -f k8s/
           # Wait for Postgres, then apply DB migrations as a one-off Job before

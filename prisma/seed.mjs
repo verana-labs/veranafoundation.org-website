@@ -4,6 +4,17 @@
 // /admin/admins isn't undone. Run: `npm run db:seed`.
 import { PrismaClient } from "@prisma/client";
 
+// Run directly via `node`, so load local env ourselves (the Prisma CLI loads it
+// via prisma.config.ts, but `node prisma/seed.mjs` doesn't). In the cluster,
+// env comes from the Job and these files are absent (no-op).
+for (const file of [".env.local", ".env"]) {
+  try {
+    process.loadEnvFile(file);
+  } catch {
+    // file absent — ignore
+  }
+}
+
 const db = new PrismaClient();
 
 const emails = (process.env.ADMIN_BOOTSTRAP_EMAILS ?? "")
