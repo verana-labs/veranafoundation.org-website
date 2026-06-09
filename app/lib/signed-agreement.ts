@@ -18,8 +18,9 @@ export async function persistSignedAgreement(opts: {
   memberId: string;
   signatureRecordId: string;
   ctx: AgreementContext;
+  template: string;
 }): Promise<{ pdf: Buffer; hash: string; key: string }> {
-  const pdf = await renderAgreementPdf(opts.ctx);
+  const pdf = await renderAgreementPdf(opts.ctx, opts.template);
   const hash = crypto.createHash("sha256").update(pdf).digest("hex");
   const key = agreementKey(opts.memberId);
   await putFile(key, pdf);

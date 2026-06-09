@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { markdownToHtml, renderAgreementHtml } from "./agreement-html";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { markdownToHtml, renderAgreementHtml, renderTemplateHtml } from "./agreement-html";
 import { AgreementContext } from "./agreement-template";
+
+const TEMPLATE = readFileSync(
+  path.join(process.cwd(), "legal", "membership-agreement-v1.md"),
+  "utf8",
+);
 
 describe("markdownToHtml", () => {
   it("maps headings, bold, rules and pipe tables", () => {
@@ -44,10 +51,19 @@ describe("renderAgreementHtml", () => {
       signerTitle: "CEO",
       effectiveDate: new Date("2026-06-09T10:00:00Z"),
     };
-    const html = await renderAgreementHtml(ctx);
+    const html = renderAgreementHtml(ctx, TEMPLATE);
     expect(html).toContain("Acme OÜ");
     expect(html).toContain("<table>");
     expect(html).toContain("☒"); // selected class checkbox kept as unicode in HTML
     expect(html).not.toMatch(/\{\{|<!--(?:IF:|ELSE|ENDIF)/);
+  });
+});
+
+describe("renderTemplateHtml (uncustomized admin preview)", () => {
+  it("keeps placeholders literal but strips conditional markers", () => {
+    const html = renderTemplateHtml(TEMPLATE);
+    expect(html).toContain("{{member_legal_name}}"); // placeholders left visible
+    expect(html).not.toMatch(/<!--(?:IF:|ELSE|ENDIF)/); // markers removed
+    expect(html).toContain("<table>");
   });
 });

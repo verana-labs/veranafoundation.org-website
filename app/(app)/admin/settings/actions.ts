@@ -1,58 +1,35 @@
 "use server";
 
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
-
-const schema = z.object({
-  version: z.string().trim().min(1),
-  url: z.string().trim().url(),
-  hash: z.string().trim().optional(),
-});
+import { activateVersion } from "@/app/lib/agreement-versions";
 
 export type SettingsState = { error?: string; ok?: boolean };
 
-export async function setAgreement(
+/** Make the chosen legal/ version file the active Membership Agreement. */
+export async function activateAgreementVersion(
   _prev: SettingsState,
   formData: FormData,
 ): Promise<SettingsState> {
   const user = await currentUser();
   if (!user || !(await isAdmin(user.email))) return { error: "Forbidden" };
 
-  const parsed = schema.safeParse({
-    version: formData.get("version"),
-    url: formData.get("url"),
-    hash: formData.get("hash") || undefined,
-  });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
-  }
-  const data = parsed.data;
+  const filename = String(formData.get("filename") ?? "").trim();
+  if (!filename) return { error: "Choose a version." };
 
-  await db.$transaction([
-    db.agreementDocument.updateMany({
-      where: { active: true },
-      data: { active: false },
-    }),
-    db.agreementDocument.create({
-      data: {
-        version: data.version,
-        url: data.url,
-        hash: data.hash ?? null,
-        active: true,
-      },
-    }),
-    db.adminAction.create({
-      data: {
-        actorUserId: user.id,
-        actorEmail: user.email!,
-        action: "agreement.update",
-        targetType: "AgreementDocument",
-        after: data,
-      },
-    }),
-  ]);
+  const res = await activateVersion(filename);
+  if (!res.ok) return { error: res.error };
+
+  await db.adminAction.create({
+    data: {
+      actorUserId: user.id,
+      actorEmail: user.email!,
+      action: "agreement.activate",
+      targetType: "AgreementDocument",
+      after: { filename },
+    },
+  });
 
   revalidatePath("/admin/settings");
   return { ok: true };

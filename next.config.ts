@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/apply": ["./legal/**"],
     "/account/**": ["./legal/**"],
+    "/admin/**": ["./legal/**"],
   },
 
   // Lint and type-check are run separately in CI; don't fail the
