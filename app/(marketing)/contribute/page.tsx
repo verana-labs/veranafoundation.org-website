@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { currentUser } from "@/app/lib/authz";
+import { listWorkingGroupsWithAccess } from "@/app/lib/working-groups";
+import WorkingGroupCards from "@/app/components/WorkingGroupCards";
 
 export const metadata: Metadata = {
   title: "Contribute",
@@ -7,38 +10,13 @@ export const metadata: Metadata = {
     "Participate in the Verana Foundation's open working groups and contribute to the specifications and software. Working-group participation requires Foundation membership (Associate or Contributor).",
 };
 
-const WORKING_GROUPS = [
-  {
-    name: "Specification WG",
-    desc: "Authors and maintains the Verifiable Trust and Verifiable Public Registry specifications.",
-    href: "https://github.com/verana-labs",
-    requires: "Associate or Contributor",
-    associateOnly: false,
-  },
-  {
-    name: "Reference Implementations WG",
-    desc: "Maintains the open-source software: Verifiable Public Registry, Indexer, VS-Agent, Frontend.",
-    href: "https://github.com/verana-labs",
-    requires: "Associate or Contributor",
-    associateOnly: false,
-  },
-  {
-    name: "Interop WG",
-    desc: "Cross-implementation interoperability testing and conformance.",
-    href: "https://github.com/verana-labs",
-    requires: "Associate or Contributor",
-    associateOnly: false,
-  },
-  {
-    name: "Business Cases WG",
-    desc: "Use cases, business models, and adoption patterns for the open trust layer.",
-    href: "https://github.com/verana-labs",
-    requires: "Associate only",
-    associateOnly: true,
-  },
-];
+// Per-user clickability of the working-group tiles makes this page dynamic.
+export const dynamic = "force-dynamic";
 
-export default function ContributePage() {
+export default async function ContributePage() {
+  const user = await currentUser();
+  const workingGroups = await listWorkingGroupsWithAccess(user?.id ?? null);
+
   return (
     <>
       <section className="border-b border-rule">
@@ -85,28 +63,7 @@ export default function ContributePage() {
           <p className="tag mb-3">Working groups</p>
           <h2 className="display text-3xl">Where the work happens</h2>
           <div className="accent-line mt-4 mb-10" />
-          <div className="space-y-4">
-            {WORKING_GROUPS.map((wg) => (
-              <a
-                key={wg.name}
-                href={wg.href}
-                rel="noopener"
-                className="wg-tile block hover:no-underline"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <p className="display text-lg text-ink">{wg.name}</p>
-                  <span
-                    className={`badge flex-shrink-0 ${
-                      wg.associateOnly ? "badge-purple" : ""
-                    }`}
-                  >
-                    {wg.requires}
-                  </span>
-                </div>
-                <p className="text-sm text-muted mt-1">{wg.desc}</p>
-              </a>
-            ))}
-          </div>
+          <WorkingGroupCards groups={workingGroups} />
           <p className="text-xs text-muted mt-4">
             Meeting cadence and charters published per working group
             (pre-incorporation: details to follow).
