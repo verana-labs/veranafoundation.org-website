@@ -1,9 +1,7 @@
-import Nav from "@/app/components/Nav";
-import Footer from "@/app/components/Footer";
 import Reveal from "@/app/components/Reveal";
 
-// Public marketing chrome (Nav + Footer). The authenticated (app) area uses its
-// own shell — see app/(app)/layout.tsx.
+// Nav + Footer now live in the root layout (shared by every page). Marketing
+// pages just add the scroll-reveal animations.
 export default function MarketingLayout({
   children,
 }: {
@@ -11,9 +9,7 @@ export default function MarketingLayout({
 }) {
   return (
     <>
-      <Nav />
-      <main>{children}</main>
-      <Footer />
+      {children}
       <Reveal />
     </>
   );

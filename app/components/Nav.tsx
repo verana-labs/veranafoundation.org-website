@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
+import UserMenu, { type MeUser, type MeAction } from "@/app/components/UserMenu";
+
+type Me = { user: MeUser | null; actions: MeAction[] };
 
 const NAV_LINKS = [
   { href: "/about", label: "About" },
@@ -19,12 +23,20 @@ export default function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [announcementVisible, setAnnouncementVisible] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [me, setMe] = useState<Me | undefined>(undefined);
 
   useEffect(() => {
     setAnnouncementVisible(localStorage.getItem(ANNOUNCEMENT_KEY) !== "true");
     const current = document.documentElement.getAttribute("data-theme");
     setTheme(current === "dark" ? "dark" : "light");
   }, []);
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => r.json())
+      .then(setMe)
+      .catch(() => setMe({ user: null, actions: [] }));
+  }, [pathname]);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -117,7 +129,14 @@ export default function Nav() {
               ))}
             </nav>
 
-            <div className="hidden md:flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-3">
+              {me === undefined ? null : me.user ? (
+                <UserMenu user={me.user} actions={me.actions} />
+              ) : (
+                <Link href="/login" className="nav-link text-sm">
+                  Log in
+                </Link>
+              )}
               <Link href="/join" className="btn btn-primary text-sm px-4 py-2">
                 Join
               </Link>
@@ -242,6 +261,34 @@ export default function Nav() {
               >
                 Join →
               </Link>
+              <div className="w-full border-t border-rule my-2" />
+              {me?.user ? (
+                <>
+                  <span className="text-xs text-muted py-1 truncate w-full">
+                    {me.user.email}
+                  </span>
+                  {me.actions.map((a) => (
+                    <Link
+                      key={a.href}
+                      href={a.href}
+                      className="block w-full py-2 nav-link"
+                    >
+                      {a.label}
+                    </Link>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="block w-full text-left py-2 nav-link"
+                  >
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <Link href="/login" className="block w-full py-2 nav-link">
+                  Log in
+                </Link>
+              )}
             </div>
           )}
         </div>
