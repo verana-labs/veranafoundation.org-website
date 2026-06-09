@@ -58,6 +58,10 @@ CMD ["node", "server.js"]
 # Stage 4 — migration runner (used only by the one-off k8s migrate Job)
 # Full dependency tree + Prisma CLI + schema/migrations. Kept out of the lean
 # runtime image above; built/pushed under a separate :migrate tag.
+#
+# ⚠ This is the LAST stage, so it is the DEFAULT `docker build` target. The app
+# image MUST be built with `--target runner` (the CI app build does) — otherwise
+# you ship the migrator (which runs `migrate deploy` and exits → crash loop).
 # -----------------------------------------------------------------------------
 FROM node:22-alpine AS migrator
 
