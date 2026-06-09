@@ -1,13 +1,10 @@
-// Admin pages keep the constrained, padded container the (app) layout used to
-// provide for everyone (full-bleed sections are only for /account*).
+// Admin pages use the same full-bleed, grey-rule-separated section pattern as
+// the marketing and /account pages (each page renders its own PageHero +
+// Sections), so the layout is a pass-through.
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
+import { PageHero, Section } from "@/app/components/PageHero";
 
 export const metadata: Metadata = { title: "Members · Admin" };
 
@@ -38,28 +39,25 @@ export default async function AdminMembersPage({
   });
 
   return (
-    <div className="prose-body max-w-3xl">
-      <p className="text-sm text-muted">
-        <Link href="/admin">← Admin</Link>
-      </p>
-      <h1 className="display text-3xl">Members</h1>
+    <>
+      <PageHero back={{ href: "/admin", label: "Admin" }} title="Members" />
+      <Section bordered={false}>
+        <form className="flex gap-2">
+          <input
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder="Search name or email"
+            className="field w-64"
+          />
+          <button type="submit" className="btn">
+            Search
+          </button>
+        </form>
 
-      <form className="mt-4 flex gap-2">
-        <input
-          name="q"
-          defaultValue={q ?? ""}
-          placeholder="Search name or email"
-          className="field w-64"
-        />
-        <button type="submit" className="btn">
-          Search
-        </button>
-      </form>
-
-      {members.length === 0 ? (
-        <p className="text-muted mt-6">No members found.</p>
-      ) : (
-        <div className="overflow-x-auto mt-6">
+        {members.length === 0 ? (
+          <p className="text-muted mt-6">No members found.</p>
+        ) : (
+          <div className="overflow-x-auto mt-6">
           <table className="w-full border-collapse text-sm min-w-[640px]">
             <thead>
               <tr className="text-left text-muted">
@@ -104,8 +102,9 @@ export default async function AdminMembersPage({
               })}
             </tbody>
           </table>
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+      </Section>
+    </>
   );
 }

@@ -12,6 +12,7 @@ import {
   type IconDefinition,
 } from "@fortawesome/free-solid-svg-icons";
 import { currentUser, isAdmin } from "@/app/lib/authz";
+import { PageHero, Section } from "@/app/components/PageHero";
 
 export const metadata: Metadata = { title: "Admin" };
 
@@ -66,36 +67,30 @@ export default async function AdminPage() {
 
   return (
     <>
-      {/* Hero */}
-      <p className="tag mb-4">Admin</p>
-      <h1 className="display text-4xl sm:text-5xl leading-tight">Administration</h1>
-      <div className="accent-line mt-6" />
-      <p className="mt-6 text-muted max-w-2xl leading-relaxed">
-        Manage members, billing, working groups, admins, and the Membership
-        Agreement.
-      </p>
-
-      {/* Thin grey separator */}
-      <hr className="mt-10 border-t border-rule" />
-
-      {/* Feature cards */}
-      <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {FEATURES.map((f) => (
-          <Link
-            key={f.href}
-            href={f.href}
-            className="card group transition-colors hover:border-purple"
-          >
-            <FontAwesomeIcon
-              icon={f.icon}
-              className="text-2xl text-purple"
-              aria-hidden="true"
-            />
-            <h3 className="mt-3 transition-colors group-hover:text-purple">{f.label}</h3>
-            <p className="text-sm text-muted leading-relaxed">{f.description}</p>
-          </Link>
-        ))}
-      </div>
+      <PageHero
+        tag="Admin"
+        title="Administration"
+        lead="Manage members, billing, working groups, admins, and the Membership Agreement."
+      />
+      <Section bordered={false}>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {FEATURES.map((f) => (
+            <Link
+              key={f.href}
+              href={f.href}
+              className="card group transition-colors hover:border-purple"
+            >
+              <FontAwesomeIcon
+                icon={f.icon}
+                className="text-2xl text-purple"
+                aria-hidden="true"
+              />
+              <h3 className="mt-3 transition-colors group-hover:text-purple">{f.label}</h3>
+              <p className="text-sm text-muted leading-relaxed">{f.description}</p>
+            </Link>
+          ))}
+        </div>
+      </Section>
     </>
   );
 }
