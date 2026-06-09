@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser, isManagerOf } from "@/app/lib/authz";
+import MembershipCard from "@/app/components/MembershipCard";
 
 export const metadata: Metadata = { title: "Organization" };
 
@@ -29,13 +30,18 @@ export default async function OrgPage({
       </p>
       <h1 className="display text-3xl">{member.legalName}</h1>
 
+      <div className="mt-6 max-w-md">
+        <MembershipCard
+          name={member.legalName}
+          type="organization"
+          membershipClass={membership?.class}
+          status={membership?.status}
+          country={member.jurisdiction}
+          periodEnd={membership?.periodEnd}
+        />
+      </div>
+
       <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-        <dt className="text-muted">Membership</dt>
-        <dd>
-          {membership ? `${membership.class} · ${membership.status}` : "—"}
-        </dd>
-        <dt className="text-muted">Jurisdiction</dt>
-        <dd>{member.jurisdiction ?? "—"}</dd>
         <dt className="text-muted">Address</dt>
         <dd>{member.registeredAddress ?? "—"}</dd>
         <dt className="text-muted">VAT</dt>

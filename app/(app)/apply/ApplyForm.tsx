@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { ASSOCIATE_TIERS, formatEur } from "@/app/lib/dues";
+import CountrySelect from "@/app/components/CountrySelect";
 import { applyMember, type ApplyState } from "./actions";
 
 const input = "rounded border border-rule bg-surface px-3 py-2 text-sm w-full";
@@ -23,11 +24,12 @@ export default function ApplyForm({
   );
 
   return (
-    <form action={formAction} className="grid gap-5 max-w-xl">
+    <form action={formAction} className="grid gap-8 max-w-xl">
       <input type="hidden" name="class" value={cls} />
 
+      {/* ── Membership ─────────────────────────────────────────────── */}
       <fieldset className="grid gap-2">
-        <legend className="font-medium mb-1">Membership</legend>
+        <legend className="tag mb-2">Membership</legend>
         <div className="flex flex-wrap gap-4 text-sm">
           <label className="flex items-center gap-2">
             <input type="radio" checked={cls === "contributor"} onChange={() => setCls("contributor")} />
@@ -38,12 +40,8 @@ export default function ApplyForm({
             Associate — supporting (dues)
           </label>
         </div>
-      </fieldset>
-
-      {cls === "contributor" ? (
-        <>
-          <input type="hidden" name="type" value={type} />
-          <div className="flex gap-4 text-sm">
+        {cls === "contributor" && (
+          <div className="flex gap-4 text-sm mt-1">
             {(["individual", "organization"] as const).map((t) => (
               <label key={t} className="flex items-center gap-2">
                 <input type="radio" checked={type === t} onChange={() => setType(t)} />
@@ -51,75 +49,137 @@ export default function ApplyForm({
               </label>
             ))}
           </div>
-          <Field label={type === "organization" ? "Organization legal name" : "Full legal name"} name="legalName" required />
-          {type === "organization" ? (
-            <>
-              <Field label="Entity type" name="entityType" placeholder="corporation / association / …" />
-              <Field label="Jurisdiction of formation" name="jurisdiction" />
-              <Field label="Registered address" name="registeredAddress" />
-            </>
-          ) : (
-            <Field label="Country of residence" name="countryOfResidence" required />
-          )}
-        </>
-      ) : (
-        <>
-          <Field label="Organization legal name" name="legalName" required />
-          <Field label="Country (2-letter code)" name="country" placeholder="EE" required />
-          <Field label="Registered address" name="registeredAddress" />
-          <Field label="VAT number (EU — enables reverse charge)" name="vatNumber" />
-          <label className="grid gap-1 text-sm">
-            <span className="font-medium">Annual dues tier</span>
-            <select name="tier" required defaultValue="" className={input}>
-              <option value="" disabled>
-                Choose by headcount…
-              </option>
-              {ASSOCIATE_TIERS.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label} — {formatEur(t.amount)}
+        )}
+      </fieldset>
+
+      {/* ── Your details ───────────────────────────────────────────── */}
+      <fieldset className="grid gap-5 border-t border-rule pt-6">
+        <legend className="tag mb-2">Your details</legend>
+
+        {cls === "contributor" ? (
+          <>
+            <input type="hidden" name="type" value={type} />
+            <Field
+              label={type === "organization" ? "Organization legal name" : "Full legal name"}
+              name="legalName"
+              required
+            />
+            {type === "organization" ? (
+              <>
+                <Field label="Entity type" name="entityType" placeholder="corporation / association / …" />
+                <Labeled label="Jurisdiction of formation">
+                  <CountrySelect name="jurisdiction" />
+                </Labeled>
+                <Field label="Registered address" name="registeredAddress" />
+              </>
+            ) : (
+              <Labeled label="Country of residence" required>
+                <CountrySelect name="countryOfResidence" required />
+              </Labeled>
+            )}
+          </>
+        ) : (
+          <>
+            <Field label="Organization legal name" name="legalName" required />
+            <Labeled label="Country" required>
+              <CountrySelect name="country" required />
+            </Labeled>
+            <Field label="Registered address" name="registeredAddress" />
+            <Field label="VAT number (EU — enables reverse charge)" name="vatNumber" />
+            <Labeled label="Annual dues tier" required>
+              <select name="tier" required defaultValue="" className={input}>
+                <option value="" disabled>
+                  Choose by headcount…
                 </option>
-              ))}
-            </select>
-          </label>
-          <fieldset className="grid gap-1 text-sm">
-            <span className="font-medium">Payment</span>
-            <label className="flex items-center gap-2">
-              <input type="radio" name="payMethod" value="bank_transfer" defaultChecked />
-              Bank transfer (we&rsquo;ll send an invoice)
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="radio" name="payMethod" value="card" />
-              Card
-            </label>
-          </fieldset>
-        </>
-      )}
+                {ASSOCIATE_TIERS.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label} — {formatEur(t.amount)}
+                  </option>
+                ))}
+              </select>
+            </Labeled>
+            <fieldset className="grid gap-1 text-sm">
+              <span className="font-medium">
+                Payment <Req />
+              </span>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="payMethod" value="bank_transfer" defaultChecked />
+                Bank transfer (we&rsquo;ll send an invoice)
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="payMethod" value="card" />
+                Card
+              </label>
+            </fieldset>
+          </>
+        )}
 
-      <Field label="Signed by (name)" name="signerName" required />
-      {(cls === "associate" || type === "organization") && (
-        <Field label="Title" name="signerTitle" />
-      )}
+        <Field label="Signed by (name)" name="signerName" required />
+        {(cls === "associate" || type === "organization") && (
+          <Field label="Title" name="signerTitle" />
+        )}
+      </fieldset>
 
-      <div className="grid gap-1 text-sm">
-        <span className="font-medium">Membership Agreement ({agreementVersion})</span>
+      {/* ── Membership Agreement ───────────────────────────────────── */}
+      <fieldset className="grid gap-2 border-t border-rule pt-6">
+        <legend className="tag mb-2">Membership Agreement ({agreementVersion})</legend>
         <iframe src={agreementUrl} title="Membership Agreement" className="w-full h-72 rounded border border-rule" />
-      </div>
+      </fieldset>
 
-      <label className="flex items-start gap-2 text-sm">
-        <input type="checkbox" name="socialAnnouncementConsent" className="mt-1" />
-        <span>You may announce our membership on the Foundation&rsquo;s social networks.</span>
-      </label>
-      <label className="flex items-start gap-2 text-sm">
-        <input type="checkbox" name="accept" required className="mt-1" />
-        <span>I have read and accept the Membership Agreement, and I am authorized to enter into it.</span>
-      </label>
+      {/* ── Sign ───────────────────────────────────────────────────── */}
+      <fieldset className="grid gap-3 border-t border-rule pt-6">
+        <legend className="tag mb-2">Sign</legend>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="socialAnnouncementConsent" defaultChecked className="mt-1" />
+          <span>You may announce our membership on the Foundation&rsquo;s social networks.</span>
+        </label>
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="accept" required className="mt-1" />
+          <span>
+            I have read and accept the Membership Agreement, and I am authorized
+            to enter into it. <Req />
+          </span>
+        </label>
 
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+        {state.error && <p className="text-sm text-red-600">{state.error}</p>}
 
-      <button type="submit" className="btn btn-primary w-fit" disabled={pending}>
-        {pending ? "Submitting…" : cls === "associate" ? "Sign & continue to payment" : "Sign & join"}
-      </button>
+        <button type="submit" className="btn btn-primary w-fit mt-1" disabled={pending}>
+          {pending ? "Submitting…" : cls === "associate" ? "Sign & continue to payment" : "Sign & join"}
+        </button>
+        <p className="text-xs text-muted">
+          Fields marked <Req /> are required.
+        </p>
+      </fieldset>
     </form>
+  );
+}
+
+/** Required-field asterisk. */
+function Req() {
+  return (
+    <span className="text-purple" aria-hidden="true">
+      *
+    </span>
+  );
+}
+
+/** Label wrapper for non-`<input>` controls (selects, CountrySelect). */
+function Labeled({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="grid gap-1 text-sm">
+      <span className="font-medium">
+        {label} {required && <Req />}
+      </span>
+      {children}
+    </label>
   );
 }
 
@@ -136,7 +196,9 @@ function Field({
 }) {
   return (
     <label className="grid gap-1 text-sm">
-      <span className="font-medium">{label}</span>
+      <span className="font-medium">
+        {label} {required && <Req />}
+      </span>
       <input name={name} required={required} placeholder={placeholder} className={input} />
     </label>
   );

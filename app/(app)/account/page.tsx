@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { currentUser, effectiveMemberships } from "@/app/lib/authz";
+import MembershipCard from "@/app/components/MembershipCard";
 
 export const metadata: Metadata = { title: "Your account" };
 
@@ -56,14 +57,15 @@ export default async function AccountPage() {
                 <p className="tag mb-3">Individual membership</p>
                 <h2 className="display text-3xl">Your membership</h2>
                 <div className="accent-line mt-4 mb-8" />
-                <div className="card max-w-md">
-                  <span className="badge badge-green">
-                    {individual.member.memberships[0]?.class ?? "member"}
-                  </span>
-                  <h3>{individual.member.legalName}</h3>
-                  <p className="text-sm text-muted">
-                    {individual.member.memberships[0]?.status ?? "—"}
-                  </p>
+                <div className="max-w-md">
+                  <MembershipCard
+                    name={individual.member.legalName}
+                    type="individual"
+                    membershipClass={individual.member.memberships[0]?.class}
+                    status={individual.member.memberships[0]?.status}
+                    country={individual.member.countryOfResidence}
+                    periodEnd={individual.member.memberships[0]?.periodEnd}
+                  />
                 </div>
               </div>
             </section>
@@ -77,22 +79,21 @@ export default async function AccountPage() {
                 <div className="accent-line mt-4 mb-10" />
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {orgs.map((l) => (
-                    <div key={l.id} className="card">
-                      <span className="badge">{l.role}</span>
-                      <h3>{l.member.legalName}</h3>
-                      <p className="text-sm text-muted">
-                        {l.member.memberships[0]?.class ?? "—"} ·{" "}
-                        {l.member.memberships[0]?.status ?? "—"}
-                      </p>
-                      {l.role === "manager" && (
-                        <Link
-                          href={`/account/org/${l.memberId}`}
-                          className="text-sm text-purple hover:underline mt-auto self-end"
-                        >
-                          Manage →
-                        </Link>
-                      )}
-                    </div>
+                    <MembershipCard
+                      key={l.id}
+                      name={l.member.legalName}
+                      type="organization"
+                      membershipClass={l.member.memberships[0]?.class}
+                      status={l.member.memberships[0]?.status}
+                      role={l.role}
+                      country={l.member.jurisdiction}
+                      periodEnd={l.member.memberships[0]?.periodEnd}
+                      manageHref={
+                        l.role === "manager"
+                          ? `/account/org/${l.memberId}`
+                          : null
+                      }
+                    />
                   ))}
                 </div>
               </div>
