@@ -1,5 +1,8 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { sendEmail, escapeHtml } from "@/app/lib/email";
+import { emailLayout } from "@/app/lib/email-layout";
+
+const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
 
 export type ExecutionDetails = {
   to: string;
@@ -60,16 +63,19 @@ export async function sendExecutedAgreementEmail(d: ExecutionDetails): Promise<v
       content: d.agreementPdf,
     });
   }
-  const html = `
-    <p>Thank you for joining the Verana Foundation.</p>
-    <p>This confirms that <strong>${escapeHtml(d.signerName)}</strong> signed the
+  const html = emailLayout({
+    heading: "Welcome to the Verana Foundation",
+    bodyHtml: `
+    <p style="margin:0 0 12px;">Thank you for joining the Verana Foundation.</p>
+    <p style="margin:0 0 12px;">This confirms that <strong>${escapeHtml(d.signerName)}</strong> signed the
     Membership Agreement (version ${escapeHtml(d.agreementVersion)}) for
     <strong>${escapeHtml(d.memberName)}</strong> as a
     ${escapeHtml(d.membershipClass)} member on
     ${d.signedAt.toISOString().slice(0, 10)}.</p>
-    <p>Your signed agreement and a certificate of execution are attached. You can
-    also download the agreement any time from your account.</p>
-  `;
+    <p style="margin:0;">Your signed agreement and a certificate of execution are
+    attached. You can also download the agreement any time from your account.</p>`,
+    button: { label: "Go to your account", href: `${SITE_URL}/account` },
+  });
   await sendEmail({
     to: d.to,
     subject: "Your Verana Foundation membership — executed agreement",
