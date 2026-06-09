@@ -47,6 +47,10 @@ export async function removeAdmin(formData: FormData) {
   if (total <= 1) throw new Error("Keep at least one admin.");
 
   const entry = await db.adminAllowlistEntry.findUnique({ where: { id } });
+  // An admin cannot remove their own access.
+  if (entry && entry.email === user.email?.toLowerCase()) {
+    throw new Error("You cannot remove your own admin access.");
+  }
   await db.adminAllowlistEntry.delete({ where: { id } });
   await db.adminAction.create({
     data: {

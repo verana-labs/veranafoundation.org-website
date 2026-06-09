@@ -12,7 +12,7 @@ export default async function AdminAdminsPage() {
   if (!user || !(await isAdmin(user.email))) notFound();
 
   const entries = await db.adminAllowlistEntry.findMany({
-    orderBy: { addedAt: "asc" },
+    orderBy: { addedAt: "desc" },
   });
 
   return (
@@ -23,7 +23,15 @@ export default async function AdminAdminsPage() {
         lead="Anyone whose verified email is on this list has full Foundation-admin access. This is the only grant of admin rights."
       />
       <Section bordered={false}>
-        <AdminAllowlist entries={entries.map((e) => ({ id: e.id, email: e.email }))} />
+        <AdminAllowlist
+          currentEmail={(user.email ?? "").toLowerCase()}
+          entries={entries.map((e) => ({
+            id: e.id,
+            email: e.email,
+            addedByUserId: e.addedByUserId,
+            addedAt: e.addedAt.toISOString().slice(0, 16).replace("T", " "),
+          }))}
+        />
       </Section>
     </>
   );
