@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { ASSOCIATE_TIERS, formatEur } from "@/app/lib/dues";
 import CountrySelect from "@/app/components/CountrySelect";
@@ -27,6 +27,26 @@ export default function ApplyForm({
     applyMember,
     {},
   );
+  const reviewRef = useRef<HTMLFieldSetElement>(null);
+  const acceptRef = useRef<HTMLSpanElement>(null);
+
+  // On reaching the review step, scroll so the "Membership Agreement" title sits
+  // just below the sticky site header.
+  useEffect(() => {
+    if (step !== 2 || !reviewRef.current) return;
+    const headerH =
+      document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
+    const y = reviewRef.current.getBoundingClientRect().top + window.scrollY - headerH - 12;
+    window.scrollTo({ top: y, behavior: "smooth" });
+  }, [step]);
+
+  /** Flash the acceptance text twice (when the disabled Sign button is clicked). */
+  function blinkAccept() {
+    acceptRef.current?.animate(
+      [{ opacity: 1 }, { opacity: 0.15 }, { opacity: 1 }],
+      { duration: 220, iterations: 2 },
+    );
+  }
 
   /** Required-field check for step 1 (CountrySelect submits a hidden input, so
    * native validation can't see it — we check the values ourselves). */
@@ -73,7 +93,6 @@ export default function ApplyForm({
       }
       setPreview(res.html);
       setStep(2);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     });
   }
 
@@ -183,7 +202,7 @@ export default function ApplyForm({
 
       {/* ── Step 2: review & sign ────────────────────────────────────── */}
       <div className={step === 2 ? "grid gap-6" : "hidden"}>
-        <fieldset className="grid gap-3">
+        <fieldset ref={reviewRef} className="grid gap-3 scroll-mt-24">
           <legend className="tag mb-2">Membership Agreement ({agreementVersion})</legend>
           <p className="text-sm text-muted">
             Review the personalised agreement below. A PDF copy will be emailed to
@@ -210,7 +229,7 @@ export default function ApplyForm({
               checked={accepted}
               onChange={(e) => setAccepted(e.target.checked)}
             />
-            <span>
+            <span ref={acceptRef}>
               I have read and accept the Membership Agreement shown above, and I am
               authorized to enter into it. <Req />
             </span>
@@ -222,7 +241,18 @@ export default function ApplyForm({
             <button type="button" className="btn btn-secondary" onClick={() => setStep(1)} disabled={pending}>
               ← Back
             </button>
-            <button type="submit" className="btn btn-primary" disabled={pending || !accepted}>
+            <button
+              type="submit"
+              className={`btn btn-primary ${!accepted ? "opacity-50 cursor-not-allowed" : ""}`}
+              disabled={pending}
+              aria-disabled={!accepted}
+              onClick={(e) => {
+                if (!accepted) {
+                  e.preventDefault();
+                  blinkAccept();
+                }
+              }}
+            >
               {pending
                 ? "Submitting…"
                 : cls === "associate"
