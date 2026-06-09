@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import UserMenu, { type MeUser, type MeAction } from "@/app/components/UserMenu";
 
-type Me = { user: MeUser | null; actions: MeAction[] };
+type Me = { user: MeUser | null; actions: MeAction[]; isMember: boolean };
 
 const NAV_LINKS = [
   { href: "/about", label: "About" },
@@ -35,7 +35,7 @@ export default function Nav() {
     fetch("/api/me")
       .then((r) => r.json())
       .then(setMe)
-      .catch(() => setMe({ user: null, actions: [] }));
+      .catch(() => setMe({ user: null, actions: [], isMember: false }));
   }, [pathname]);
 
   useEffect(() => {
@@ -137,9 +137,11 @@ export default function Nav() {
                   Sign in
                 </Link>
               )}
-              <Link href="/join" className="btn btn-primary text-sm px-4 py-2">
-                Join
-              </Link>
+              {!me?.isMember && (
+                <Link href="/join" className="btn btn-primary text-sm px-4 py-2">
+                  Join
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={toggleTheme}
@@ -255,12 +257,14 @@ export default function Nav() {
                   {link.label}
                 </Link>
               ))}
-              <Link
-                href="/join"
-                className="block w-full py-2 nav-link font-medium text-purple"
-              >
-                Join →
-              </Link>
+              {!me?.isMember && (
+                <Link
+                  href="/join"
+                  className="block w-full py-2 nav-link font-medium text-purple"
+                >
+                  Join →
+                </Link>
+              )}
               <div className="w-full border-t border-rule my-2" />
               {me?.user ? (
                 <>
