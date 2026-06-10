@@ -46,7 +46,12 @@ export async function buildExecutionCertificate(d: ExecutionDetails): Promise<Bu
   if (d.versionHash) line(`Template hash (sha384): ${d.versionHash}`, 8);
   if (d.documentHash) line(`Signed document hash (sha384): ${d.documentHash}`, 8);
   y -= 10;
-  line("The signed Membership Agreement is attached to this email.", 10);
+  line(
+    d.agreementPdf
+      ? "The signed Membership Agreement is attached to this email."
+      : "The signed Membership Agreement is available from your account at veranafoundation.org.",
+    10,
+  );
 
   return Buffer.from(await pdf.save());
 }
@@ -62,6 +67,12 @@ export async function sendExecutedAgreementEmail(d: ExecutionDetails): Promise<v
       filename: `verana-membership-agreement-${d.agreementVersion}.pdf`,
       content: d.agreementPdf,
     });
+  } else {
+    // Should not happen (the caller renders before emailing) — loud, so a
+    // member receiving only the certificate is visible in the logs.
+    console.error(
+      `[executed-agreement] sending without the signed-agreement PDF (member ${d.memberName})`,
+    );
   }
   const html = emailLayout({
     heading: "Welcome to the Verana Foundation",
@@ -72,8 +83,11 @@ export async function sendExecutedAgreementEmail(d: ExecutionDetails): Promise<v
     <strong>${escapeHtml(d.memberName)}</strong> as a
     ${escapeHtml(d.membershipClass)} member on
     ${d.signedAt.toISOString().slice(0, 10)}.</p>
-    <p style="margin:0;">Your signed agreement and a certificate of execution are
-    attached. You can also download the agreement any time from your account.</p>`,
+    <p style="margin:0;">${
+      d.agreementPdf
+        ? "Your signed agreement and a certificate of execution are attached. You can also download the agreement any time from your account."
+        : "A certificate of execution is attached. Your signed agreement is available any time from your account."
+    }</p>`,
     button: { label: "Go to your account", href: `${SITE_URL}/account` },
   });
   await sendEmail({
