@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { currentUser, effectiveMemberships } from "@/app/lib/authz";
+import { db } from "@/app/lib/db";
 import MembershipCard from "@/app/components/MembershipCard";
 
 export const metadata: Metadata = { title: "Your account" };
@@ -11,6 +12,19 @@ export default async function AccountPage() {
 
   const orgs = links.filter((l) => l.member.type === "organization");
   const individual = links.find((l) => l.member.type === "individual");
+
+  // Active manager / representative counts per org, to decide which menu actions
+  // are offered (the actions re-check server-side before mutating).
+  const orgIds = orgs.map((l) => l.memberId);
+  const accessCounts = orgIds.length
+    ? await db.memberAccess.groupBy({
+        by: ["memberId", "role"],
+        where: { memberId: { in: orgIds }, status: { not: "removed" } },
+        _count: { _all: true },
+      })
+    : [];
+  const countOf = (memberId: string, role: "manager" | "representative") =>
+    accessCounts.find((c) => c.memberId === memberId && c.role === role)?._count._all ?? 0;
 
   return (
     <>
@@ -66,6 +80,7 @@ export default async function AccountPage() {
                     country={individual.member.countryOfResidence}
                     periodEnd={individual.member.memberships[0]?.periodEnd}
                     agreementHref={`/account/agreement/${individual.memberId}`}
+                    menu={{ memberId: individual.memberId, canCancel: true }}
                   />
                 </div>
               </div>
@@ -96,11 +111,21 @@ export default async function AccountPage() {
                           ? `/account/agreement/${l.memberId}`
                           : null
                       }
-                      manageHref={
-                        l.role === "manager"
-                          ? `/account/org/${l.memberId}`
-                          : null
-                      }
+                      menu={(() => {
+                        const isManager = l.role === "manager";
+                        const mgr = countOf(l.memberId, "manager");
+                        const rep = countOf(l.memberId, "representative");
+                        return {
+                          memberId: l.memberId,
+                          manageHref: isManager ? `/account/org/${l.memberId}/access` : null,
+                          billingHref: isManager ? `/account/org/${l.memberId}/billing` : null,
+                          // Managers may leave only if another manager remains;
+                          // representatives may always leave.
+                          canLeave: isManager ? mgr > 1 : true,
+                          // Only the sole manager with no representatives can cancel.
+                          canCancel: isManager && mgr === 1 && rep === 0,
+                        };
+                      })()}
                     />
                   ))}
                 </div>
