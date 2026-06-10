@@ -21,6 +21,13 @@ spec:
       labels:
         app.kubernetes.io/name: veranafoundation-website
     spec:
+      # The app runs as uid 1001 (`nextjs`, Dockerfile) but a fresh PVC mounts
+      # root-owned, so every write under /data failed EACCES (signed-agreement
+      # PDFs, logos). fsGroup makes kubelet chown the volume to the app's group
+      # on mount; OnRootMismatch skips the walk once ownership is right.
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: veranafoundation-website
           # Mutable tag; paired with imagePullPolicy: Always so a
