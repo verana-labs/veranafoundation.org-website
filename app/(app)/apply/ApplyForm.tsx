@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { ASSOCIATE_TIERS, formatEur } from "@/app/lib/dues";
+import { EU_COUNTRIES } from "@/app/lib/eu";
+import { countryName } from "@/app/lib/countries";
 import CountrySelect from "@/app/components/CountrySelect";
 import PayMethodChooser from "@/app/components/PayMethodChooser";
 import { applyMember, previewAgreement, type ApplyState } from "./actions";
@@ -25,6 +27,16 @@ export default function ApplyForm({
     hasIndividual ? "organization" : "individual",
   );
   const [accepted, setAccepted] = useState(false);
+  const [assocCountry, setAssocCountry] = useState("");
+  const [vatNumber, setVatNumber] = useState("");
+  // EU companies (except the seller's own Estonia, where VAT applies
+  // regardless) are charged Estonian VAT unless they provide a VAT number.
+  const vatWarning =
+    cls === "associate" &&
+    assocCountry !== "" &&
+    assocCountry !== "EE" &&
+    EU_COUNTRIES.has(assocCountry) &&
+    vatNumber.trim() === "";
   const [preview, setPreview] = useState<string>("");
   const [previewError, setPreviewError] = useState<string>("");
   const [previewing, startPreview] = useTransition();
@@ -190,10 +202,30 @@ export default function ApplyForm({
             <>
               <Field label="Organization legal name" name="legalName" required />
               <Labeled label="Country" required>
-                <CountrySelect name="country" required />
+                <CountrySelect name="country" required onChange={setAssocCountry} />
               </Labeled>
               <Field label="Registered address" name="registeredAddress" />
-              <Field label="VAT number (EU — enables reverse charge)" name="vatNumber" />
+              <div className="form-field">
+                <label htmlFor="vatNumber">
+                  VAT number (EU — enables reverse charge)
+                </label>
+                <input
+                  id="vatNumber"
+                  name="vatNumber"
+                  value={vatNumber}
+                  onChange={(e) => setVatNumber(e.target.value)}
+                />
+              </div>
+              {vatWarning && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                  <strong>{countryName(assocCountry)} is in the EU:</strong>{" "}
+                  without a VAT number, Estonian VAT will be added to your
+                  dues. Reverse charge (0% VAT) requires entering your VAT
+                  number <em>now</em> — it can&rsquo;t be applied after
+                  signing. To change it later you would have to cancel this
+                  membership and apply again with the VAT number.
+                </div>
+              )}
               <Labeled label="Annual dues tier" required>
                 <select name="tier" required defaultValue="">
                   <option value="" disabled>

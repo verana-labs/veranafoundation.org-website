@@ -113,3 +113,42 @@ export async function cancelMembership(memberId: string) {
 
   revalidatePath("/account");
 }
+
+/**
+ * Update an organization's registered address (managers only). Invoices render
+ * their PDF on demand, so a corrected address shows on the next download.
+ */
+export async function updateOrgAddress(memberId: string, address: string) {
+  const user = await currentUser();
+  if (!user?.id || !user.email) throw new Error("Forbidden");
+
+  const link = await db.userMember.findUnique({
+    where: { userId_memberId: { userId: user.id, memberId } },
+  });
+  if (link?.role !== "manager") {
+    throw new Error("Only a manager can update the organization's address.");
+  }
+  const member = await db.member.findUnique({ where: { id: memberId } });
+  if (!member || member.type !== "organization") throw new Error("Not found");
+
+  const trimmed = address.trim().slice(0, 500);
+  await db.$transaction([
+    db.member.update({
+      where: { id: memberId },
+      data: { registeredAddress: trimmed || null },
+    }),
+    db.adminAction.create({
+      data: {
+        actorUserId: user.id,
+        actorEmail: user.email,
+        action: "member.update_address",
+        targetType: "Member",
+        targetId: memberId,
+        before: { registeredAddress: member.registeredAddress },
+        after: { registeredAddress: trimmed || null },
+      },
+    }),
+  ]);
+
+  revalidatePath("/account");
+}
