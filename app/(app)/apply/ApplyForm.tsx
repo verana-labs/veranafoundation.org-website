@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
 import { ASSOCIATE_TIERS, formatEur } from "@/app/lib/dues";
 import CountrySelect from "@/app/components/CountrySelect";
+import PayMethodChooser from "@/app/components/PayMethodChooser";
 import { applyMember, previewAgreement, type ApplyState } from "./actions";
 
 
@@ -317,16 +318,11 @@ export default function ApplyForm({
               ) : null}
               Due by {state.success.dueDate}
             </p>
-            {state.success.payUrl && (
-              <a href={state.success.payUrl} className="btn btn-primary w-full justify-center mt-6">
-                Pay membership dues
-              </a>
-            )}
-            <p className="text-xs text-muted mt-4 leading-relaxed">
-              Pay securely online — or settle by bank transfer using the
-              details in the email we just sent, with the invoice number as the
-              payment reference.
-            </p>
+            <PayMethodChooser
+              payUrl={state.success.payUrl}
+              bankDetails={state.success.bankDetails}
+              invoiceNumber={state.success.invoiceNumber}
+            />
           </div>
 
           <p className="text-sm text-muted">

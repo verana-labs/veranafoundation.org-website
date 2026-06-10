@@ -3,7 +3,9 @@ import Link from "next/link";
 import { currentUser, effectiveMemberships } from "@/app/lib/authz";
 import { db } from "@/app/lib/db";
 import { formatEur } from "@/app/lib/dues";
+import { invoicePayUrl } from "@/app/lib/invoices";
 import MembershipCard from "@/app/components/MembershipCard";
+import PayMethodChooser from "@/app/components/PayMethodChooser";
 
 export const metadata: Metadata = { title: "Your account" };
 
@@ -115,22 +117,19 @@ export default async function AccountPage({
               </div>
             )}
             {dueInvoices.map((inv) => (
-              <div
-                key={inv.id}
-                className="card max-w-2xl flex flex-wrap items-center justify-between gap-4"
-              >
-                <div>
-                  <h3>Dues pending — {inv.membership.member.legalName}</h3>
-                  <p className="text-sm text-muted">
-                    Invoice {inv.number} · {formatEur(inv.grossAmount)}
-                    {inv.dueDate
-                      ? ` · due ${inv.dueDate.toISOString().slice(0, 10)}`
-                      : ""}
-                  </p>
-                </div>
-                <a href={`/pay/${inv.id}`} className="btn btn-primary">
-                  Pay now
-                </a>
+              <div key={inv.id} className="card max-w-2xl">
+                <h3>Dues pending — {inv.membership.member.legalName}</h3>
+                <p className="text-sm text-muted">
+                  Invoice {inv.number} · {formatEur(inv.grossAmount)}
+                  {inv.dueDate
+                    ? ` · due ${inv.dueDate.toISOString().slice(0, 10)}`
+                    : ""}
+                </p>
+                <PayMethodChooser
+                  payUrl={invoicePayUrl(inv.id)}
+                  bankDetails={process.env.BANK_TRANSFER_DETAILS ?? null}
+                  invoiceNumber={inv.number}
+                />
               </div>
             ))}
           </div>
