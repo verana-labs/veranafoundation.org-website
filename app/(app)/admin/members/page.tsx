@@ -26,7 +26,7 @@ export default async function AdminMembersPage({
         }
       : undefined,
     include: {
-      memberships: { orderBy: { createdAt: "desc" }, take: 1 },
+      membership: true,
       // Whether a signed agreement PDF exists, for the download link.
       signatureRecords: {
         where: { agreementPdfPath: { not: null } },
@@ -70,7 +70,7 @@ export default async function AdminMembersPage({
             </thead>
             <tbody>
               {members.map((m) => {
-                const ms = m.memberships[0];
+                const ms = m.membership;
                 return (
                   <tr key={m.id} className="border-t border-rule">
                     <td className="p-2">

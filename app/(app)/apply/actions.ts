@@ -199,7 +199,7 @@ export async function applyMember(
           countryOfResidence: isOrg ? null : d.countryOfResidence ?? null,
           primaryEmail: user.email!,
           socialAnnouncementConsent: d.socialAnnouncementConsent,
-          memberships: {
+          membership: {
             create: {
               class: "contributor",
               status: "active",
@@ -291,7 +291,7 @@ export async function applyMember(
           vatNumber: d.vatNumber ?? null,
           primaryEmail: user.email!,
           socialAnnouncementConsent: d.socialAnnouncementConsent,
-          memberships: {
+          membership: {
             create: { class: "associate", tier: d.tier, status: "pending", provisional: true },
           },
           signatureRecords: {
@@ -301,12 +301,12 @@ export async function applyMember(
             create: { email: user.email!, role: "manager", status: "active", addedByUserId: user.id },
           },
         },
-        include: { memberships: true, signatureRecords: true },
+        include: { membership: true, signatureRecords: true },
       });
       await tx.userMember.create({ data: { userId: user.id!, memberId: member.id, role: "manager" } });
       return {
         memberId: member.id,
-        membershipId: member.memberships[0].id,
+        membershipId: member.membership!.id,
         signatureRecordId: member.signatureRecords[0].id,
       };
     });

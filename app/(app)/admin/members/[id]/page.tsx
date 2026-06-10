@@ -19,12 +19,13 @@ export default async function AdminMemberDetail({
   const member = await db.member.findUnique({
     where: { id },
     include: {
-      memberships: { orderBy: { createdAt: "desc" } },
+      membership: true,
       access: { where: { status: { not: "removed" } }, orderBy: { addedAt: "asc" } },
       signatureRecords: { orderBy: { signedAt: "desc" } },
     },
   });
   if (!member) notFound();
+  const ms = member.membership;
 
   return (
     <>
@@ -41,26 +42,24 @@ export default async function AdminMemberDetail({
         <dd>{member.vatNumber ?? "—"}</dd>
       </dl>
 
-      <h2 className="display text-xl mt-8">Memberships</h2>
-      <ul className="mt-2 grid gap-2">
-        {member.memberships.map((ms) => (
-          <li key={ms.id} className="card flex items-center justify-between gap-3">
-            <span className="text-sm">
-              {ms.class} · {ms.status}
-              {ms.provisional && <span className="badge ml-2">provisional</span>}
-            </span>
-            <form
-              action={ms.status === "suspended" ? reinstateMembership : suspendMembership}
-            >
-              <input type="hidden" name="membershipId" value={ms.id} />
-              <input type="hidden" name="memberId" value={member.id} />
-              <button type="submit" className="btn text-xs">
-                {ms.status === "suspended" ? "Reinstate" : "Suspend"}
-              </button>
-            </form>
-          </li>
-        ))}
-      </ul>
+      <h2 className="display text-xl mt-8">Membership</h2>
+      {ms ? (
+        <div className="mt-2 card flex items-center justify-between gap-3">
+          <span className="text-sm">
+            {ms.class} · {ms.status}
+            {ms.provisional && <span className="badge ml-2">provisional</span>}
+          </span>
+          <form action={ms.status === "suspended" ? reinstateMembership : suspendMembership}>
+            <input type="hidden" name="membershipId" value={ms.id} />
+            <input type="hidden" name="memberId" value={member.id} />
+            <button type="submit" className="btn text-xs">
+              {ms.status === "suspended" ? "Reinstate" : "Suspend"}
+            </button>
+          </form>
+        </div>
+      ) : (
+        <p className="text-muted mt-2 text-sm">No membership.</p>
+      )}
 
       <h2 className="display text-xl mt-8">Access list</h2>
       <ul className="mt-2 grid gap-1 text-sm">

@@ -24,7 +24,7 @@ export async function isAdmin(email?: string | null) {
 export async function effectiveMemberships(userId: string) {
   return db.userMember.findMany({
     where: { userId },
-    include: { member: { include: { memberships: true } } },
+    include: { member: { include: { membership: true } } },
     orderBy: { createdAt: "asc" },
   });
 }

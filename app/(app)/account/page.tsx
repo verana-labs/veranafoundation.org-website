@@ -75,10 +75,10 @@ export default async function AccountPage() {
                   <MembershipCard
                     name={individual.member.legalName}
                     type="individual"
-                    membershipClass={individual.member.memberships[0]?.class}
-                    status={individual.member.memberships[0]?.status}
+                    membershipClass={individual.member.membership?.class}
+                    status={individual.member.membership?.status}
                     country={individual.member.countryOfResidence}
-                    periodEnd={individual.member.memberships[0]?.periodEnd}
+                    periodEnd={individual.member.membership?.periodEnd}
                     agreementHref={`/account/agreement/${individual.memberId}`}
                     menu={{ memberId: individual.memberId, canCancel: true }}
                   />
@@ -99,11 +99,11 @@ export default async function AccountPage() {
                       key={l.id}
                       name={l.member.legalName}
                       type="organization"
-                      membershipClass={l.member.memberships[0]?.class}
-                      status={l.member.memberships[0]?.status}
+                      membershipClass={l.member.membership?.class}
+                      status={l.member.membership?.status}
                       role={l.role}
                       country={l.member.jurisdiction}
-                      periodEnd={l.member.memberships[0]?.periodEnd}
+                      periodEnd={l.member.membership?.periodEnd}
                       agreementHref={
                         // Only managers (incl. the signer) may download the
                         // signed agreement — not representatives.
