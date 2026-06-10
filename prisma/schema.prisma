@@ -294,6 +294,7 @@ model WorkingGroup {
   showOnHome    Boolean           @default(false) // featured on the public home page
   state         WorkingGroupState @default(enabled) // disabled = hidden from public pages
   priority      Int               @default(0) // higher shows first in public listings
+  disabledAt    DateTime? // when state last became disabled (admin grace window)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

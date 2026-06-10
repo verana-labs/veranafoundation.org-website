@@ -14,6 +14,8 @@ export type AdminWg = {
   showOnHome: boolean;
   state: "enabled" | "disabled";
   priority: number;
+  /** ISO timestamp of when it last became disabled, or null. */
+  disabledAt: string | null;
 };
 
 export default function WorkingGroupAdminCard({ wg }: { wg: AdminWg }) {

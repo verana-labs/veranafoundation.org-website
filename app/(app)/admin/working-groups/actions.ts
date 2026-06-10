@@ -80,9 +80,18 @@ export async function updateWg(formData: FormData) {
     priority: formData.get("priority") ?? 0,
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
+  const current = await db.workingGroup.findUniqueOrThrow({ where: { id } });
+  // Stamp disabledAt on the enabled→disabled transition; keep it while it stays
+  // disabled; clear it when re-enabled.
+  const disabledAt =
+    parsed.data.state === "disabled"
+      ? current.state === "disabled"
+        ? current.disabledAt
+        : new Date()
+      : null;
   await db.workingGroup.update({
     where: { id },
-    data: { ...parsed.data, description: parsed.data.description ?? null },
+    data: { ...parsed.data, description: parsed.data.description ?? null, disabledAt },
   });
   await db.adminAction.create({
     data: {
@@ -118,7 +127,10 @@ export async function toggleState(id: string) {
   const user = await assertAdmin();
   const wg = await db.workingGroup.findUniqueOrThrow({ where: { id } });
   const state = wg.state === "enabled" ? "disabled" : "enabled";
-  await db.workingGroup.update({ where: { id }, data: { state } });
+  await db.workingGroup.update({
+    where: { id },
+    data: { state, disabledAt: state === "disabled" ? new Date() : null },
+  });
   await db.adminAction.create({
     data: {
       actorUserId: user.id,
