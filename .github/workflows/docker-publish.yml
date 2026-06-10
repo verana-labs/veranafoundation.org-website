@@ -132,6 +132,11 @@ jobs:
           SELLER_VAT_NUMBER: ${{ secrets.SELLER_VAT_NUMBER }}
           BANK_TRANSFER_DETAILS: ${{ secrets.BANK_TRANSFER_DETAILS }}
           ADMIN_BOOTSTRAP_EMAILS: ${{ secrets.ADMIN_BOOTSTRAP_EMAILS }}
+          WISE_API_TOKEN: ${{ secrets.WISE_API_TOKEN }}
+          WISE_PROFILE_ID: ${{ secrets.WISE_PROFILE_ID }}
+          WISE_SCA_PRIVATE_KEY: ${{ secrets.WISE_SCA_PRIVATE_KEY }}
+          WISE_WEBHOOK_PUBLIC_KEY: ${{ secrets.WISE_WEBHOOK_PUBLIC_KEY }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           echo "$KUBECONFIG_DATA" > /tmp/kubeconfig
           export KUBECONFIG=/tmp/kubeconfig
@@ -155,6 +160,11 @@ jobs:
             --from-literal=SELLER_VAT_NUMBER="${SELLER_VAT_NUMBER}" \
             --from-literal=BANK_TRANSFER_DETAILS="${BANK_TRANSFER_DETAILS}" \
             --from-literal=ADMIN_BOOTSTRAP_EMAILS="${ADMIN_BOOTSTRAP_EMAILS}" \
+            --from-literal=WISE_API_TOKEN="${WISE_API_TOKEN}" \
+            --from-literal=WISE_PROFILE_ID="${WISE_PROFILE_ID}" \
+            --from-literal=WISE_SCA_PRIVATE_KEY="${WISE_SCA_PRIVATE_KEY}" \
+            --from-literal=WISE_WEBHOOK_PUBLIC_KEY="${WISE_WEBHOOK_PUBLIC_KEY}" \
+            --from-literal=CRON_SECRET="${CRON_SECRET}" \
             --dry-run=client -o yaml | kubectl apply -f -
           kubectl apply -f k8s/
           # Wait for Postgres, then apply DB migrations as a one-off Job before

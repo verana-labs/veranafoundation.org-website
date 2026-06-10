@@ -152,6 +152,39 @@ spec:
                   name: veranafoundation-website-secrets
                   key: BANK_TRANSFER_DETAILS
                   optional: true
+            # Wise auto-reconciliation of direct wires (read-only API) + the
+            # cron backstop. All optional: without them /api/webhooks/wise
+            # answers 503 and reconciliation simply stays off.
+            - name: WISE_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: WISE_API_TOKEN
+                  optional: true
+            - name: WISE_PROFILE_ID
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: WISE_PROFILE_ID
+                  optional: true
+            - name: WISE_SCA_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: WISE_SCA_PRIVATE_KEY
+                  optional: true
+            - name: WISE_WEBHOOK_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: WISE_WEBHOOK_PUBLIC_KEY
+                  optional: true
+            - name: CRON_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: CRON_SECRET
+                  optional: true
           resources:
             requests:
               cpu: "50m"
