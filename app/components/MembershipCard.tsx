@@ -365,7 +365,11 @@ export default function MembershipCard({
             <input
               type="checkbox"
               name="logoDisplayConsent"
-              defaultChecked={logoConsent ?? true}
+              // Checked by default. The stored flag only takes over when a
+              // logo already exists — i.e. the member made an actual choice
+              // before; the DB default `false` of a logo-less org must not
+              // present a first upload as opted-out.
+              defaultChecked={logoUrl ? (logoConsent ?? true) : true}
               className="mt-0.5"
             />
             <span>We may display this logo on veranafoundation.org.</span>
