@@ -105,7 +105,10 @@ export default function CountrySelect({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          className={`field w-full ${flag ? "pl-9" : ""}`}
+          className="field w-full"
+          // Inline style: .form-field input's padding outranks a pl-* utility,
+          // which left the flag sitting on top of the text.
+          style={flag ? { paddingLeft: "2.25rem" } : undefined}
         />
       </div>
 

@@ -66,10 +66,13 @@ export default function ApplyForm({
 
   /** Required-field check for step 1 (CountrySelect submits a hidden input, so
    * native validation can't see it — we check the values ourselves). */
+  /** Individuals sign as themselves — their legal name IS the signature. */
+  const selfSigned = cls === "contributor" && type === "individual";
+
   function step1Error(fd: FormData): string | null {
     const has = (k: string) => !!(fd.get(k) as string)?.trim();
     if (!has("legalName")) return "Enter the legal name.";
-    if (!has("signerName")) return "Enter the signatory's name.";
+    if (!selfSigned && !has("signerName")) return "Enter the signatory's name.";
     if (cls === "contributor") {
       if (type === "individual" && !has("countryOfResidence"))
         return "Select the country of residence.";
@@ -103,7 +106,7 @@ export default function ApplyForm({
         registeredAddress: get("registeredAddress"),
         countryOfResidence: get("countryOfResidence"),
         country: get("country"),
-        signerName: get("signerName"),
+        signerName: selfSigned ? get("legalName") : get("signerName"),
         signerTitle: get("signerTitle"),
       });
       if (res.error || !res.html) {
@@ -122,7 +125,7 @@ export default function ApplyForm({
       {/* ── Step 1: your details ─────────────────────────────────────── */}
       <div className={step === 1 ? "grid gap-8" : "hidden"}>
         <fieldset className="grid gap-2">
-          <legend className="tag mb-2">Membership</legend>
+          <SectionHeading tag="Membership" title="How will you join?" />
           <div className="flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-2">
               <input type="radio" checked={cls === "contributor"} onChange={() => setCls("contributor")} />
@@ -158,8 +161,8 @@ export default function ApplyForm({
           )}
         </fieldset>
 
-        <fieldset className="grid gap-1 border-t border-rule pt-6">
-          <legend className="tag mb-2">Your details</legend>
+        <fieldset className="grid gap-1 border-t border-rule pt-8">
+          <SectionHeading tag="Your details" title="Tell us who's joining" />
 
           {cls === "contributor" ? (
             <>
@@ -210,7 +213,9 @@ export default function ApplyForm({
             </>
           )}
 
-          <Field label="Signed by (name)" name="signerName" required />
+          {/* Individuals sign as themselves — asking again would duplicate
+              the "Full legal name" field; the server falls back to it. */}
+          {!selfSigned && <Field label="Signed by (name)" name="signerName" required />}
           {(cls === "associate" || type === "organization") && (
             <Field label="Title" name="signerTitle" />
           )}
@@ -226,7 +231,10 @@ export default function ApplyForm({
       {/* ── Step 2: review & sign ────────────────────────────────────── */}
       <div className={step === 2 ? "grid gap-6" : "hidden"}>
         <fieldset ref={reviewRef} className="grid gap-3 scroll-mt-24">
-          <legend className="tag mb-2">Membership Agreement ({agreementVersion})</legend>
+          <SectionHeading
+            tag={`Membership Agreement (${agreementVersion})`}
+            title="Review your agreement"
+          />
           <p className="text-sm text-muted">
             Review the personalised agreement below. A PDF copy will be emailed to
             you and is available any time from your account.
@@ -238,7 +246,7 @@ export default function ApplyForm({
         </fieldset>
 
         <fieldset className="grid gap-3 border-t border-rule pt-6">
-          <legend className="tag mb-2">Sign</legend>
+          <SectionHeading tag="Sign" title="Make it official" />
           <label className="flex items-start gap-2 text-sm">
             <input type="checkbox" name="socialAnnouncementConsent" defaultChecked className="mt-1" />
             <span>You may announce our membership on the Foundation&rsquo;s social networks.</span>
@@ -341,6 +349,16 @@ export default function ApplyForm({
         </div>
       )}
     </form>
+  );
+}
+
+/** Contact-form-style section header (tag + display title), legal in a <legend>. */
+function SectionHeading({ tag, title }: { tag: string; title: string }) {
+  return (
+    <legend className="grid gap-3 mb-5">
+      <span className="tag">{tag}</span>
+      <span className="display text-2xl text-ink">{title}</span>
+    </legend>
   );
 }
 
