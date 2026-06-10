@@ -132,7 +132,7 @@ spec:
             # Invoicing config — non-sensitive, plain values. VAT_DOMESTIC_RATE:
             # CONFIRM the Estonian rate + 2060 OÜ VAT registration with the accountant.
             - name: SELLER_LEGAL_NAME
-              value: "Verana Foundation (in formation), represented by 2060 OÜ"
+              value: "Verana Foundation (2060 OÜ)"
             - name: SELLER_COUNTRY
               value: EE
             - name: INVOICE_PREFIX
