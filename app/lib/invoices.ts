@@ -1,6 +1,7 @@
 import type { PayMethod } from "@prisma/client";
 import { db } from "@/app/lib/db";
 import { computeVat, type VatResult } from "@/app/lib/vat";
+import { ACTIVE_FEE_SCHEDULE } from "@/app/lib/dues";
 import { sendPaymentReceiptEmail } from "@/app/lib/billing-emails";
 
 const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
@@ -89,6 +90,7 @@ export async function createMembershipInvoice(args: {
       grossAmount: gross,
       vatTreatment: vat.treatment,
       status: "issued",
+      feeScheduleVersion: ACTIVE_FEE_SCHEDULE,
       dueDate,
       issuedAt: new Date(),
     },

@@ -1,5 +1,16 @@
-// Associate annual dues by worldwide headcount (Agreement Annex D). Amounts in
-// minor units (EUR cents). Contributor dues are €0 (no tier).
+// Associate annual dues by worldwide headcount. Amounts in minor units
+// (EUR cents). Contributor dues are €0 (no tier).
+//
+// Fee schedules are versioned data, keyed by the agreement version that
+// introduced them (fee changes ship with a new agreement version; its Annex D
+// embeds the table). fee-schedule.test.ts asserts every agreement version's
+// Annex D matches its mapped schedule, so legal text and billing can never
+// silently diverge.
+//
+// To change fees: add the new schedule under the new agreement version's key,
+// flip ACTIVE_FEE_SCHEDULE, and map the new template file below. An agreement
+// version that does NOT change fees simply maps to the older schedule key.
+
 export type AssociateTier =
   | "tier_1"
   | "tier_2"
@@ -8,21 +19,46 @@ export type AssociateTier =
   | "tier_5"
   | "tier_6";
 
-export const ASSOCIATE_TIERS: {
-  id: AssociateTier;
-  label: string;
-  amount: number;
-}[] = [
-  { id: "tier_1", label: "1–10 employees", amount: 150_000 },
-  { id: "tier_2", label: "11–100 employees", amount: 300_000 },
-  { id: "tier_3", label: "101–500 employees", amount: 700_000 },
-  { id: "tier_4", label: "501–2,500 employees", amount: 1_000_000 },
-  { id: "tier_5", label: "2,501–10,000 employees", amount: 2_500_000 },
-  { id: "tier_6", label: "10,001+ employees", amount: 5_000_000 },
-];
+export type FeeTier = { id: AssociateTier; label: string; amount: number };
 
-export function tierAmount(id: string): number | null {
-  return ASSOCIATE_TIERS.find((t) => t.id === id)?.amount ?? null;
+export const FEE_SCHEDULES: Record<string, FeeTier[]> = {
+  v1: [
+    { id: "tier_1", label: "1–10 employees", amount: 150_000 },
+    { id: "tier_2", label: "11–100 employees", amount: 300_000 },
+    { id: "tier_3", label: "101–500 employees", amount: 700_000 },
+    { id: "tier_4", label: "501–2,500 employees", amount: 1_000_000 },
+    { id: "tier_5", label: "2,501–10,000 employees", amount: 2_500_000 },
+    { id: "tier_6", label: "10,001+ employees", amount: 5_000_000 },
+  ],
+};
+
+/** The schedule new invoices (applications, renewals, reissues) price from. */
+export const ACTIVE_FEE_SCHEDULE = "v1";
+
+/** Which fee schedule each agreement template's Annex D snapshots (tested). */
+export const AGREEMENT_FEE_SCHEDULE: Record<string, string> = {
+  "membership-agreement-v1.md": "v1",
+};
+
+/** The active schedule's tiers — what the apply form offers. */
+export const ASSOCIATE_TIERS: FeeTier[] = FEE_SCHEDULES[ACTIVE_FEE_SCHEDULE];
+
+export function tierAmount(
+  id: string,
+  schedule: string = ACTIVE_FEE_SCHEDULE,
+): number | null {
+  return FEE_SCHEDULES[schedule]?.find((t) => t.id === id)?.amount ?? null;
+}
+
+export function tierLabel(
+  id: string | null | undefined,
+  schedule: string | null | undefined,
+): string | null {
+  if (!id) return null;
+  return (
+    FEE_SCHEDULES[schedule ?? ACTIVE_FEE_SCHEDULE]?.find((t) => t.id === id)
+      ?.label ?? null
+  );
 }
 
 export function formatEur(cents: number): string {
