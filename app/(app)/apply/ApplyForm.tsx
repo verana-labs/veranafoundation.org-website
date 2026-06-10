@@ -307,7 +307,15 @@ export default function ApplyForm({
           </p>
 
           <div className="card max-w-md">
-            <p className="tag mb-4">Invoice {state.success.invoiceNumber}</p>
+            <p className="tag mb-4">
+              <a
+                href={`/account/invoice/${state.success.invoiceId}`}
+                className="hover:text-purple"
+                title="Download the invoice (PDF)"
+              >
+                Invoice {state.success.invoiceNumber} ↓
+              </a>
+            </p>
             <p className="display text-4xl">{state.success.amountDue}</p>
             <p className="text-sm text-muted mt-2">
               {state.success.vatNote ? (

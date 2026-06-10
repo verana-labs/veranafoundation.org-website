@@ -5,18 +5,43 @@
 import { sendEmail, escapeHtml } from "@/app/lib/email";
 import { emailLayout } from "@/app/lib/email-layout";
 import { formatEur } from "@/app/lib/dues";
+import { renderInvoicePdf } from "@/app/lib/invoice-pdf";
 
 const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
+const PURPLE = "#763ef0";
 
-/** Multiline bank details from env (account holder, IBAN, BIC…), or null. */
-function bankDetailsHtml(reference: string): string {
+/**
+ * "How would you like to pay?" — card link + wire instructions, shared by the
+ * payment-request and reminder emails.
+ */
+function payOptionsHtml(payUrl: string | null, reference: string): string {
   const details = process.env.BANK_TRANSFER_DETAILS;
-  if (!details) return "";
-  return `
-    <p style="margin:20px 0 6px;font-weight:600;">Prefer a direct bank transfer?</p>
-    <p style="margin:0 0 8px;">Wire the amount to the account below, using
-    <strong>${escapeHtml(reference)}</strong> as the payment reference:</p>
-    <pre style="margin:0;padding:12px 14px;background:#fafafb;border:1px solid #e8e6e0;border-radius:8px;font-size:13px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(details)}</pre>`;
+  const card = payUrl
+    ? `<p style="margin:0 0 6px;"><strong>By card</strong>:
+       <a href="${payUrl}" style="color:${PURPLE};">pay securely online here</a>.</p>`
+    : "";
+  const bank = details
+    ? `<p style="margin:20px 0 6px;font-weight:600;">Prefer a direct bank transfer?</p>
+       <p style="margin:0 0 8px;">Wire the amount to the account below, using
+       <strong>${escapeHtml(reference)}</strong> as the payment reference:</p>
+       <pre style="margin:0;padding:12px 14px;background:#fafafb;border:1px solid #e8e6e0;border-radius:8px;font-size:13px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(details)}</pre>`
+    : "";
+  if (!card && !bank) return "";
+  return `<p style="margin:18px 0 10px;font-weight:600;">How would you like to pay?</p>${card}${bank}`;
+}
+
+/** The invoice PDF as an email attachment — best-effort, never blocks the send. */
+async function invoiceAttachment(
+  invoiceId: string | undefined,
+): Promise<{ filename: string; content: Buffer }[] | undefined> {
+  if (!invoiceId) return undefined;
+  try {
+    const { pdf, filename } = await renderInvoicePdf(invoiceId);
+    return [{ filename, content: pdf }];
+  } catch (e) {
+    console.error("[billing-emails] invoice PDF render failed", e);
+    return undefined;
+  }
 }
 
 /** The boxed invoice summary shared by the request and reminder emails. */
@@ -47,6 +72,8 @@ export async function sendPaymentRequestEmail(args: {
   vatNote: string | null;
   dueDate: Date;
   payUrl: string | null;
+  /** Attach the rendered invoice PDF (best-effort). */
+  invoiceId?: string;
   /** Renewal of an active membership (vs the initial application). */
   renewal?: boolean;
 }): Promise<void> {
@@ -58,6 +85,7 @@ export async function sendPaymentRequestEmail(args: {
     : `<p style="margin:0 0 12px;">Thank you — the Membership Agreement for
         <strong>${escapeHtml(args.memberName)}</strong> is signed. Your Associate
         membership activates as soon as the annual dues are paid.</p>`;
+  const attachments = await invoiceAttachment(args.invoiceId);
   await sendEmail({
     to: args.to,
     subject: args.renewal
@@ -70,12 +98,10 @@ export async function sendPaymentRequestEmail(args: {
       bodyHtml: `
         ${intro}
         ${invoiceBoxHtml(args)}
-        ${args.payUrl ? `<p style="margin:0;">Pay securely online:</p>` : ""}
-        ${bankDetailsHtml(args.invoiceNumber)}`,
-      button: args.payUrl
-        ? { label: "Pay membership dues", href: args.payUrl }
-        : undefined,
+        ${payOptionsHtml(args.payUrl, args.invoiceNumber)}
+        ${attachments ? `<p style="margin:18px 0 0;font-size:12px;color:#5b5b5b;">Your invoice is attached as a PDF.</p>` : ""}`,
     }),
+    attachments,
   });
 }
 
@@ -91,12 +117,15 @@ export async function sendPaymentReminderEmail(args: {
   reminderDay: number;
   /** Day (since issue) the invoice is voided and the membership expires. */
   expireDay: number;
+  /** Attach the rendered invoice PDF (best-effort). */
+  invoiceId?: string;
   renewal?: boolean;
 }): Promise<void> {
   const daysLeft = args.expireDay - args.reminderDay;
   const consequence = args.renewal
     ? "your membership and working-group access will expire"
     : "your application will expire and the invoice will be cancelled";
+  const attachments = await invoiceAttachment(args.invoiceId);
   await sendEmail({
     to: args.to,
     subject: `Reminder — membership dues, invoice ${args.invoiceNumber}`,
@@ -109,12 +138,10 @@ export async function sendPaymentReminderEmail(args: {
         <strong>${daysLeft} days</strong>, ${consequence} — you can of course
         rejoin later.</p>
         ${invoiceBoxHtml(args)}
-        ${args.payUrl ? `<p style="margin:0;">Pay securely online:</p>` : ""}
-        ${bankDetailsHtml(args.invoiceNumber)}`,
-      button: args.payUrl
-        ? { label: "Pay membership dues", href: args.payUrl }
-        : undefined,
+        ${payOptionsHtml(args.payUrl, args.invoiceNumber)}
+        ${attachments ? `<p style="margin:18px 0 0;font-size:12px;color:#5b5b5b;">Your invoice is attached as a PDF.</p>` : ""}`,
     }),
+    attachments,
   });
 }
 

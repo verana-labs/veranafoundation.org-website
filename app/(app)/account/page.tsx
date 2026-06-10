@@ -120,7 +120,14 @@ export default async function AccountPage({
               <div key={inv.id} className="card max-w-2xl">
                 <h3>Dues pending — {inv.membership.member.legalName}</h3>
                 <p className="text-sm text-muted">
-                  Invoice {inv.number} · {formatEur(inv.grossAmount)}
+                  <a
+                    href={`/account/invoice/${inv.id}`}
+                    className="text-purple hover:underline"
+                    title="Download the invoice (PDF)"
+                  >
+                    Invoice {inv.number} ↓
+                  </a>{" "}
+                  · {formatEur(inv.grossAmount)}
                   {inv.dueDate
                     ? ` · due ${inv.dueDate.toISOString().slice(0, 10)}`
                     : ""}
