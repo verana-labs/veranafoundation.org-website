@@ -16,7 +16,6 @@ export type AdminMembership = {
   class: "associate" | "contributor";
   status: MembershipStatus;
   tier: string | null;
-  provisional: boolean;
   periodStart: string | null;
   periodEnd: string | null;
 };
@@ -64,7 +63,6 @@ export default function MembershipAdminCard({ membership: m }: { membership: Adm
             {titleize(m.class)}
           </span>
           <span className={`badge ${STATUS_BADGE[m.status] ?? ""}`}>{titleize(m.status)}</span>
-          {m.provisional && <span className="badge">Provisional</span>}
         </div>
 
         {targets.length > 0 && (

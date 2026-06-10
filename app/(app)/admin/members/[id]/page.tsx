@@ -52,7 +52,6 @@ export default async function AdminMemberDetail({
             class: ms.class,
             status: ms.status,
             tier: ms.tier,
-            provisional: ms.provisional,
             periodStart: ms.periodStart?.toISOString() ?? null,
             periodEnd: ms.periodEnd?.toISOString() ?? null,
           }}

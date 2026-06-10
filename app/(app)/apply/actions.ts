@@ -203,7 +203,6 @@ export async function applyMember(
             create: {
               class: "contributor",
               status: "active",
-              provisional: true,
               periodStart: signedAt,
             },
           },
@@ -292,7 +291,7 @@ export async function applyMember(
           primaryEmail: user.email!,
           socialAnnouncementConsent: d.socialAnnouncementConsent,
           membership: {
-            create: { class: "associate", tier: d.tier, status: "pending", provisional: true },
+            create: { class: "associate", tier: d.tier, status: "pending" },
           },
           signatureRecords: {
             create: { ...signatureBase, signerName: d.signerName, signerTitle: d.signerTitle ?? null },
