@@ -25,6 +25,7 @@ export type AssociateSuccess = {
   vatNote: string | null;
   dueDate: string; // YYYY-MM-DD
   payUrl: string | null; // null when Stripe isn't configured (bank transfer only)
+  bankDetails: string | null; // wire instructions for the bank-transfer option
 };
 
 export type ApplyState = { error?: string; success?: AssociateSuccess };
@@ -388,6 +389,7 @@ export async function applyMember(
         vatNote,
         dueDate: inv.dueDate.toISOString().slice(0, 10),
         payUrl: inv.payUrl,
+        bankDetails: process.env.BANK_TRANSFER_DETAILS ?? null,
       },
     };
   }
