@@ -47,21 +47,23 @@ export async function createCheckoutSession(args: {
     customerId = customer.id;
   }
 
-  const session = await stripe.checkout.sessions.create({
+  const params = (withBankTransfer: boolean): Stripe.Checkout.SessionCreateParams => ({
     mode: "payment",
-    customer: customerId,
+    customer: customerId!,
     // Card settles instantly; customer_balance is Stripe's SEPA bank transfer
     // (async — confirmed by checkout.session.async_payment_succeeded).
-    payment_method_types: ["card", "customer_balance"],
-    payment_method_options: {
-      customer_balance: {
-        funding_type: "bank_transfer",
-        bank_transfer: {
-          type: "eu_bank_transfer",
-          eu_bank_transfer: { country: BANK_TRANSFER_COUNTRY },
-        },
-      },
-    },
+    payment_method_types: withBankTransfer ? ["card", "customer_balance"] : ["card"],
+    payment_method_options: withBankTransfer
+      ? {
+          customer_balance: {
+            funding_type: "bank_transfer",
+            bank_transfer: {
+              type: "eu_bank_transfer",
+              eu_bank_transfer: { country: BANK_TRANSFER_COUNTRY },
+            },
+          },
+        }
+      : undefined,
     line_items: [
       {
         quantity: 1,
@@ -80,6 +82,22 @@ export async function createCheckoutSession(args: {
     success_url: `${SITE_URL}/account?paid=${invoice.id}`,
     cancel_url: `${SITE_URL}/account`,
   });
+
+  let session: Stripe.Checkout.Session;
+  try {
+    session = await stripe.checkout.sessions.create(params(true));
+  } catch (e) {
+    // "Bank transfer" not yet enabled in the dashboard's payment-method
+    // settings: don't strand the payer — fall back to card-only (direct wires
+    // stay available via the emailed bank details).
+    const msg = e instanceof Error ? e.message : "";
+    if (!msg.includes("customer_balance")) throw e;
+    console.error(
+      "[stripe] customer_balance rejected — is Bank transfer enabled in " +
+        "https://dashboard.stripe.com/settings/payment_methods ? Falling back to card-only.",
+    );
+    session = await stripe.checkout.sessions.create(params(false));
+  }
 
   if (!session.url) throw new Error("Stripe did not return a Checkout URL.");
   return { url: session.url, sessionId: session.id, customerId };
