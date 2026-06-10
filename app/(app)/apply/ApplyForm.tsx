@@ -32,24 +32,27 @@ export default function ApplyForm({
     {},
   );
   const reviewRef = useRef<HTMLFieldSetElement>(null);
+  const payRef = useRef<HTMLDivElement>(null);
   const acceptRef = useRef<HTMLSpanElement>(null);
+
+  /** Scroll so `el` sits just below the sticky site header. */
+  function scrollBelowHeader(el: HTMLElement) {
+    const headerH =
+      document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
+    const y = el.getBoundingClientRect().top + window.scrollY - headerH - 12;
+    window.scrollTo({ top: y, behavior: "smooth" });
+  }
 
   // An Associate signature returns the invoice + pay link: show the payment step.
   useEffect(() => {
-    if (state.success) {
-      setStep(3);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    if (state.success) setStep(3);
   }, [state.success]);
 
-  // On reaching the review step, scroll so the "Membership Agreement" title sits
-  // just below the sticky site header.
+  // On reaching the review or payment step, scroll its title ("Membership
+  // Agreement" / "Application signed") to just below the sticky site header.
   useEffect(() => {
-    if (step !== 2 || !reviewRef.current) return;
-    const headerH =
-      document.querySelector(".site-header")?.getBoundingClientRect().height ?? 0;
-    const y = reviewRef.current.getBoundingClientRect().top + window.scrollY - headerH - 12;
-    window.scrollTo({ top: y, behavior: "smooth" });
+    if (step === 2 && reviewRef.current) scrollBelowHeader(reviewRef.current);
+    if (step === 3 && payRef.current) scrollBelowHeader(payRef.current);
   }, [step]);
 
   /** Flash the acceptance text twice (when the disabled Sign button is clicked). */
@@ -287,7 +290,7 @@ export default function ApplyForm({
       {/* ── Step 3: payment (Associate) ──────────────────────────────── */}
       {state.success && (
         <div className={step === 3 ? "grid gap-8" : "hidden"}>
-          <div>
+          <div ref={payRef} className="scroll-mt-24">
             <p className="tag mb-3">Application signed</p>
             <h2 className="display text-3xl sm:text-4xl leading-tight">
               One last step — payment
