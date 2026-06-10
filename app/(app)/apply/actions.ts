@@ -4,8 +4,9 @@ import { z } from "zod";
 import { redirect } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser } from "@/app/lib/authz";
-import { tierAmount } from "@/app/lib/dues";
+import { tierAmount, formatEur } from "@/app/lib/dues";
 import { createMembershipInvoice } from "@/app/lib/invoices";
+import { sendPaymentRequestEmail } from "@/app/lib/billing-emails";
 import { sendExecutedAgreementEmail } from "@/app/lib/executed-agreement";
 import { toAgreementContext } from "@/app/lib/agreement-context";
 import { renderAgreementHtml } from "@/app/lib/agreement-html";
@@ -16,7 +17,17 @@ import { emailLayout } from "@/app/lib/email-layout";
 
 const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
 
-export type ApplyState = { error?: string };
+/** Shown on the apply wizard's payment step after an Associate signs. */
+export type AssociateSuccess = {
+  memberName: string;
+  invoiceNumber: string;
+  amountDue: string; // preformatted, e.g. "€3,000"
+  vatNote: string | null;
+  dueDate: string; // YYYY-MM-DD
+  payUrl: string | null; // null when Stripe isn't configured (bank transfer only)
+};
+
+export type ApplyState = { error?: string; success?: AssociateSuccess };
 
 /** Best-effort: never block a successful signup on email delivery. */
 async function emailExecutedCopy(d: Parameters<typeof sendExecutedAgreementEmail>[0]) {
@@ -130,7 +141,6 @@ const associateSchema = z.object({
   registeredAddress: z.string().trim().optional(),
   vatNumber: z.string().trim().optional(),
   tier: z.string().trim().min(1, "Choose a tier"),
-  payMethod: z.enum(["card", "bank_transfer"]),
 });
 
 export async function applyMember(
@@ -268,7 +278,6 @@ export async function applyMember(
       registeredAddress: formData.get("registeredAddress") || undefined,
       vatNumber: formData.get("vatNumber") || undefined,
       tier: formData.get("tier"),
-      payMethod: formData.get("payMethod"),
     });
     if (!parsed.success) {
       return { error: parsed.error.issues[0]?.message ?? "Please check the form." };
@@ -276,9 +285,6 @@ export async function applyMember(
     const d = parsed.data;
     const net = tierAmount(d.tier);
     if (net == null) return { error: "Choose a valid dues tier." };
-    if (d.payMethod === "card" && !process.env.STRIPE_SECRET_KEY) {
-      return { error: "Card payments aren't available yet — choose bank transfer." };
-    }
 
     const created = await db.$transaction(async (tx) => {
       const member = await tx.member.create({
@@ -345,17 +351,45 @@ export async function applyMember(
       agreementPdf: pdf,
     });
 
-    const { hostedPayUrl } = await createMembershipInvoice({
+    const inv = await createMembershipInvoice({
       membershipId: created.membershipId,
-      member: { id: created.memberId, legalName: d.legalName, primaryEmail: user.email!, stripeCustomerId: null },
       net,
       country: d.country,
       hasVatNumber: !!d.vatNumber,
-      payMethod: d.payMethod,
     });
 
-    if (hostedPayUrl) redirect(hostedPayUrl);
-    redirect("/account");
+    const vatNote =
+      inv.vat.treatment === "reverse_charge"
+        ? "VAT reverse-charged (Art. 196 EU VAT Directive)"
+        : inv.vat.vatAmount > 0
+          ? `Includes ${formatEur(inv.vat.vatAmount)} VAT`
+          : null;
+
+    // Separate from the executed-agreement email: this one requests payment.
+    try {
+      await sendPaymentRequestEmail({
+        to: user.email!,
+        memberName: d.legalName,
+        invoiceNumber: inv.number,
+        amountDue: formatEur(inv.grossAmount),
+        vatNote,
+        dueDate: inv.dueDate,
+        payUrl: inv.payUrl,
+      });
+    } catch (e) {
+      console.error("[apply] payment-request email failed", e);
+    }
+
+    return {
+      success: {
+        memberName: d.legalName,
+        invoiceNumber: inv.number,
+        amountDue: formatEur(inv.grossAmount),
+        vatNote,
+        dueDate: inv.dueDate.toISOString().slice(0, 10),
+        payUrl: inv.payUrl,
+      },
+    };
   }
 
   return { error: "Invalid membership class." };

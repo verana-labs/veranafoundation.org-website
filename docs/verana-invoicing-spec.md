@@ -160,9 +160,19 @@ React to the webhook: `verified` + buyer country ≠ EE → reverse charge; else
 
 ## Provider choice
 
-**Recommendation: Stripe Invoicing** for Verana, because **Stripe Tax** does EU B2B reverse-charge + **VIES VAT-ID validation** natively and supports **bank-transfer + card on one hosted invoice** — minimal custom tax code. **Mollie** is the EU-friendly alternative (clean SEPA/bank-transfer, simpler pricing) but you'd own more of the VAT logic.
+**Decision: a Stripe Checkout Session is the hosted pay page; Wise Business is the settlement bank; large tiers wire directly (offline).** Wise Business has **no API to create payment links** (app-only) and we are not on Wise Platform, so Wise cannot mint per-invoice links — but it gives a low-cost EUR IBAN. So Stripe runs the hosted "choose card or bank transfer" page and **pays out to the Wise IBAN**.
 
-Either sits behind the ADR-0001 `PaymentProvider` port, plus an **offline bank-transfer adapter** (issue invoice with unique reference; mark paid in admin). At this volume, manual reconciliation of wires is acceptable and the offline adapter proves the abstraction.
+We deliberately use **Checkout in `payment` mode without `invoice_creation`** — Stripe collects a `PaymentIntent` and never issues its own invoice number or PDF. **Our DB owns the single canonical invoice** (number `VF-YYYY-NNNN`, VAT, PDF); this avoids duplicate invoices and skips Stripe's 0.4% invoicing fee. We compute VAT in-app (`vat.ts` + the VIES rules above) and do **not** enable Stripe Tax (no 0.5% fee). Everything sits behind the ADR-0001 `PaymentProvider` port; **Mollie** remains a fallback.
+
+### Stripe Checkout flow (Associate)
+
+1. On Associate **signature**, create the `Invoice` (system of record: number, VAT treatment, gross) — `status: issued`.
+2. The persistent pay link is **our own** URL `/pay/{invoiceId}` (never expires), shown in **step 3** of `/apply` and sent in a **separate, branded payment-request email** (distinct from the post-payment confirmation).
+3. On click, `/pay/{invoiceId}` mints a fresh **Checkout Session** (amount from the `Invoice`, methods: card + SEPA bank transfer, `success_url = /account`, `metadata.invoiceId`) and 302-redirects to Stripe. Minting per click sidesteps Checkout's 24h session expiry.
+4. Payer pays by card or bank transfer → Stripe redirects to `/account`.
+5. The **`checkout.session.completed` webhook** is the source of truth: match by `metadata.invoiceId` → write `Payment{provider:"stripe"}`, set `Invoice.paid` + `Membership.active` (`periodEnd = +1y`), emit `payment.succeeded` + `entitlement.changed`, then send the **confirmation/receipt** email with the executed PDF. Idempotent; the redirect is UX only.
+
+**Large tiers (≈€10k+):** the per-invoice fees (esp. card ~1.9%) dominate, so steer these to a **direct wire to the Wise IBAN** and mark paid via the **offline bank-transfer adapter** (admin) — ~€0 in fees. Both paths sit behind the same port; the invoice can present either the Stripe link or the IBAN + reference.
 
 ## Lifecycle & renewal
 
@@ -182,13 +192,13 @@ List members/memberships; issue / void invoice; mark bank transfer paid; apply w
 ## Build order
 
 1. Schema + `Member`/`Membership` + Contributor (free) flow end-to-end (no payments) — covers individuals and Contributor orgs, exercises e-sign + entitlements + events.
-2. Associate flow with **Stripe Invoicing** (card + bank transfer) + Stripe Tax.
-3. Offline bank-transfer adapter + admin mark-paid.
+2. Associate flow with a **Stripe Checkout Session** via a `/pay/{invoiceId}` redirect route (no Stripe invoice) + `checkout.session.completed` webhook + the payment-request email.
+3. Offline bank-transfer adapter + admin mark-paid (direct Wise wire for large tiers); Wise IBAN set as the Stripe payout/settlement account.
 4. Renewal reminders + dunning/suspension.
 
 ## Open questions
 
 1. Estonian VAT rate + Foundation/2060 OÜ VAT registration status (accountant).
-2. Stripe Invoicing vs Mollie — confirm pick.
+2. ~~Stripe Invoicing vs Mollie vs Wise~~ — **resolved: Stripe Checkout Session** (`payment` mode, no `invoice_creation`) as the hosted pay page, **Wise IBAN as the Stripe settlement account**, direct Wise wire (offline) for large tiers. Wise Business has no link-creation API and we're not on Wise Platform, so Wise can't mint per-invoice links. Mollie remains a fallback.
 3. Invoice number format / sequence per seller entity (e.g. `VF-{year}-{seq}`).
 4. Where entitlement events are published (shared bus vs per-product webhooks).

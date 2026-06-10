@@ -18,7 +18,7 @@ export default function ApplyForm({
   hasIndividual?: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [cls, setCls] = useState<"contributor" | "associate">(initialClass);
   const [type, setType] = useState<"individual" | "organization">(
     hasIndividual ? "organization" : "individual",
@@ -33,6 +33,14 @@ export default function ApplyForm({
   );
   const reviewRef = useRef<HTMLFieldSetElement>(null);
   const acceptRef = useRef<HTMLSpanElement>(null);
+
+  // An Associate signature returns the invoice + pay link: show the payment step.
+  useEffect(() => {
+    if (state.success) {
+      setStep(3);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [state.success]);
 
   // On reaching the review step, scroll so the "Membership Agreement" title sits
   // just below the sticky site header.
@@ -191,19 +199,10 @@ export default function ApplyForm({
                   ))}
                 </select>
               </Labeled>
-              <fieldset className="grid gap-1 text-sm">
-                <span className="font-medium">
-                  Payment <Req />
-                </span>
-                <label className="flex items-center gap-2">
-                  <input type="radio" name="payMethod" value="bank_transfer" defaultChecked />
-                  Bank transfer (we&rsquo;ll send an invoice)
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="radio" name="payMethod" value="card" />
-                  Card
-                </label>
-              </fieldset>
+              <p className="text-sm text-muted">
+                After signing you&rsquo;ll receive an invoice, payable online by
+                card or SEPA bank transfer — or by direct wire.
+              </p>
             </>
           )}
 
@@ -255,7 +254,9 @@ export default function ApplyForm({
             </span>
           </label>
 
-          {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+          {state.error && step === 2 && (
+            <p className="text-sm text-red-600">{state.error}</p>
+          )}
 
           <div className="flex items-center gap-3 mt-1">
             <button type="button" className="btn btn-secondary" onClick={() => setStep(1)} disabled={pending}>
@@ -282,6 +283,56 @@ export default function ApplyForm({
           </div>
         </fieldset>
       </div>
+
+      {/* ── Step 3: payment (Associate) ──────────────────────────────── */}
+      {state.success && (
+        <div className={step === 3 ? "grid gap-8" : "hidden"}>
+          <div>
+            <p className="tag mb-3">Application signed</p>
+            <h2 className="display text-3xl sm:text-4xl leading-tight">
+              One last step — payment
+            </h2>
+            <div className="accent-line mt-5" />
+          </div>
+
+          <p className="text-muted leading-relaxed max-w-prose">
+            Thank you — the Membership Agreement for{" "}
+            <strong className="text-ink">{state.success.memberName}</strong> is
+            signed, and a copy is on its way to your inbox. Your Associate
+            membership activates as soon as the annual dues are received.
+          </p>
+
+          <div className="card max-w-md">
+            <p className="tag mb-4">Invoice {state.success.invoiceNumber}</p>
+            <p className="display text-4xl">{state.success.amountDue}</p>
+            <p className="text-sm text-muted mt-2">
+              {state.success.vatNote ? (
+                <>
+                  {state.success.vatNote}
+                  <br />
+                </>
+              ) : null}
+              Due by {state.success.dueDate}
+            </p>
+            {state.success.payUrl && (
+              <a href={state.success.payUrl} className="btn btn-primary w-full justify-center mt-6">
+                Pay membership dues
+              </a>
+            )}
+            <p className="text-xs text-muted mt-4 leading-relaxed">
+              Pay securely by card or SEPA bank transfer. Prefer a direct wire?
+              Bank details are in the email we just sent — use the invoice
+              number as the payment reference.
+            </p>
+          </div>
+
+          <p className="text-sm text-muted">
+            <a href="/account" className="text-purple hover:underline">
+              Or pay later from your account →
+            </a>
+          </p>
+        </div>
+      )}
     </form>
   );
 }

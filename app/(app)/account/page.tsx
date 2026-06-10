@@ -2,16 +2,50 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { currentUser, effectiveMemberships } from "@/app/lib/authz";
 import { db } from "@/app/lib/db";
+import { formatEur } from "@/app/lib/dues";
 import MembershipCard from "@/app/components/MembershipCard";
 
 export const metadata: Metadata = { title: "Your account" };
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ paid?: string; payError?: string }>;
+}) {
+  const { paid, payError } = await searchParams;
   const user = await currentUser();
   const links = user ? await effectiveMemberships(user.id) : [];
 
   const orgs = links.filter((l) => l.member.type === "organization");
   const individual = links.find((l) => l.member.type === "individual");
+
+  // Back from Stripe Checkout (?paid={invoiceId}): the webhook is the source of
+  // truth, so the invoice may or may not be marked paid yet (bank transfers
+  // settle days later). Reflect whichever state we see.
+  let paidBanner: "received" | "processing" | null = null;
+  if (paid) {
+    const inv = await db.invoice.findUnique({ where: { id: paid } });
+    paidBanner = inv ? (inv.status === "paid" ? "received" : "processing") : null;
+  }
+
+  // Outstanding dues for orgs this user manages — pay any time from here.
+  const manageableIds = orgs
+    .filter(
+      (l) =>
+        l.role === "manager" &&
+        (l.member.membership?.status === "pending" ||
+          l.member.membership?.status === "past_due"),
+    )
+    .map((l) => l.memberId);
+  const dueInvoices = manageableIds.length
+    ? (
+        await db.invoice.findMany({
+          where: { status: "issued", membership: { memberId: { in: manageableIds } } },
+          orderBy: { issuedAt: "desc" },
+          include: { membership: { include: { member: true } } },
+        })
+      ).filter((inv) => !(paidBanner === "processing" && inv.id === paid))
+    : [];
 
   // Active manager / representative counts per org, to decide which menu actions
   // are offered (the actions re-check server-side before mutating).
@@ -47,6 +81,61 @@ export default async function AccountPage() {
           </p>
         </div>
       </section>
+
+      {(paidBanner || payError || dueInvoices.length > 0) && (
+        <section className="border-b border-rule">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid gap-4">
+            {paidBanner === "received" && (
+              <div className="card max-w-2xl border-l-4 border-l-emerald-600">
+                <h3>Payment received</h3>
+                <p className="text-sm text-muted leading-relaxed">
+                  Thank you — your membership is active. A receipt is on its way
+                  to your inbox.
+                </p>
+              </div>
+            )}
+            {paidBanner === "processing" && (
+              <div className="card max-w-2xl border-l-4 border-l-purple">
+                <h3>Payment in progress</h3>
+                <p className="text-sm text-muted leading-relaxed">
+                  Bank transfers can take 1–2 business days to settle. Your
+                  membership activates automatically, and we&rsquo;ll email a
+                  receipt as soon as the payment lands.
+                </p>
+              </div>
+            )}
+            {payError && (
+              <div className="card max-w-2xl border-l-4 border-l-red-600">
+                <h3>Payment unavailable</h3>
+                <p className="text-sm text-muted leading-relaxed">
+                  We couldn&rsquo;t start the online payment. Please try again in
+                  a moment, or settle by bank transfer using the details in your
+                  invoice email.
+                </p>
+              </div>
+            )}
+            {dueInvoices.map((inv) => (
+              <div
+                key={inv.id}
+                className="card max-w-2xl flex flex-wrap items-center justify-between gap-4"
+              >
+                <div>
+                  <h3>Dues pending — {inv.membership.member.legalName}</h3>
+                  <p className="text-sm text-muted">
+                    Invoice {inv.number} · {formatEur(inv.grossAmount)}
+                    {inv.dueDate
+                      ? ` · due ${inv.dueDate.toISOString().slice(0, 10)}`
+                      : ""}
+                  </p>
+                </div>
+                <a href={`/pay/${inv.id}`} className="btn btn-primary">
+                  Pay now
+                </a>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {links.length === 0 ? (
         <section>
