@@ -160,7 +160,13 @@ export async function applyMember(
 
   const signedAt = new Date();
   const sig = {
-    signerName: formData.get("signerName"),
+    // Individuals sign as themselves: the form omits the signer field (it
+    // would duplicate "Full legal name"), so fall back to the legal name.
+    signerName:
+      formData.get("signerName") ||
+      (formData.get("class") === "contributor" && formData.get("type") === "individual"
+        ? formData.get("legalName")
+        : null),
     signerTitle: formData.get("signerTitle") || undefined,
     socialAnnouncementConsent: formData.get("socialAnnouncementConsent") === "on",
     accept: formData.get("accept") === "on",
