@@ -20,6 +20,7 @@ const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
 /** Shown on the apply wizard's payment step after an Associate signs. */
 export type AssociateSuccess = {
   memberName: string;
+  invoiceId: string; // for the /account/invoice/{id} PDF download
   invoiceNumber: string;
   amountDue: string; // preformatted, e.g. "€3,000"
   vatNote: string | null;
@@ -382,6 +383,7 @@ export async function applyMember(
         vatNote,
         dueDate: inv.dueDate,
         payUrl: inv.payUrl,
+        invoiceId: inv.invoiceId,
       });
     } catch (e) {
       console.error("[apply] payment-request email failed", e);
@@ -390,6 +392,7 @@ export async function applyMember(
     return {
       success: {
         memberName: d.legalName,
+        invoiceId: inv.invoiceId,
         invoiceNumber: inv.number,
         amountDue: formatEur(inv.grossAmount),
         vatNote,

@@ -83,6 +83,7 @@ export async function reissueInvoice(formData: FormData) {
             : null,
       dueDate: inv.dueDate,
       payUrl: inv.payUrl,
+      invoiceId: inv.invoiceId,
     });
   } catch (e) {
     console.error("[admin] reissue email failed", e);

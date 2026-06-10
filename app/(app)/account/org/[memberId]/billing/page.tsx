@@ -4,7 +4,6 @@ import { db } from "@/app/lib/db";
 import { currentUser, isManagerOf } from "@/app/lib/authz";
 import { formatEur } from "@/app/lib/dues";
 import { PageHero, Section } from "@/app/components/PageHero";
-import { openBillingPortal } from "./actions";
 
 export const metadata: Metadata = { title: "Billing" };
 
@@ -36,21 +35,13 @@ export default async function BillingPage({
         title="Billing"
         lead={
           <>
-            Invoices and payment for <strong>{member.legalName}</strong>. Manage
-            payment methods, or settle dues by bank transfer.
+            Invoices and payment for <strong>{member.legalName}</strong>. Pay
+            outstanding dues online or by bank transfer, and download invoices
+            as PDF.
           </>
         }
       />
       <Section bordered={false}>
-      {member.stripeCustomerId && (
-        <form action={openBillingPortal} className="mb-6">
-          <input type="hidden" name="memberId" value={memberId} />
-          <button type="submit" className="btn btn-primary">
-            Manage billing &amp; payment ↗
-          </button>
-        </form>
-      )}
-
       {invoices.length === 0 ? (
         <p className="text-muted mt-6">No invoices yet.</p>
       ) : (
@@ -69,7 +60,15 @@ export default async function BillingPage({
             <tbody>
               {invoices.map((inv) => (
                 <tr key={inv.id} className="border-t border-rule">
-                  <td className="p-2 whitespace-nowrap">{inv.number}</td>
+                  <td className="p-2 whitespace-nowrap">
+                    <a
+                      href={`/account/invoice/${inv.id}`}
+                      className="text-purple hover:underline"
+                      title="Download the invoice (PDF)"
+                    >
+                      {inv.number} ↓
+                    </a>
+                  </td>
                   <td className="p-2 whitespace-nowrap">{formatEur(inv.grossAmount)}</td>
                   <td className="p-2 text-muted">{inv.payMethod ?? "—"}</td>
                   <td className="p-2">

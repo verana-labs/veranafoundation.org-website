@@ -102,6 +102,7 @@ async function issueRenewals(now: Date, result: DunningResult) {
         vatNote: vatNote(inv.vat.treatment, inv.vat.vatAmount),
         dueDate: inv.dueDate,
         payUrl: inv.payUrl,
+        invoiceId: inv.invoiceId,
         renewal: true,
       });
     } catch (e) {
@@ -164,6 +165,7 @@ async function processOpenInvoices(now: Date, result: DunningResult) {
         vatNote: vatNote(inv.vatTreatment, inv.vatAmount),
         dueDate: inv.dueDate ?? now,
         payUrl: invoicePayUrl(inv.id),
+        invoiceId: inv.id,
         reminderDay: action.day,
         expireDay: EXPIRE_DAYS,
         renewal,
