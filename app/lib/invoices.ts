@@ -1,6 +1,9 @@
+import type { PayMethod } from "@prisma/client";
 import { db } from "@/app/lib/db";
-import { computeVat } from "@/app/lib/vat";
-import { getProvider, type PayMethod } from "@/app/lib/payments";
+import { computeVat, type VatResult } from "@/app/lib/vat";
+import { sendPaymentReceiptEmail } from "@/app/lib/billing-emails";
+
+const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
 
 /** The single invoicing entity (lazily created). */
 export async function getSellerEntity() {
@@ -27,26 +30,37 @@ async function nextInvoiceNumber(prefix: string): Promise<string> {
 }
 
 /**
- * Create an issued invoice for a membership and hand it to the payment
- * provider. Returns the hosted pay URL for card, or null for bank transfer.
+ * Our persistent pay link. It never expires — /pay/[invoiceId] mints a fresh
+ * Stripe Checkout Session per click. Null when Stripe isn't configured
+ * (bank transfer remains available via the emailed details).
+ */
+export function invoicePayUrl(invoiceId: string): string | null {
+  return process.env.STRIPE_SECRET_KEY ? `${SITE_URL}/pay/${invoiceId}` : null;
+}
+
+/**
+ * Create an issued invoice for a membership. No provider call here — our DB is
+ * the system of record; payment is collected later via /pay/{id} (Checkout) or
+ * a direct wire reconciled in admin. payMethod stays null until paid.
  */
 export async function createMembershipInvoice(args: {
   membershipId: string;
-  member: {
-    id: string;
-    legalName: string;
-    primaryEmail: string;
-    stripeCustomerId: string | null;
-  };
   net: number;
   country: string;
   hasVatNumber: boolean;
-  payMethod: PayMethod;
-}): Promise<{ invoiceId: string; hostedPayUrl: string | null }> {
+}): Promise<{
+  invoiceId: string;
+  number: string;
+  grossAmount: number;
+  vat: VatResult;
+  dueDate: Date;
+  payUrl: string | null;
+}> {
   const seller = await getSellerEntity();
   const vat = computeVat(args.net, args.country, args.hasVatNumber);
   const gross = args.net + vat.vatAmount;
   const number = await nextInvoiceNumber(seller.invoicePrefix);
+  const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   const invoice = await db.invoice.create({
     data: {
@@ -59,56 +73,36 @@ export async function createMembershipInvoice(args: {
       grossAmount: gross,
       vatTreatment: vat.treatment,
       status: "issued",
-      payMethod: args.payMethod,
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      dueDate,
       issuedAt: new Date(),
     },
   });
 
-  const provider = getProvider(args.payMethod);
-  const res = await provider.createInvoice({
-    member: {
-      id: args.member.id,
-      legalName: args.member.legalName,
-      primaryEmail: args.member.primaryEmail,
-      country: args.country,
-      stripeCustomerId: args.member.stripeCustomerId,
-    },
-    invoice: {
-      id: invoice.id,
-      number,
-      grossAmount: gross,
-      currency: "EUR",
-      description: `Associate membership dues — ${number}`,
-    },
-  });
-
-  if (res.providerRef) {
-    await db.invoice.update({
-      where: { id: invoice.id },
-      data: { providerRef: res.providerRef },
-    });
-  }
-  if (res.customerId && !args.member.stripeCustomerId) {
-    await db.member.update({
-      where: { id: args.member.id },
-      data: { stripeCustomerId: res.customerId },
-    });
-  }
-
-  return { invoiceId: invoice.id, hostedPayUrl: res.hostedPayUrl };
+  return {
+    invoiceId: invoice.id,
+    number,
+    grossAmount: gross,
+    vat,
+    dueDate,
+    payUrl: invoicePayUrl(invoice.id),
+  };
 }
 
-/** Mark an invoice paid and activate its membership (idempotent). */
+/**
+ * Mark an invoice paid and activate its membership (idempotent), then send the
+ * receipt email (best-effort). Called from the Stripe webhook and admin
+ * mark-paid.
+ */
 export async function markInvoicePaid(args: {
   invoiceId: string;
   provider: string;
   providerRef?: string | null;
   amount: number;
+  payMethod?: PayMethod;
 }) {
   const invoice = await db.invoice.findUnique({
     where: { id: args.invoiceId },
-    include: { membership: true },
+    include: { membership: { include: { member: true } } },
   });
   if (!invoice || invoice.status === "paid") return;
 
@@ -119,7 +113,11 @@ export async function markInvoicePaid(args: {
   await db.$transaction([
     db.invoice.update({
       where: { id: invoice.id },
-      data: { status: "paid", paidAt: now },
+      data: {
+        status: "paid",
+        paidAt: now,
+        payMethod: args.payMethod ?? invoice.payMethod,
+      },
     }),
     db.payment.create({
       data: {
@@ -135,4 +133,16 @@ export async function markInvoicePaid(args: {
       data: { status: "active", periodStart: now, periodEnd },
     }),
   ]);
+
+  try {
+    await sendPaymentReceiptEmail({
+      to: invoice.membership.member.primaryEmail,
+      memberName: invoice.membership.member.legalName,
+      invoiceNumber: invoice.number,
+      amountPaid: args.amount,
+      periodEnd,
+    });
+  } catch (e) {
+    console.error("[invoices] receipt email failed", e);
+  }
 }

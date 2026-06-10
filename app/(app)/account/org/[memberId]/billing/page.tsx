@@ -25,10 +25,9 @@ export default async function BillingPage({
     orderBy: { createdAt: "desc" },
   });
 
-  const hasBankTransferDue = invoices.some(
-    (i) => i.status === "issued" && i.payMethod === "bank_transfer",
-  );
+  const hasDue = invoices.some((i) => i.status === "issued");
   const bankDetails = process.env.BANK_TRANSFER_DETAILS;
+  const canPayOnline = !!process.env.STRIPE_SECRET_KEY;
 
   return (
     <>
@@ -64,6 +63,7 @@ export default async function BillingPage({
                 <th className="p-2">Method</th>
                 <th className="p-2">Status</th>
                 <th className="p-2">Due</th>
+                <th className="p-2"></th>
               </tr>
             </thead>
             <tbody>
@@ -78,6 +78,13 @@ export default async function BillingPage({
                   <td className="p-2 text-muted whitespace-nowrap">
                     {inv.dueDate ? inv.dueDate.toISOString().slice(0, 10) : "—"}
                   </td>
+                  <td className="p-2 whitespace-nowrap">
+                    {inv.status === "issued" && canPayOnline && (
+                      <a href={`/pay/${inv.id}`} className="text-purple hover:underline">
+                        Pay →
+                      </a>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -85,13 +92,13 @@ export default async function BillingPage({
         </div>
       )}
 
-      {hasBankTransferDue && (
+      {hasDue && (
         <div className="card mt-6">
           <h2 className="display text-lg">Bank transfer</h2>
           <p className="text-sm text-muted mt-1">
-            Pay the outstanding invoice by bank transfer, using the{" "}
-            <strong>invoice number as the payment reference</strong>. Your
-            membership activates once we reconcile the payment.
+            Outstanding invoices can also be settled by direct bank transfer,
+            using the <strong>invoice number as the payment reference</strong>.
+            Your membership activates once we reconcile the payment.
           </p>
           {bankDetails ? (
             <pre className="text-sm mt-2 whitespace-pre-wrap">{bankDetails}</pre>
