@@ -1,0 +1,46 @@
+# Daily backstop for Wise wire reconciliation (the balances#credit webhook is
+# the primary trigger; the scan window re-covers misses). Calls the app's
+# /api/cron/wise-reconcile guarded by CRON_SECRET. Harmless when Wise isn't
+# configured: the route reports configured:false / 503.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: wise-reconcile
+  namespace: web
+  labels:
+    app.kubernetes.io/name: veranafoundation-website
+spec:
+  schedule: "0 6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 300
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: curl
+              image: curlimages/curl:8.10.1
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: veranafoundation-website-secrets
+                      key: CRON_SECRET
+                      optional: true
+              command: ["/bin/sh", "-c"]
+              args:
+                - >-
+                  curl -fsS --max-time 240
+                  -H "Authorization: Bearer ${CRON_SECRET}"
+                  http://veranafoundation-website.web.svc.cluster.local/api/cron/wise-reconcile
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
