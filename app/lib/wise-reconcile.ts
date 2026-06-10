@@ -28,12 +28,13 @@ export type ReconcileResult = {
   configured: boolean;
   scanned: number;
   matched: string[]; // invoice numbers marked paid
-  alerts: string[]; // human-readable problems needing admin review
+  alerts: string[]; // NEW problems emailed to admins this run
+  suppressed: number; // known problems re-seen in the window (already alerted)
 };
 
 export async function reconcileWiseCredits(): Promise<ReconcileResult> {
   if (!wiseConfigured()) {
-    return { configured: false, scanned: 0, matched: [], alerts: [] };
+    return { configured: false, scanned: 0, matched: [], alerts: [], suppressed: 0 };
   }
 
   const seller = await getSellerEntity();
@@ -41,24 +42,52 @@ export async function reconcileWiseCredits(): Promise<ReconcileResult> {
   const credits = await fetchCredits({ since });
 
   const matched: string[] = [];
-  const alerts: string[] = [];
+  const problems: { key: string; message: string }[] = [];
 
   for (const credit of credits) {
     const numbers = extractInvoiceNumbers(credit.text, seller.invoicePrefix);
     for (const number of numbers) {
       const problem = await settleCredit(credit, number);
       if (problem === null) matched.push(number);
-      else if (problem) alerts.push(problem);
+      else if (problem) {
+        problems.push({ key: `${credit.referenceNumber}:${number}`, message: problem });
+      }
     }
   }
 
-  if (alerts.length) await alertAdmins(alerts);
-  if (matched.length || alerts.length) {
+  // The scan window re-covers past days on every run, so an unresolved anomaly
+  // would re-alert daily for WISE_RECONCILE_DAYS. Dedupe via the AdminAction
+  // audit log: each wire+invoice pair alerts exactly once.
+  const fresh: typeof problems = [];
+  for (const p of problems) {
+    const seen = await db.adminAction.findFirst({
+      where: { action: "wise_reconcile.alert", targetType: "WiseCredit", targetId: p.key },
+      select: { id: true },
+    });
+    if (!seen) fresh.push(p);
+  }
+  const suppressed = problems.length - fresh.length;
+
+  if (fresh.length && (await alertAdmins(fresh.map((p) => p.message)))) {
+    // Recorded only after the email went out, so a failed send retries next run.
+    await db.adminAction.createMany({
+      data: fresh.map((p) => ({
+        actorEmail: "system:wise-reconcile",
+        action: "wise_reconcile.alert",
+        targetType: "WiseCredit",
+        targetId: p.key,
+        after: { message: p.message },
+      })),
+    });
+  }
+
+  const alerts = fresh.map((p) => p.message);
+  if (matched.length || problems.length) {
     console.log(
-      `[wise-reconcile] scanned ${credits.length} credits — paid: ${matched.join(", ") || "none"}; alerts: ${alerts.length}`,
+      `[wise-reconcile] scanned ${credits.length} credits — paid: ${matched.join(", ") || "none"}; new alerts: ${alerts.length}; suppressed: ${suppressed}`,
     );
   }
-  return { configured: true, scanned: credits.length, matched, alerts };
+  return { configured: true, scanned: credits.length, matched, alerts, suppressed };
 }
 
 /**
@@ -107,12 +136,16 @@ async function settleCredit(
   return null;
 }
 
-/** Best-effort heads-up to the admin allowlist about credits needing review. */
-async function alertAdmins(alerts: string[]): Promise<void> {
+/**
+ * Heads-up to the admin allowlist about credits needing review. Returns
+ * whether the email was sent — callers only record an alert as delivered
+ * (for dedupe) when it actually went out.
+ */
+async function alertAdmins(alerts: string[]): Promise<boolean> {
   try {
     const admins = await db.adminAllowlistEntry.findMany({ select: { email: true } });
     const to = admins.map((a) => a.email).join(",");
-    if (!to) return;
+    if (!to) return false;
     const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
     await sendEmail({
       to,
@@ -130,7 +163,9 @@ async function alertAdmins(alerts: string[]): Promise<void> {
         button: { label: "Open admin invoices", href: `${SITE_URL}/admin/invoices` },
       }),
     });
+    return true;
   } catch (e) {
     console.error("[wise-reconcile] admin alert failed", e);
+    return false;
   }
 }
