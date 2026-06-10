@@ -397,7 +397,7 @@ function SectionHeading({ tag, title }: { tag: string; title: string }) {
   );
 }
 
-/** Optional org-logo upload + the display-consent checkbox (shown on pick). */
+/** Optional org-logo upload with live preview + display-consent checkbox. */
 function LogoField({
   hasLogo,
   onPick,
@@ -405,6 +405,15 @@ function LogoField({
   hasLogo: boolean;
   onPick: (has: boolean) => void;
 }) {
+  const [preview, setPreview] = useState<string | null>(null);
+
+  // Object URLs hold the file in memory — release the old one on replace/unmount.
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
   return (
     <>
       <div className="form-field">
@@ -416,10 +425,28 @@ function LogoField({
           type="file"
           name="logo"
           accept=".svg,.png,.webp,.jpg,.jpeg,image/svg+xml,image/png,image/webp,image/jpeg"
-          onChange={(e) => onPick(!!e.target.files?.length)}
+          onChange={(e) => {
+            const file = e.target.files?.[0] ?? null;
+            onPick(!!file);
+            setPreview(file ? URL.createObjectURL(file) : null);
+          }}
         />
         <p className="hint">SVG, PNG, WebP or JPG — max 1 MB.</p>
       </div>
+      {preview && (
+        <div className="flex items-center gap-3">
+          {/* Blob URL preview of the user's own pick — next/image can't help here. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={preview}
+            alt="Logo preview"
+            className="h-16 w-16 object-contain rounded border border-rule bg-surface p-1"
+          />
+          <p className="text-xs text-muted">
+            Preview — shown at small sizes, so check it stays legible.
+          </p>
+        </div>
+      )}
       {hasLogo && (
         <label className="flex items-start gap-2 text-sm">
           <input
