@@ -180,8 +180,11 @@ Wise Business can't create payment links by API, but it **can read balances and 
 
 ## Lifecycle & renewal
 
-- States: `pending → active → past_due → suspended/expired`, with discretionary `reinstated` (§8.8).
-- **Renewal:** annual. Reminder + next invoice issued N days before `periodEnd` (e.g. 30). Grace period on non-payment → `past_due`; after grace → `suspended` (revoke entitlement) per §8.3(a)/§7.4.
+- States: `pending → active → past_due → expired`, with `suspended`/`cancelled` for discretionary admin use (§8.8).
+- **Dunning (implemented in `dunning.ts`, daily cron):** for any issued Associate invoice — application (`pending`) or renewal (`past_due`) — payment reminders go out **7, 14, 21 and 28 days** after issue; at **39 days** the invoice is **voided** (never deleted — the statutory number sequence stays intact) and the membership/application becomes `expired`, with a notice email. Reminders are deduped via the AdminAction log; after downtime only the latest reached milestone is sent, not a backlog.
+- **Renewal:** annual. The day `periodEnd` passes, a **fresh renewal invoice** is issued (current tier price) and emailed; status moves to `past_due` but **access continues through the 39-day grace**. Same reminder cadence applies.
+- **Period continuity (in `markInvoicePaid`):** a renewal paid **within grace** extends the year **from the old `periodEnd`** (no free time for paying late); a first payment, or a payment on an admin-**reissued** invoice after expiry, starts the year **on the day of payment** (no charge for the lapse).
+- **After expiry:** the void invoice is not payable (`/pay` rejects it; a late wire against it raises a Wise-reconcile admin alert). A returning member gets a **reissued invoice** (admin action: new number, new 30-day due date, current price).
 - **Provisional flag** clears (→ ordinary membership) when the Foundation incorporates and ratifies (§2.3); entitlements are unaffected by the flag.
 
 ## Admin (minimal)

@@ -4,7 +4,7 @@ import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
 import { formatEur } from "@/app/lib/dues";
 import { PageHero, Section } from "@/app/components/PageHero";
-import { markPaid, voidInvoice } from "./actions";
+import { markPaid, reissueInvoice, voidInvoice } from "./actions";
 
 export const metadata: Metadata = { title: "Invoices · Admin" };
 
@@ -68,6 +68,20 @@ export default async function AdminInvoicesPage() {
                         </form>
                       </div>
                     )}
+                    {inv.status === "void" &&
+                      inv.membership.class === "associate" &&
+                      inv.membership.status !== "active" && (
+                        <form action={reissueInvoice}>
+                          <input type="hidden" name="invoiceId" value={inv.id} />
+                          <button
+                            type="submit"
+                            className="btn text-xs"
+                            title="Fresh invoice (new number, 30-day due date, current tier price); membership year starts on payment."
+                          >
+                            Reissue
+                          </button>
+                        </form>
+                      )}
                   </td>
                 </tr>
               ))}

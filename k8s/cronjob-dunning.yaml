@@ -1,0 +1,45 @@
+# Daily dunning/renewal job for Associate dues: renewal invoices the day
+# periodEnd passes, payment reminders at 7/14/21/28 days, invoice void +
+# membership expiry at 39. Idempotent (AdminAction-deduped) — safe to re-run.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dunning
+  namespace: web
+  labels:
+    app.kubernetes.io/name: veranafoundation-website
+spec:
+  schedule: "30 6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 300
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: curl
+              image: curlimages/curl:8.10.1
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: veranafoundation-website-secrets
+                      key: CRON_SECRET
+                      optional: true
+              command: ["/bin/sh", "-c"]
+              args:
+                - >-
+                  curl -fsS --max-time 240
+                  -H "Authorization: Bearer ${CRON_SECRET}"
+                  http://veranafoundation-website.web.svc.cluster.local/api/cron/dunning
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi

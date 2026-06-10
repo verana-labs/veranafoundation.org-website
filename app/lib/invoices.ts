@@ -5,6 +5,12 @@ import { sendPaymentReceiptEmail } from "@/app/lib/billing-emails";
 
 const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
 
+// Dunning cadence (days after an invoice is issued): reminders, then the
+// invoice is voided and the membership/application expires. Shared with
+// dunning.ts so the reminder copy and the continuity rule below agree.
+export const REMINDER_DAYS = [7, 14, 21, 28] as const;
+export const EXPIRE_DAYS = 39;
+
 /** The single invoicing entity (lazily created). */
 export async function getSellerEntity() {
   const existing = await db.sellerEntity.findFirst();
@@ -107,7 +113,17 @@ export async function markInvoicePaid(args: {
   if (!invoice || invoice.status === "paid") return;
 
   const now = new Date();
-  const periodEnd = new Date(now);
+  // Period continuity: a renewal paid within the grace window extends from the
+  // previous periodEnd (the member kept access during grace — paying late must
+  // not gain free time). First payments, and reactivations after expiry (fresh
+  // invoice), start the year on the day of payment.
+  const prevEnd = invoice.membership.periodEnd;
+  const base =
+    prevEnd != null &&
+    now.getTime() - prevEnd.getTime() <= EXPIRE_DAYS * 24 * 60 * 60 * 1000
+      ? prevEnd
+      : now;
+  const periodEnd = new Date(base);
   periodEnd.setFullYear(periodEnd.getFullYear() + 1);
 
   await db.$transaction([
@@ -130,7 +146,7 @@ export async function markInvoicePaid(args: {
     }),
     db.membership.update({
       where: { id: invoice.membershipId },
-      data: { status: "active", periodStart: now, periodEnd },
+      data: { status: "active", periodStart: base, periodEnd },
     }),
   ]);
 
