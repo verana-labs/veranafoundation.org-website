@@ -111,7 +111,11 @@ model Member {
   vatStatus        VatStatus @default(none)
   stripeCustomerId String?
 
-  memberships      Membership[]
+  // One membership per member: a Member is the durable party; its single
+  // Membership is the current subscription term, renewed in place (periodEnd
+  // extended), reactivated on re-join. Per-period billing history lives in
+  // Invoice; change history in AdminAction.
+  membership       Membership?
   access           MemberAccess[]
   userLinks        UserMember[]
   signatureRecords SignatureRecord[]
@@ -122,7 +126,7 @@ model Member {
 
 model Membership {
   id       String @id @default(cuid())
-  memberId String
+  memberId String @unique // one membership per member (1:1)
   member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   class       MembershipClass
@@ -138,7 +142,6 @@ model Membership {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([memberId])
   @@index([status])
 }
 

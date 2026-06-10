@@ -6,13 +6,12 @@ export type WgClass = "contributor" | "associate";
 export async function userActiveClasses(userId: string): Promise<Set<WgClass>> {
   const links = await db.userMember.findMany({
     where: { userId },
-    include: { member: { include: { memberships: true } } },
+    include: { member: { include: { membership: true } } },
   });
   const set = new Set<WgClass>();
   for (const link of links) {
-    for (const m of link.member.memberships) {
-      if (m.status === "active") set.add(m.class as WgClass);
-    }
+    const m = link.member.membership;
+    if (m && m.status === "active") set.add(m.class as WgClass);
   }
   return set;
 }

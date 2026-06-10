@@ -19,10 +19,10 @@ export default async function OrgPage({
 
   const member = await db.member.findUnique({
     where: { id: memberId },
-    include: { memberships: { orderBy: { createdAt: "desc" }, take: 1 } },
+    include: { membership: true },
   });
   if (!member) notFound();
-  const membership = member.memberships[0];
+  const membership = member.membership;
 
   return (
     <>
