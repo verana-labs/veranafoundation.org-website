@@ -13,18 +13,28 @@ export const EXPIRE_DAYS = 39;
 
 /** The single invoicing entity (lazily created). */
 export async function getSellerEntity() {
+  const fromEnv = {
+    legalName: process.env.SELLER_LEGAL_NAME || "Verana Foundation (2060 OÜ)",
+    country: process.env.SELLER_COUNTRY || "EE",
+    vatNumber: process.env.SELLER_VAT_NUMBER || null,
+  };
   const existing = await db.sellerEntity.findFirst();
-  if (existing) return existing;
-  return db.sellerEntity.create({
-    data: {
-      legalName:
-        process.env.SELLER_LEGAL_NAME ??
-        "Verana Foundation (in formation), represented by 2060 OÜ",
-      country: process.env.SELLER_COUNTRY ?? "EE",
-      vatNumber: process.env.SELLER_VAT_NUMBER ?? null,
-      invoicePrefix: process.env.INVOICE_PREFIX ?? "VF-",
-    },
-  });
+  if (!existing) {
+    return db.sellerEntity.create({
+      data: { ...fromEnv, invoicePrefix: process.env.INVOICE_PREFIX || "VF-" },
+    });
+  }
+  // Keep the row in step with config — the lazily-created row otherwise pins
+  // the name/VAT forever (the prod row still said "…in formation, represented
+  // by 2060 OÜ", which overflows the invoice PDF header).
+  if (
+    existing.legalName !== fromEnv.legalName ||
+    existing.country !== fromEnv.country ||
+    existing.vatNumber !== fromEnv.vatNumber
+  ) {
+    return db.sellerEntity.update({ where: { id: existing.id }, data: fromEnv });
+  }
+  return existing;
 }
 
 async function nextInvoiceNumber(prefix: string): Promise<string> {
