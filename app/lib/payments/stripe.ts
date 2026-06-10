@@ -2,6 +2,13 @@ import Stripe from "stripe";
 
 const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
 
+// Stripe prohibits its Bank Transfers feature for some business categories —
+// including "membership organizations", this account's category — so Checkout
+// runs card-only by default. Set STRIPE_BANK_TRANSFER=on only if Stripe
+// support enables the feature; bank payers always have the direct-wire path
+// (BANK_TRANSFER_DETAILS + admin mark-paid) regardless.
+const BANK_TRANSFER = process.env.STRIPE_BANK_TRANSFER === "on";
+
 // Where Stripe domiciles the virtual IBAN shown for EU bank transfers
 // (one of BE / DE / ES / FR / IE / NL — Estonia isn't offered).
 const BANK_TRANSFER_COUNTRY = process.env.STRIPE_BANK_TRANSFER_COUNTRY ?? "DE";
@@ -85,16 +92,16 @@ export async function createCheckoutSession(args: {
 
   let session: Stripe.Checkout.Session;
   try {
-    session = await stripe.checkout.sessions.create(params(true));
+    session = await stripe.checkout.sessions.create(params(BANK_TRANSFER));
   } catch (e) {
-    // "Bank transfer" not yet enabled in the dashboard's payment-method
-    // settings: don't strand the payer — fall back to card-only (direct wires
-    // stay available via the emailed bank details).
+    // Opted in but Stripe still rejects customer_balance (feature not enabled
+    // on the account): don't strand the payer — fall back to card-only
+    // (direct wires stay available via the emailed bank details).
     const msg = e instanceof Error ? e.message : "";
-    if (!msg.includes("customer_balance")) throw e;
+    if (!BANK_TRANSFER || !msg.includes("customer_balance")) throw e;
     console.error(
-      "[stripe] customer_balance rejected — is Bank transfer enabled in " +
-        "https://dashboard.stripe.com/settings/payment_methods ? Falling back to card-only.",
+      "[stripe] customer_balance rejected — is the Bank Transfers feature enabled " +
+        "for this account? Falling back to card-only.",
     );
     session = await stripe.checkout.sessions.create(params(false));
   }

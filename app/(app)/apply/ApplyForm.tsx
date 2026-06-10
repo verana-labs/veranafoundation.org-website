@@ -203,8 +203,8 @@ export default function ApplyForm({
                 </select>
               </Labeled>
               <p className="text-sm text-muted">
-                After signing you&rsquo;ll receive an invoice, payable online by
-                card or SEPA bank transfer — or by direct wire.
+                After signing you&rsquo;ll receive an invoice, payable online or
+                by bank transfer.
               </p>
             </>
           )}
@@ -323,9 +323,9 @@ export default function ApplyForm({
               </a>
             )}
             <p className="text-xs text-muted mt-4 leading-relaxed">
-              Pay securely by card or SEPA bank transfer. Prefer a direct wire?
-              Bank details are in the email we just sent — use the invoice
-              number as the payment reference.
+              Pay securely online — or settle by bank transfer using the
+              details in the email we just sent, with the invoice number as the
+              payment reference.
             </p>
           </div>
 

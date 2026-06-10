@@ -47,7 +47,7 @@ export async function sendPaymentRequestEmail(args: {
             Due by <strong>${due}</strong>
           </td></tr>
         </table>
-        ${args.payUrl ? `<p style="margin:0;">Pay securely online by card or SEPA bank transfer:</p>` : ""}
+        ${args.payUrl ? `<p style="margin:0;">Pay securely online:</p>` : ""}
         ${bankDetailsHtml(args.invoiceNumber)}`,
       button: args.payUrl
         ? { label: "Pay membership dues", href: args.payUrl }
