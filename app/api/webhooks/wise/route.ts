@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
 // trigger, and reconciliation re-reads the SCA-protected statement itself, so
 // even a forged call could at worst start a harmless idempotent scan.
 export async function POST(req: Request) {
-  const pem = process.env.WISE_WEBHOOK_PUBLIC_KEY;
+  // Tolerate \n-escaped PEMs (single-line env values).
+  const pem = process.env.WISE_WEBHOOK_PUBLIC_KEY?.replace(/\\n/g, "\n");
   if (!pem) {
     return NextResponse.json({ error: "Wise webhook not configured" }, { status: 503 });
   }

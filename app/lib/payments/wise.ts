@@ -49,7 +49,8 @@ async function wiseFetchSca(path: string): Promise<Response> {
   const first = await wiseFetch(path);
   if (first.status !== 403) return first;
   const token = first.headers.get("x-2fa-approval");
-  const pem = process.env.WISE_SCA_PRIVATE_KEY;
+  // Tolerate \n-escaped PEMs (single-line env values).
+  const pem = process.env.WISE_SCA_PRIVATE_KEY?.replace(/\\n/g, "\n");
   if (!token || !pem) return first;
   const signature = crypto
     .createSign("RSA-SHA256")
