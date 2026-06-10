@@ -1,6 +1,6 @@
 import { PDFDocument, PDFFont, StandardFonts, rgb } from "pdf-lib";
 import { db } from "@/app/lib/db";
-import { ASSOCIATE_TIERS } from "@/app/lib/dues";
+import { tierLabel } from "@/app/lib/dues";
 
 // Renders a dues invoice to PDF with pdf-lib + standard Helvetica (same
 // approach as agreement-pdf.ts: no headless browser, runs on node:alpine).
@@ -51,7 +51,7 @@ export async function renderInvoicePdf(
   if (!inv) throw new Error("Invoice not found");
   const member = inv.membership.member;
   const seller = inv.sellerEntity;
-  const tierLabel = ASSOCIATE_TIERS.find((t) => t.id === inv.membership.tier)?.label;
+  const tier = tierLabel(inv.membership.tier, inv.feeScheduleVersion);
 
   const doc = await PDFDocument.create();
   const page = doc.addPage([PAGE.w, PAGE.h]);
@@ -142,7 +142,7 @@ export async function renderInvoicePdf(
   text("Amount", { size: 8, color: MUTED, alignRight: true });
   down(16);
   text(
-    `Associate membership dues — annual${tierLabel ? ` (${tierLabel})` : ""}`,
+    `Associate membership dues — annual${tier ? ` (${tier})` : ""}`,
     { size: 10 },
   );
   text(eur(inv.netAmount), { size: 10, alignRight: true });

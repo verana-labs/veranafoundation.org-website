@@ -212,6 +212,8 @@ model Invoice {
   status       InvoiceStatus @default(draft)
   payMethod    PayMethod?
   providerRef  String? // Stripe invoice id, etc.
+  // Which fee schedule priced this invoice (audit; null on legacy rows).
+  feeScheduleVersion String?
 
   dueDate  DateTime?
   issuedAt DateTime?
