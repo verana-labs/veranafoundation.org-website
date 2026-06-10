@@ -9,6 +9,8 @@ import {
   leaveOrganization,
   cancelMembership,
   updateOrgAddress,
+  uploadOrgLogo,
+  removeOrgLogo,
 } from "@/app/(app)/account/actions";
 
 export type MembershipMenu = {
@@ -19,6 +21,8 @@ export type MembershipMenu = {
   billingHref?: string | null;
   /** Manager-only — offer inline editing of the registered address. */
   canEditAddress?: boolean;
+  /** Manager-only — offer logo upload/replace/remove. */
+  canEditLogo?: boolean;
   /** Show "Leave Organization" (representatives, or a manager when not the last). */
   canLeave?: boolean;
   /** Show "Cancel membership" (individuals, or an org's sole manager w/ no reps). */
@@ -38,6 +42,10 @@ export type MembershipCardData = {
   /** Organization's VAT number. Only rendered when `showVat` (EU companies). */
   vatNumber?: string | null;
   showVat?: boolean;
+  /** Serving URL of the uploaded logo (cache-busted), if any. */
+  logoUrl?: string | null;
+  /** Current display consent — preselects the checkbox when replacing. */
+  logoConsent?: boolean;
   /** When set, a "Download agreement" link to the signed PDF is shown. */
   agreementHref?: string | null;
   /** When set, a ⋮ actions menu is shown top-right. */
@@ -68,12 +76,17 @@ export default function MembershipCard({
   address,
   vatNumber,
   showVat,
+  logoUrl,
+  logoConsent,
   agreementHref,
   menu,
 }: MembershipCardData) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(false);
   const [draftAddress, setDraftAddress] = useState("");
+  const [editingLogo, setEditingLogo] = useState(false);
+  const [logoError, setLogoError] = useState("");
+  const logoFormRef = useRef<HTMLFormElement>(null);
   const [pending, startTransition] = useTransition();
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -106,6 +119,7 @@ export default function MembershipCard({
     (menu.canLeave ||
       menu.canCancel ||
       menu.canEditAddress ||
+      menu.canEditLogo ||
       !!menu.manageHref ||
       !!menu.billingHref);
 
@@ -113,6 +127,20 @@ export default function MembershipCard({
     startTransition(async () => {
       await updateOrgAddress(menu!.memberId, draftAddress);
       setEditingAddress(false);
+    });
+  }
+
+  function saveLogo() {
+    const form = logoFormRef.current;
+    if (!form) return;
+    const fd = new FormData(form);
+    startTransition(async () => {
+      const res = await uploadOrgLogo(fd);
+      if (res.error) setLogoError(res.error);
+      else {
+        setLogoError("");
+        setEditingLogo(false);
+      }
     });
   }
 
@@ -205,6 +233,36 @@ export default function MembershipCard({
                     Update address
                   </button>
                 )}
+                {menu!.canEditLogo && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={pending}
+                    className="block w-full px-3 py-2 text-left hover:bg-rule/40"
+                    onClick={() => {
+                      setLogoError("");
+                      setEditingLogo(true);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    {logoUrl ? "Replace logo" : "Upload logo"}
+                  </button>
+                )}
+                {menu!.canEditLogo && logoUrl && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={pending}
+                    className="block w-full px-3 py-2 text-left hover:bg-rule/40"
+                    onClick={() =>
+                      act("Remove the organization's logo?", () =>
+                        removeOrgLogo(menu!.memberId),
+                      )
+                    }
+                  >
+                    Remove logo
+                  </button>
+                )}
                 {menu!.manageHref && (
                   <Link
                     role="menuitem"
@@ -232,6 +290,15 @@ export default function MembershipCard({
       </div>
 
       <h3 className="flex items-center gap-2">
+        {logoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element -- served by our
+          // own /logo route; next/image can't optimize SVGs anyway.
+          <img
+            src={logoUrl}
+            alt=""
+            className="h-9 w-9 object-contain rounded"
+          />
+        )}
         <span>{name}</span>
         {flag ? (
           <span aria-label={label ?? undefined} title={label ?? undefined}>
@@ -281,6 +348,48 @@ export default function MembershipCard({
         <p className="text-sm text-muted">
           VAT: {vatNumber || <span className="italic">not set</span>}
         </p>
+      )}
+
+      {editingLogo && menu && (
+        <form ref={logoFormRef} className="mt-2 grid gap-2 text-sm">
+          <input type="hidden" name="memberId" value={menu.memberId} />
+          <input
+            type="file"
+            name="logo"
+            accept=".svg,.png,.webp,.jpg,.jpeg,image/svg+xml,image/png,image/webp,image/jpeg"
+            className="text-xs"
+            disabled={pending}
+          />
+          <p className="text-xs text-muted">SVG, PNG, WebP or JPG — max 1 MB.</p>
+          <label className="flex items-start gap-2 text-xs">
+            <input
+              type="checkbox"
+              name="logoDisplayConsent"
+              defaultChecked={logoConsent ?? true}
+              className="mt-0.5"
+            />
+            <span>We may display this logo on veranafoundation.org.</span>
+          </label>
+          {logoError && <p className="text-xs text-red-600">{logoError}</p>}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="btn btn-primary text-xs"
+              disabled={pending}
+              onClick={saveLogo}
+            >
+              {pending ? "Uploading…" : "Save"}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary text-xs"
+              disabled={pending}
+              onClick={() => setEditingLogo(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
       )}
 
       {expiry && <p className="text-sm text-muted">Expire {expiry}</p>}

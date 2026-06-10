@@ -4,6 +4,13 @@ const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
 
+  // sharp is a native module (logo resizing) — keep it external so the
+  // standalone tracer ships its prebuilt musl binaries instead of bundling.
+  serverExternalPackages: ["sharp"],
+
+  // Logo uploads ride server actions; the default body limit is 1 MB.
+  experimental: { serverActions: { bodySizeLimit: "2mb" } },
+
   // The Membership Agreement template is read from disk at runtime when a
   // member signs (app/lib/agreement-template.ts). `output: "standalone"` only
   // ships traced files, so include legal/ for the routes that render it.

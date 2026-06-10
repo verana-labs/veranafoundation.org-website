@@ -27,6 +27,7 @@ export default function ApplyForm({
     hasIndividual ? "organization" : "individual",
   );
   const [accepted, setAccepted] = useState(false);
+  const [hasLogo, setHasLogo] = useState(false);
   const [assocCountry, setAssocCountry] = useState("");
   const [vatNumber, setVatNumber] = useState("");
   // EU companies (except the seller's own Estonia, where VAT applies
@@ -191,6 +192,7 @@ export default function ApplyForm({
                     <CountrySelect name="jurisdiction" required />
                   </Labeled>
                   <Field label="Registered address" name="registeredAddress" />
+                  <LogoField hasLogo={hasLogo} onPick={setHasLogo} />
                 </>
               ) : (
                 <Labeled label="Country of residence" required>
@@ -205,6 +207,7 @@ export default function ApplyForm({
                 <CountrySelect name="country" required onChange={setAssocCountry} />
               </Labeled>
               <Field label="Registered address" name="registeredAddress" />
+              <LogoField hasLogo={hasLogo} onPick={setHasLogo} />
               <div className="form-field">
                 <label htmlFor="vatNumber">
                   VAT number (EU — enables reverse charge)
@@ -391,6 +394,44 @@ function SectionHeading({ tag, title }: { tag: string; title: string }) {
       <span className="tag">{tag}</span>
       <span className="display text-2xl text-ink">{title}</span>
     </legend>
+  );
+}
+
+/** Optional org-logo upload + the display-consent checkbox (shown on pick). */
+function LogoField({
+  hasLogo,
+  onPick,
+}: {
+  hasLogo: boolean;
+  onPick: (has: boolean) => void;
+}) {
+  return (
+    <>
+      <div className="form-field">
+        <label htmlFor="logo">
+          Organization logo <span className="opt">(optional)</span>
+        </label>
+        <input
+          id="logo"
+          type="file"
+          name="logo"
+          accept=".svg,.png,.webp,.jpg,.jpeg,image/svg+xml,image/png,image/webp,image/jpeg"
+          onChange={(e) => onPick(!!e.target.files?.length)}
+        />
+        <p className="hint">SVG, PNG, WebP or JPG — max 1 MB.</p>
+      </div>
+      {hasLogo && (
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="logoDisplayConsent"
+            defaultChecked
+            className="mt-1"
+          />
+          <span>We may display this logo on veranafoundation.org.</span>
+        </label>
+      )}
+    </>
   );
 }
 

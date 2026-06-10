@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/app/lib/db";
 import { currentUser } from "@/app/lib/authz";
+import { saveMemberLogo, removeMemberLogo, LogoError } from "@/app/lib/logo";
 
 /** Count active (non-removed) access entries of a role, optionally excluding an email. */
 async function roleCount(
@@ -150,5 +151,59 @@ export async function updateOrgAddress(memberId: string, address: string) {
     }),
   ]);
 
+  revalidatePath("/account");
+}
+
+/**
+ * Upload/replace an organization's logo (managers only) with the explicit
+ * display consent gathered at upload. Returns a user-safe error message
+ * instead of throwing, so the card can show it inline.
+ */
+export async function uploadOrgLogo(formData: FormData): Promise<{ error?: string }> {
+  const user = await currentUser();
+  if (!user?.id || !user.email) return { error: "Not signed in." };
+
+  const memberId = String(formData.get("memberId"));
+  const link = await db.userMember.findUnique({
+    where: { userId_memberId: { userId: user.id, memberId } },
+  });
+  if (link?.role !== "manager") {
+    return { error: "Only a manager can update the organization's logo." };
+  }
+  const member = await db.member.findUnique({ where: { id: memberId } });
+  if (!member || member.type !== "organization") return { error: "Not found." };
+
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose a logo file first." };
+  }
+
+  try {
+    await saveMemberLogo({
+      memberId,
+      file,
+      displayConsent: formData.get("logoDisplayConsent") === "on",
+      actor: { userId: user.id, email: user.email },
+    });
+  } catch (e) {
+    if (e instanceof LogoError) return { error: e.message };
+    console.error("[account] logo upload failed", e);
+    return { error: "The logo could not be processed — please try another file." };
+  }
+
+  revalidatePath("/account");
+  return {};
+}
+
+/** Remove an organization's logo (managers only). */
+export async function removeOrgLogo(memberId: string) {
+  const user = await currentUser();
+  if (!user?.id || !user.email) throw new Error("Forbidden");
+  const link = await db.userMember.findUnique({
+    where: { userId_memberId: { userId: user.id, memberId } },
+  });
+  if (link?.role !== "manager") throw new Error("Forbidden");
+
+  await removeMemberLogo({ memberId, actor: { userId: user.id, email: user.email } });
   revalidatePath("/account");
 }

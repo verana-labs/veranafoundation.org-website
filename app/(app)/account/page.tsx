@@ -203,6 +203,12 @@ export default async function AccountPage({
                       address={l.member.registeredAddress}
                       vatNumber={l.member.vatNumber}
                       showVat={EU_COUNTRIES.has(l.member.jurisdiction ?? "")}
+                      logoUrl={
+                        l.member.logoUri
+                          ? `/logo/${l.memberId}?v=${l.member.updatedAt.getTime()}`
+                          : null
+                      }
+                      logoConsent={l.member.logoDisplayConsent}
                       agreementHref={
                         // Only managers (incl. the signer) may download the
                         // signed agreement — not representatives.
@@ -217,6 +223,7 @@ export default async function AccountPage({
                         return {
                           memberId: l.memberId,
                           canEditAddress: isManager,
+                          canEditLogo: isManager,
                           manageHref: isManager ? `/account/org/${l.memberId}/access` : null,
                           billingHref: isManager ? `/account/org/${l.memberId}/billing` : null,
                           // Managers may leave only if another manager remains;
