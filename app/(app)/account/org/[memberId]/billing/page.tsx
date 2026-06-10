@@ -33,7 +33,7 @@ export default async function BillingPage({
   return (
     <>
       <PageHero
-        back={{ href: `/account/org/${memberId}`, label: member.legalName }}
+        back={{ href: "/account", label: "Account" }}
         title="Billing"
       />
       <Section bordered={false}>
