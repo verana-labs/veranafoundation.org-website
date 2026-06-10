@@ -30,7 +30,7 @@ export default async function AccessPage({
   return (
     <>
       <PageHero
-        back={{ href: `/account/org/${memberId}`, label: member.legalName }}
+        back={{ href: "/account", label: "Account" }}
         title="Manage Participants"
         lead={
           <>
