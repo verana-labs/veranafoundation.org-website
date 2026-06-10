@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
 import { PageHero, Section } from "@/app/components/PageHero";
-import { suspendMembership, reinstateMembership } from "./actions";
+import MembershipAdminCard from "./MembershipAdminCard";
 
 export const metadata: Metadata = { title: "Member · Admin" };
 
@@ -31,7 +31,8 @@ export default async function AdminMemberDetail({
     <>
       <PageHero back={{ href: "/admin/members", label: "Members" }} title={member.legalName} />
       <Section bordered={false}>
-      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
+      <h2 className="display text-xl">Member</h2>
+      <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
         <dt className="text-muted">Type</dt>
         <dd>{member.type}</dd>
         <dt className="text-muted">Primary email</dt>
@@ -44,19 +45,18 @@ export default async function AdminMemberDetail({
 
       <h2 className="display text-xl mt-8">Membership</h2>
       {ms ? (
-        <div className="mt-2 card flex items-center justify-between gap-3">
-          <span className="text-sm">
-            {ms.class} · {ms.status}
-            {ms.provisional && <span className="badge ml-2">provisional</span>}
-          </span>
-          <form action={ms.status === "suspended" ? reinstateMembership : suspendMembership}>
-            <input type="hidden" name="membershipId" value={ms.id} />
-            <input type="hidden" name="memberId" value={member.id} />
-            <button type="submit" className="btn text-xs">
-              {ms.status === "suspended" ? "Reinstate" : "Suspend"}
-            </button>
-          </form>
-        </div>
+        <MembershipAdminCard
+          membership={{
+            id: ms.id,
+            memberId: member.id,
+            class: ms.class,
+            status: ms.status,
+            tier: ms.tier,
+            provisional: ms.provisional,
+            periodStart: ms.periodStart?.toISOString() ?? null,
+            periodEnd: ms.periodEnd?.toISOString() ?? null,
+          }}
+        />
       ) : (
         <p className="text-muted mt-2 text-sm">No membership.</p>
       )}
