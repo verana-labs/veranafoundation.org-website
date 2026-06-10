@@ -1078,8 +1078,7 @@ The annual dues applicable to **Associate Members** shall be determined by refer
 
 | Employee Count | Annual Dues (EUR) |
 | :---- | :---- |
-| 0-1 employees | €10 |
-| 2–10 employees | €1,500 |
+| 1–10 employees | €10 |
 | 11–100 employees | €3,000 |
 | 101–500 employees | €7,000 |
 | 501–2,500 employees | €10,000 |
