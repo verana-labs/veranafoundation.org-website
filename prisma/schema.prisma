@@ -133,6 +133,7 @@ model Membership {
   class       MembershipClass
   tier        String? // Associate only — e.g. "tier_3" (Annex D bands); dues resolved in code
   status      MembershipStatus @default(pending)
+  listed      Boolean          @default(false) // admin-curated: shown on the public /members page
 
   periodStart DateTime?
   periodEnd   DateTime?

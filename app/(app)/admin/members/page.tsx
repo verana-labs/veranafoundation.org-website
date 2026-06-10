@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
 import { PageHero, Section } from "@/app/components/PageHero";
+import { toggleListed } from "./actions";
 
 export const metadata: Metadata = { title: "Members · Admin" };
 
@@ -66,6 +67,7 @@ export default async function AdminMembersPage({
                 <th className="p-2">Membership</th>
                 <th className="p-2">Email</th>
                 <th className="p-2">Signed Agreement</th>
+                <th className="p-2">Directory</th>
               </tr>
             </thead>
             <tbody>
@@ -93,6 +95,29 @@ export default async function AdminMembersPage({
                         >
                           PDF ↓
                         </a>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
+                    </td>
+                    <td className="p-2 whitespace-nowrap">
+                      {ms ? (
+                        <form action={toggleListed} className="flex items-center gap-2">
+                          <input type="hidden" name="membershipId" value={ms.id} />
+                          <span className={`badge ${ms.listed ? "badge-green" : ""}`}>
+                            {ms.listed ? "Listed" : "Not listed"}
+                          </span>
+                          <button
+                            type="submit"
+                            className="btn text-xs"
+                            title={
+                              ms.listed
+                                ? "Remove from the public /members page"
+                                : "Show on the public /members page"
+                            }
+                          >
+                            {ms.listed ? "Unlist" : "List"}
+                          </button>
+                        </form>
                       ) : (
                         <span className="text-muted">—</span>
                       )}
