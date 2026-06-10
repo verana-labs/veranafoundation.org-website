@@ -5,7 +5,11 @@ import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEllipsisVertical } from "@fortawesome/free-solid-svg-icons";
 import { flagEmoji, countryName } from "@/app/lib/countries";
-import { leaveOrganization, cancelMembership } from "@/app/(app)/account/actions";
+import {
+  leaveOrganization,
+  cancelMembership,
+  updateOrgAddress,
+} from "@/app/(app)/account/actions";
 
 export type MembershipMenu = {
   memberId: string;
@@ -13,6 +17,8 @@ export type MembershipMenu = {
   manageHref?: string | null;
   /** Manager-only — link to the billing page. */
   billingHref?: string | null;
+  /** Manager-only — offer inline editing of the registered address. */
+  canEditAddress?: boolean;
   /** Show "Leave Organization" (representatives, or a manager when not the last). */
   canLeave?: boolean;
   /** Show "Cancel membership" (individuals, or an org's sole manager w/ no reps). */
@@ -27,6 +33,11 @@ export type MembershipCardData = {
   role?: string | null;
   country?: string | null;
   periodEnd?: Date | string | null;
+  /** Organization's registered address (shown + editable for managers). */
+  address?: string | null;
+  /** Organization's VAT number. Only rendered when `showVat` (EU companies). */
+  vatNumber?: string | null;
+  showVat?: boolean;
   /** When set, a "Download agreement" link to the signed PDF is shown. */
   agreementHref?: string | null;
   /** When set, a ⋮ actions menu is shown top-right. */
@@ -54,10 +65,15 @@ export default function MembershipCard({
   role,
   country,
   periodEnd,
+  address,
+  vatNumber,
+  showVat,
   agreementHref,
   menu,
 }: MembershipCardData) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(false);
+  const [draftAddress, setDraftAddress] = useState("");
   const [pending, startTransition] = useTransition();
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -87,7 +103,18 @@ export default function MembershipCard({
 
   const hasMenu =
     !!menu &&
-    (menu.canLeave || menu.canCancel || !!menu.manageHref || !!menu.billingHref);
+    (menu.canLeave ||
+      menu.canCancel ||
+      menu.canEditAddress ||
+      !!menu.manageHref ||
+      !!menu.billingHref);
+
+  function saveAddress() {
+    startTransition(async () => {
+      await updateOrgAddress(menu!.memberId, draftAddress);
+      setEditingAddress(false);
+    });
+  }
 
   return (
     <div ref={rootRef} className="card relative">
@@ -163,6 +190,21 @@ export default function MembershipCard({
                     Cancel membership
                   </button>
                 )}
+                {menu!.canEditAddress && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={pending}
+                    className="block w-full px-3 py-2 text-left hover:bg-rule/40"
+                    onClick={() => {
+                      setDraftAddress(address ?? "");
+                      setEditingAddress(true);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    Update address
+                  </button>
+                )}
                 {menu!.manageHref && (
                   <Link
                     role="menuitem"
@@ -199,6 +241,47 @@ export default function MembershipCard({
           <span className="text-sm font-normal text-muted">{label}</span>
         ) : null}
       </h3>
+
+      {type === "organization" &&
+        (editingAddress ? (
+          <div className="mt-1 grid gap-2">
+            <textarea
+              value={draftAddress}
+              onChange={(e) => setDraftAddress(e.target.value)}
+              rows={3}
+              placeholder="Registered address"
+              className="field w-full text-sm"
+              disabled={pending}
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="btn btn-primary text-xs"
+                disabled={pending}
+                onClick={saveAddress}
+              >
+                {pending ? "Saving…" : "Save"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary text-xs"
+                disabled={pending}
+                onClick={() => setEditingAddress(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted whitespace-pre-line">
+            {address || <span className="italic">No registered address</span>}
+          </p>
+        ))}
+      {type === "organization" && showVat && (
+        <p className="text-sm text-muted">
+          VAT: {vatNumber || <span className="italic">not set</span>}
+        </p>
+      )}
 
       {expiry && <p className="text-sm text-muted">Expire {expiry}</p>}
 

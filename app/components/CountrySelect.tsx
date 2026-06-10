@@ -13,11 +13,14 @@ export default function CountrySelect({
   required,
   defaultValue,
   placeholder = "Search countries…",
+  onChange,
 }: {
   name: string;
   required?: boolean;
   defaultValue?: string;
   placeholder?: string;
+  /** Fires with the 2-letter code on selection, "" when the choice is cleared. */
+  onChange?: (code: string) => void;
 }) {
   const initial = defaultValue
     ? COUNTRIES.find((c) => c.code === defaultValue.toUpperCase())
@@ -54,6 +57,7 @@ export default function CountrySelect({
     setCode(c.code);
     setQuery(c.name);
     setOpen(false);
+    onChange?.(c.code);
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
@@ -100,6 +104,7 @@ export default function CountrySelect({
           onChange={(e) => {
             setQuery(e.target.value);
             setCode(""); // typing invalidates the prior selection
+            onChange?.("");
             setActive(0);
             setOpen(true);
           }}

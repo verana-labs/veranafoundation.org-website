@@ -3,6 +3,7 @@ import Link from "next/link";
 import { currentUser, effectiveMemberships } from "@/app/lib/authz";
 import { db } from "@/app/lib/db";
 import { formatEur } from "@/app/lib/dues";
+import { EU_COUNTRIES } from "@/app/lib/eu";
 import { invoicePayUrl } from "@/app/lib/invoices";
 import MembershipCard from "@/app/components/MembershipCard";
 import PayMethodChooser from "@/app/components/PayMethodChooser";
@@ -199,6 +200,9 @@ export default async function AccountPage({
                       role={l.role}
                       country={l.member.jurisdiction}
                       periodEnd={l.member.membership?.periodEnd}
+                      address={l.member.registeredAddress}
+                      vatNumber={l.member.vatNumber}
+                      showVat={EU_COUNTRIES.has(l.member.jurisdiction ?? "")}
                       agreementHref={
                         // Only managers (incl. the signer) may download the
                         // signed agreement — not representatives.
@@ -212,6 +216,7 @@ export default async function AccountPage({
                         const rep = countOf(l.memberId, "representative");
                         return {
                           memberId: l.memberId,
+                          canEditAddress: isManager,
                           manageHref: isManager ? `/account/org/${l.memberId}/access` : null,
                           billingHref: isManager ? `/account/org/${l.memberId}/billing` : null,
                           // Managers may leave only if another manager remains;

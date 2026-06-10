@@ -7,11 +7,7 @@
 // that a VAT number was supplied — it should be VIES-validated (see
 // verana-invoicing-spec.md §VAT) before granting 0% in production.
 
-const EU = new Set([
-  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU",
-  "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES",
-  "SE",
-]);
+import { EU_COUNTRIES as EU } from "@/app/lib/eu";
 
 const SELLER_COUNTRY = "EE";
 const DOMESTIC_RATE = Number(process.env.VAT_DOMESTIC_RATE ?? "0.24");
