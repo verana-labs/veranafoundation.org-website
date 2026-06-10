@@ -118,6 +118,9 @@ export default function Footer() {
             </p>
             <ul className="flex flex-wrap gap-4">
               <li>
+                <Link href="/members">Members</Link>
+              </li>
+              <li>
                 <Link href="/privacy">Privacy</Link>
               </li>
               <li>
