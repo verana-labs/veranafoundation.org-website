@@ -359,6 +359,7 @@ enum MembershipStatus {
   past_due
   suspended
   expired
+  cancelled // member left / self-cancelled (records retained)
 }
 
 enum MemberRole {

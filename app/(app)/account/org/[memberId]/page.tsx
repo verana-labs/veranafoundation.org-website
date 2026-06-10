@@ -53,7 +53,7 @@ export default async function OrgPage({
 
       <div className="mt-8 flex gap-3">
         <Link href={`/account/org/${memberId}/access`} className="btn btn-primary">
-          Manage access list
+          Manage Members
         </Link>
         <Link href={`/account/org/${memberId}/billing`} className="btn">
           Billing
