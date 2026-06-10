@@ -7,6 +7,7 @@ import { currentUser } from "@/app/lib/authz";
 import { tierAmount, formatEur } from "@/app/lib/dues";
 import { createMembershipInvoice } from "@/app/lib/invoices";
 import { sendPaymentRequestEmail } from "@/app/lib/billing-emails";
+import { saveMemberLogo } from "@/app/lib/logo";
 import { sendExecutedAgreementEmail } from "@/app/lib/executed-agreement";
 import { toAgreementContext } from "@/app/lib/agreement-context";
 import { renderAgreementHtml } from "@/app/lib/agreement-html";
@@ -37,6 +38,28 @@ async function emailExecutedCopy(d: Parameters<typeof sendExecutedAgreementEmail
     await sendExecutedAgreementEmail(d);
   } catch (e) {
     console.error("[apply] executed-agreement email failed", e);
+  }
+}
+
+/** Best-effort: store an optional org logo from the application form. */
+async function maybeSaveLogo(
+  formData: FormData,
+  memberId: string,
+  actor: { userId?: string | null; email: string },
+) {
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) return;
+  try {
+    await saveMemberLogo({
+      memberId,
+      file,
+      displayConsent: formData.get("logoDisplayConsent") === "on",
+      actor,
+    });
+  } catch (e) {
+    // A bad logo never fails the application; it can be re-uploaded from the
+    // membership card.
+    console.error("[apply] logo upload failed (continuing)", e);
   }
 }
 
@@ -237,6 +260,10 @@ export async function applyMember(
       return { memberId: member.id, signatureRecordId: member.signatureRecords[0].id };
     });
 
+    if (isOrg) {
+      await maybeSaveLogo(formData, memberId, { userId: user.id, email: user.email! });
+    }
+
     const ctx = toAgreementContext({
       class: "contributor",
       type: d.type,
@@ -323,6 +350,8 @@ export async function applyMember(
         signatureRecordId: member.signatureRecords[0].id,
       };
     });
+
+    await maybeSaveLogo(formData, created.memberId, { userId: user.id, email: user.email! });
 
     const ctx = toAgreementContext({
       class: "associate",

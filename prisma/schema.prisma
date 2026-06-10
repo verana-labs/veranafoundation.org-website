@@ -97,13 +97,14 @@ model Member {
   jurisdiction       String?
   registeredAddress  String?
   noticeBillingEmail String?
-  logoUri            String? // URL or inline SVG — optional; for future homepage display
+  logoUri            String? // storage key of the uploaded logo (logos/{id}.{ext}); future homepage display
 
   // individual-only
   countryOfResidence String?
 
   // consent
   socialAnnouncementConsent Boolean @default(false) // ok to announce their membership on our social networks
+  logoDisplayConsent        Boolean @default(false) // ok to display the logo on veranafoundation.org (asked at upload)
 
   // billing / tax
   primaryEmail     String
