@@ -155,7 +155,11 @@ function EntryTable({
                         <input type="hidden" name="memberId" value={memberId} />
                         <input type="hidden" name="accessId" value={e.id} />
                         <input type="hidden" name="role" value={counterRole} />
-                        <button type="submit" className="btn text-xs" disabled={locked}>
+                        <button
+                          type="submit"
+                          className="text-purple hover:underline disabled:text-muted disabled:no-underline disabled:cursor-not-allowed"
+                          disabled={locked}
+                        >
                           {counterLabel}
                         </button>
                       </form>
@@ -164,7 +168,11 @@ function EntryTable({
                       <form action={removeAccess}>
                         <input type="hidden" name="memberId" value={memberId} />
                         <input type="hidden" name="accessId" value={e.id} />
-                        <button type="submit" className="btn text-xs" disabled={locked}>
+                        <button
+                          type="submit"
+                          className="text-purple hover:underline disabled:text-muted disabled:no-underline disabled:cursor-not-allowed"
+                          disabled={locked}
+                        >
                           Remove
                         </button>
                       </form>
