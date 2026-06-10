@@ -1,6 +1,6 @@
 // Transactional emails around Associate dues: the payment request (sent at
-// signature, separate from the executed-agreement email) and the receipt
-// (sent when the invoice is paid). Both best-effort at call sites.
+// signature or on renewal), dunning reminders, the expiry notice, and the
+// receipt (sent when the invoice is paid). All best-effort at call sites.
 
 import { sendEmail, escapeHtml } from "@/app/lib/email";
 import { emailLayout } from "@/app/lib/email-layout";
@@ -19,25 +19,15 @@ function bankDetailsHtml(reference: string): string {
     <pre style="margin:0;padding:12px 14px;background:#fafafb;border:1px solid #e8e6e0;border-radius:8px;font-size:13px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(details)}</pre>`;
 }
 
-export async function sendPaymentRequestEmail(args: {
-  to: string;
-  memberName: string;
+/** The boxed invoice summary shared by the request and reminder emails. */
+function invoiceBoxHtml(args: {
   invoiceNumber: string;
-  amountDue: string; // preformatted, e.g. "€3,000"
+  amountDue: string;
   vatNote: string | null;
   dueDate: Date;
-  payUrl: string | null;
-}): Promise<void> {
+}): string {
   const due = args.dueDate.toISOString().slice(0, 10);
-  await sendEmail({
-    to: args.to,
-    subject: `Membership dues — invoice ${args.invoiceNumber}`,
-    html: emailLayout({
-      heading: "Complete your Associate membership",
-      bodyHtml: `
-        <p style="margin:0 0 12px;">Thank you — the Membership Agreement for
-        <strong>${escapeHtml(args.memberName)}</strong> is signed. Your Associate
-        membership activates as soon as the annual dues are paid.</p>
+  return `
         <table role="presentation" cellpadding="0" cellspacing="0" border="0"
                style="margin:16px 0;width:100%;border:1px solid #e8e6e0;border-radius:8px;">
           <tr><td style="padding:14px 16px;font-size:14px;line-height:1.7;">
@@ -46,12 +36,111 @@ export async function sendPaymentRequestEmail(args: {
             ${args.vatNote ? `${escapeHtml(args.vatNote)}<br>` : ""}
             Due by <strong>${due}</strong>
           </td></tr>
-        </table>
+        </table>`;
+}
+
+export async function sendPaymentRequestEmail(args: {
+  to: string;
+  memberName: string;
+  invoiceNumber: string;
+  amountDue: string; // preformatted, e.g. "€3,000"
+  vatNote: string | null;
+  dueDate: Date;
+  payUrl: string | null;
+  /** Renewal of an active membership (vs the initial application). */
+  renewal?: boolean;
+}): Promise<void> {
+  const intro = args.renewal
+    ? `<p style="margin:0 0 12px;">The annual Associate membership of
+        <strong>${escapeHtml(args.memberName)}</strong> is up for renewal. Your
+        membership and working-group access continue uninterrupted once the
+        dues below are paid.</p>`
+    : `<p style="margin:0 0 12px;">Thank you — the Membership Agreement for
+        <strong>${escapeHtml(args.memberName)}</strong> is signed. Your Associate
+        membership activates as soon as the annual dues are paid.</p>`;
+  await sendEmail({
+    to: args.to,
+    subject: args.renewal
+      ? `Membership renewal — invoice ${args.invoiceNumber}`
+      : `Membership dues — invoice ${args.invoiceNumber}`,
+    html: emailLayout({
+      heading: args.renewal
+        ? "Renew your Associate membership"
+        : "Complete your Associate membership",
+      bodyHtml: `
+        ${intro}
+        ${invoiceBoxHtml(args)}
         ${args.payUrl ? `<p style="margin:0;">Pay securely online:</p>` : ""}
         ${bankDetailsHtml(args.invoiceNumber)}`,
       button: args.payUrl
         ? { label: "Pay membership dues", href: args.payUrl }
         : undefined,
+    }),
+  });
+}
+
+export async function sendPaymentReminderEmail(args: {
+  to: string;
+  memberName: string;
+  invoiceNumber: string;
+  amountDue: string;
+  vatNote: string | null;
+  dueDate: Date;
+  payUrl: string | null;
+  /** Which reminder this is, in days since the invoice was issued (7/14/21/28). */
+  reminderDay: number;
+  /** Day (since issue) the invoice is voided and the membership expires. */
+  expireDay: number;
+  renewal?: boolean;
+}): Promise<void> {
+  const daysLeft = args.expireDay - args.reminderDay;
+  const consequence = args.renewal
+    ? "your membership and working-group access will expire"
+    : "your application will expire and the invoice will be cancelled";
+  await sendEmail({
+    to: args.to,
+    subject: `Reminder — membership dues, invoice ${args.invoiceNumber}`,
+    html: emailLayout({
+      heading: "Your membership dues are still unpaid",
+      bodyHtml: `
+        <p style="margin:0 0 12px;">A friendly reminder that the Associate dues
+        for <strong>${escapeHtml(args.memberName)}</strong> are still
+        outstanding. If we don't receive payment within
+        <strong>${daysLeft} days</strong>, ${consequence} — you can of course
+        rejoin later.</p>
+        ${invoiceBoxHtml(args)}
+        ${args.payUrl ? `<p style="margin:0;">Pay securely online:</p>` : ""}
+        ${bankDetailsHtml(args.invoiceNumber)}`,
+      button: args.payUrl
+        ? { label: "Pay membership dues", href: args.payUrl }
+        : undefined,
+    }),
+  });
+}
+
+export async function sendMembershipExpiredEmail(args: {
+  to: string;
+  memberName: string;
+  invoiceNumber: string;
+  renewal?: boolean;
+}): Promise<void> {
+  await sendEmail({
+    to: args.to,
+    subject: args.renewal
+      ? "Your Associate membership has expired"
+      : "Your Associate application has expired",
+    html: emailLayout({
+      heading: args.renewal ? "Membership expired" : "Application expired",
+      bodyHtml: `
+        <p style="margin:0 0 12px;">The dues for
+        <strong>${escapeHtml(args.memberName)}</strong> (invoice
+        ${escapeHtml(args.invoiceNumber)}) were not received in time, so the
+        invoice has been cancelled and the ${args.renewal ? "membership has" : "application has"}
+        expired.</p>
+        <p style="margin:0;">You're welcome back any time — reply to this email
+        or contact us and we'll issue a fresh invoice; the new membership year
+        starts on the day of payment.</p>`,
+      button: { label: "Go to your account", href: `${SITE_URL}/account` },
     }),
   });
 }
