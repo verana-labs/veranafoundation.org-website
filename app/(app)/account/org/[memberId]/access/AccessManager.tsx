@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { addAccess, removeAccess, changeRole, type AccessState } from "./actions";
 
 type Entry = {
@@ -30,35 +30,6 @@ export default function AccessManager({
   return (
     <div className="grid gap-8">
       <section>
-        <h2 className="display text-xl">Admins</h2>
-        <p className="text-sm text-muted">
-          Can manage billing and this access list, and participate in working
-          groups.
-        </p>
-        <EntryList
-          memberId={memberId}
-          entries={admins}
-          counterRole="representative"
-          counterLabel="Make representative"
-          lockedId={lastAdminId}
-        />
-      </section>
-
-      <section>
-        <h2 className="display text-xl">Representatives</h2>
-        <p className="text-sm text-muted">
-          Participate in working groups on the organization&rsquo;s behalf.
-        </p>
-        <EntryList
-          memberId={memberId}
-          entries={representatives}
-          counterRole="manager"
-          counterLabel="Make admin"
-          lockedId={null}
-        />
-      </section>
-
-      <section>
         <h2 className="display text-xl">Add someone</h2>
         <form action={addAction} className="space-y-1 mt-3 max-w-md">
           <input type="hidden" name="memberId" value={memberId} />
@@ -86,61 +57,125 @@ export default function AccessManager({
           shown as <em>invited</em>.
         </p>
       </section>
+
+      <section>
+        <h2 className="display text-xl">Admins</h2>
+        <p className="text-sm text-muted">
+          Can manage billing and this access list, and participate in working
+          groups.
+        </p>
+        <EntryTable
+          memberId={memberId}
+          entries={admins}
+          typeLabel="Admin"
+          counterRole="representative"
+          counterLabel="Make representative"
+          lockedId={lastAdminId}
+        />
+      </section>
+
+      <section>
+        <h2 className="display text-xl">Representatives</h2>
+        <p className="text-sm text-muted">
+          Participate in working groups on the organization&rsquo;s behalf.
+        </p>
+        <EntryTable
+          memberId={memberId}
+          entries={representatives}
+          typeLabel="Representative"
+          counterRole="manager"
+          counterLabel="Make admin"
+          lockedId={null}
+        />
+      </section>
     </div>
   );
 }
 
-function EntryList({
+function EntryTable({
   memberId,
   entries,
+  typeLabel,
   counterRole,
   counterLabel,
   lockedId,
 }: {
   memberId: string;
   entries: Entry[];
+  typeLabel: string;
   counterRole: "manager" | "representative";
   counterLabel: string;
   lockedId: string | null;
 }) {
-  if (entries.length === 0) {
-    return <p className="text-sm text-muted mt-2">None yet.</p>;
-  }
+  const [q, setQ] = useState("");
+  const query = q.trim().toLowerCase();
+  const filtered = query
+    ? entries.filter((e) => e.email.toLowerCase().includes(query))
+    : entries;
+
   return (
-    <ul className="mt-2 grid gap-2">
-      {entries.map((e) => {
-        const locked = e.id === lockedId;
-        return (
-          <li
-            key={e.id}
-            className="card flex flex-wrap items-center justify-between gap-3"
-          >
-            <span className="text-sm">
-              {e.email}
-              {e.status === "invited" && (
-                <span className="badge ml-2">invited</span>
-              )}
-            </span>
-            <div className="flex gap-2">
-              <form action={changeRole}>
-                <input type="hidden" name="memberId" value={memberId} />
-                <input type="hidden" name="accessId" value={e.id} />
-                <input type="hidden" name="role" value={counterRole} />
-                <button type="submit" className="btn text-xs" disabled={locked}>
-                  {counterLabel}
-                </button>
-              </form>
-              <form action={removeAccess}>
-                <input type="hidden" name="memberId" value={memberId} />
-                <input type="hidden" name="accessId" value={e.id} />
-                <button type="submit" className="btn text-xs" disabled={locked}>
-                  Remove
-                </button>
-              </form>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="mt-3">
+      <input
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Filter by email"
+        className="field w-64"
+      />
+
+      {entries.length === 0 ? (
+        <p className="text-sm text-muted mt-3">None yet.</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-sm text-muted mt-3">No matches.</p>
+      ) : (
+        <div className="overflow-x-auto mt-3">
+          <table className="w-full border-collapse text-sm min-w-[520px]">
+            <thead>
+              <tr className="text-left text-muted">
+                <th className="p-2">Email</th>
+                <th className="p-2">Type</th>
+                <th className="p-2">Change type</th>
+                <th className="p-2">Remove</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((e) => {
+                const locked = e.id === lockedId;
+                return (
+                  <tr key={e.id} className="border-t border-rule">
+                    <td className="p-2">
+                      {e.email}
+                      {e.status === "invited" && (
+                        <span className="badge ml-2">invited</span>
+                      )}
+                    </td>
+                    <td className="p-2 text-muted">{typeLabel}</td>
+                    <td className="p-2">
+                      <form action={changeRole}>
+                        <input type="hidden" name="memberId" value={memberId} />
+                        <input type="hidden" name="accessId" value={e.id} />
+                        <input type="hidden" name="role" value={counterRole} />
+                        <button type="submit" className="btn text-xs" disabled={locked}>
+                          {counterLabel}
+                        </button>
+                      </form>
+                    </td>
+                    <td className="p-2">
+                      <form action={removeAccess}>
+                        <input type="hidden" name="memberId" value={memberId} />
+                        <input type="hidden" name="accessId" value={e.id} />
+                        <button type="submit" className="btn text-xs" disabled={locked}>
+                          Remove
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }

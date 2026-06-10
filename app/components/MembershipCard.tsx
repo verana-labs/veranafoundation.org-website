@@ -9,7 +9,7 @@ import { leaveOrganization, cancelMembership } from "@/app/(app)/account/actions
 
 export type MembershipMenu = {
   memberId: string;
-  /** Manager-only — link to the access ("Manage Members") page. */
+  /** Manager-only — link to the access ("Manage Participants") page. */
   manageHref?: string | null;
   /** Manager-only — link to the billing page. */
   billingHref?: string | null;
@@ -170,7 +170,7 @@ export default function MembershipCard({
                     className="block w-full px-3 py-2 text-left hover:bg-rule/40"
                     onClick={() => setMenuOpen(false)}
                   >
-                    Manage Members
+                    Manage Participants
                   </Link>
                 )}
                 {menu!.billingHref && (
