@@ -35,6 +35,12 @@ export default async function BillingPage({
       <PageHero
         back={{ href: "/account", label: "Account" }}
         title="Billing"
+        lead={
+          <>
+            Invoices and payment for <strong>{member.legalName}</strong>. Manage
+            payment methods, or settle dues by bank transfer.
+          </>
+        }
       />
       <Section bordered={false}>
       {member.stripeCustomerId && (
