@@ -174,6 +174,10 @@ We deliberately use **Checkout in `payment` mode without `invoice_creation`** �
 
 **Large tiers (≈€10k+):** the per-invoice fees (esp. card ~1.9%) dominate, so steer these to a **direct wire to the Wise IBAN** and mark paid via the **offline bank-transfer adapter** (admin) — ~€0 in fees. Both paths sit behind the same port; the invoice can present either the Stripe link or the IBAN + reference.
 
+### Wise auto-reconciliation (direct wires)
+
+Wise Business can't create payment links by API, but it **can read balances and statements** — enough to automate the offline adapter. A reconcile job (`wise-reconcile.ts`) scans recent **EUR balance credits** for our invoice number (`{prefix}YYYY-NNNN`) in the payment reference, verifies currency + amount, and calls the same `markInvoicePaid` as the admin path (membership activation + receipt email included). Triggers: the Wise **`balances#credit` profile webhook** (`/api/webhooks/wise`, RSA-signature-verified) and a **daily cron backstop** (`/api/cron/wise-reconcile`, `CRON_SECRET`). The scan window re-covers ~14 days and settlement is idempotent (keyed on the Wise transaction `referenceNumber`). Anything unsafe to auto-settle — unknown reference, underpayment, duplicate payment on a paid invoice — emails the admin allowlist for manual review; admin mark-paid stays the fallback. Setup: read-only API token + an **SCA keypair** (statement endpoint is SCA-protected; public half registered on the Wise profile).
+
 ## Lifecycle & renewal
 
 - States: `pending → active → past_due → suspended/expired`, with discretionary `reinstated` (§8.8).
