@@ -132,7 +132,6 @@ model Membership {
   class       MembershipClass
   tier        String? // Associate only — e.g. "tier_3" (Annex D bands); dues resolved in code
   status      MembershipStatus @default(pending)
-  provisional Boolean          @default(false) // pre-incorporation participation (Agreement §2.4(c))
 
   periodStart DateTime?
   periodEnd   DateTime?
