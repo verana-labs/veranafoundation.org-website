@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
-import { reconcileWiseCredits } from "@/app/lib/wise-reconcile";
+import { reconcileWiseCredits, alertIncomingCredit } from "@/app/lib/wise-reconcile";
+import { WiseStatementAccessError } from "@/app/lib/payments/wise";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  let event: { event_type?: string } = {};
+  let event: {
+    event_type?: string;
+    data?: { amount?: number; currency?: string; occurred_at?: string };
+  } = {};
   try {
     event = JSON.parse(body);
   } catch {
@@ -37,9 +41,20 @@ export async function POST(req: Request) {
     try {
       await reconcileWiseCredits();
     } catch (e) {
-      // 200 anyway: Wise retries failures, and the cron backstop re-covers the
-      // window — a transient statement error must not disable the webhook.
-      console.error("[wise-webhook] reconcile failed", e);
+      if (e instanceof WiseStatementAccessError && event.data?.amount != null) {
+        // Statement API is closed to us (PSD2 SCA retirement) — degrade to an
+        // admin alert with exact-amount invoice matches from the payload.
+        console.warn("[wise-webhook] statement access unavailable — alerting admins", e.message);
+        await alertIncomingCredit({
+          amount: event.data.amount,
+          currency: event.data.currency ?? "EUR",
+          occurredAt: event.data.occurred_at ?? new Date().toISOString(),
+        }).catch((err) => console.error("[wise-webhook] credit alert failed", err));
+      } else {
+        // 200 anyway: Wise retries failures, and the cron backstop re-covers
+        // the window — a transient error must not disable the webhook.
+        console.error("[wise-webhook] reconcile failed", e);
+      }
     }
   }
 

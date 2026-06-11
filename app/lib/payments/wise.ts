@@ -45,6 +45,13 @@ async function wiseFetch(path: string, scaHeaders?: Record<string, string>) {
  * `x-2fa-approval` header; sign it (RSA-SHA256, base64) with the private key
  * whose public half is registered on the Wise profile, then retry.
  */
+/**
+ * Statement access denied by Wise for reasons that aren't fixable from our
+ * side (PSD2 retirement of signature SCA, token permissions). Callers fall
+ * back to webhook-payload-based admin alerts instead of failing outright.
+ */
+export class WiseStatementAccessError extends Error {}
+
 async function wiseFetchSca(path: string): Promise<Response> {
   const first = await wiseFetch(path);
   if (first.status !== 403) return first;
@@ -52,7 +59,7 @@ async function wiseFetchSca(path: string): Promise<Response> {
   // Diagnose precisely — a bare "403" hides which link in the chain failed.
   const token = first.headers.get("x-2fa-approval");
   if (!token) {
-    throw new Error(
+    throw new WiseStatementAccessError(
       `wise: 403 without an SCA challenge — the token cannot access this endpoint at all ` +
         `(wrong WISE_PROFILE_ID, or statement access not enabled for this token; ` +
         `EU business accounts may need Wise support to enable statements). Body: ${await first.text()}`,
@@ -81,9 +88,11 @@ async function wiseFetchSca(path: string): Promise<Response> {
   });
   if (retry.status === 403) {
     const result = retry.headers.get("x-2fa-approval-result");
-    throw new Error(
-      `wise: SCA signature rejected (x-2fa-approval-result: ${result ?? "n/a"}) — ` +
-        `the registered public key on the Wise profile does not match WISE_SCA_PRIVATE_KEY. ` +
+    throw new WiseStatementAccessError(
+      `wise: SCA signature rejected (x-2fa-approval-result: ${result ?? "n/a"}). ` +
+        `Either the registered public key doesn't match WISE_SCA_PRIVATE_KEY, or — per Wise's ` +
+        `PSD2 changes — signature-based SCA is no longer accepted for this account's API tokens ` +
+        `(confirmed key match + by-hand rejection means the latter: contact Wise support). ` +
         `Body: ${await retry.text()}`,
     );
   }
