@@ -94,7 +94,8 @@ export default function AboutPage() {
           organizations and individuals. Founding members are 2060 OÜ, Mobiera,
           and Orchestrating Identity.{" "}
           <Link href="/join">Compare membership and join →</Link> To participate
-          in the working groups, see <Link href="/contribute">Contribute</Link>.
+          in the working groups, see{" "}
+          <Link href="/working-groups">Working Groups</Link>.
         </p>
 
         <h2>What the Foundation is not</h2>

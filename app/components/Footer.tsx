@@ -32,7 +32,7 @@ export default function Footer() {
                   <Link href="/about">About</Link>
                 </li>
                 <li>
-                  <Link href="/contribute">Contribute</Link>
+                  <Link href="/members">Members</Link>
                 </li>
                 <li>
                   <Link href="/ecosystem">Ecosystem</Link>
@@ -49,7 +49,7 @@ export default function Footer() {
                   <Link href="/join">Join the Foundation</Link>
                 </li>
                 <li>
-                  <Link href="/contribute">Working Groups</Link>
+                  <Link href="/working-groups">Working Groups</Link>
                 </li>
                 <li>
                   <a href="https://discord.gg/edjaFn252q" rel="noopener">

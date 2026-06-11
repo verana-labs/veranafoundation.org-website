@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { WorkingGroupCard } from "@/app/lib/working-groups";
 import PersonAvatars from "@/app/components/PersonAvatars";
+import LocalTime from "@/app/components/LocalTime";
 
-// The working-group tile design, shared by the public Contribute page and
-// /account/working-groups. Every tile links to the group's page; what you can
-// do there (join, meeting link) depends on your memberships.
+// The working-group tile design for the /working-groups board. Every tile
+// links to the group's page; what you can do there (join, meeting link)
+// depends on your memberships.
 export default function WorkingGroupCards({
   groups,
 }: {
@@ -58,11 +59,7 @@ export default function WorkingGroupCards({
               )}
               {wg.nextMeeting && (
                 <span>
-                  Next meeting:{" "}
-                  {new Intl.DateTimeFormat("en-GB", {
-                    day: "numeric", month: "short",
-                    hour: "2-digit", minute: "2-digit",
-                  }).format(new Date(wg.nextMeeting))}
+                  Next meeting: <LocalTime iso={wg.nextMeeting} />
                 </span>
               )}
             </div>

@@ -320,8 +320,8 @@ export default async function HomePage() {
               <p className="text-sm text-muted mt-4">
                 Everyone who authors the specs and maintains the software, in
                 public.{" "}
-                <Link href="/contribute" className="text-purple hover:underline">
-                  How to contribute →
+                <Link href="/working-groups" className="text-purple hover:underline">
+                  Get involved →
                 </Link>
               </p>
             </div>
@@ -330,7 +330,7 @@ export default async function HomePage() {
               <h3 className="display text-lg mb-4">Working groups</h3>
               <HomeWorkingGroups />
               <p className="text-sm text-muted mt-4">
-                <Link href="/contribute" className="text-purple hover:underline">
+                <Link href="/working-groups" className="text-purple hover:underline">
                   Join a working group →
                 </Link>{" "}
               </p>
