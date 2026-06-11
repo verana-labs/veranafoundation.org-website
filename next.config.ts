@@ -24,6 +24,20 @@ const nextConfig: NextConfig = {
   // production/container build on them.
   eslint: { ignoreDuringBuilds: true },
 
+  // Old URLs of the working-groups board (pre-ADR-0003 restructure): the
+  // public page replaced /contribute, and the signed-in copy at
+  // /account/working-groups was retired. Keep bookmarks and inbound links alive.
+  async redirects() {
+    return [
+      { source: "/contribute", destination: "/working-groups", permanent: true },
+      {
+        source: "/account/working-groups",
+        destination: "/working-groups",
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {

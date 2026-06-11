@@ -87,8 +87,8 @@ export default function ContactPage() {
               <p className="text-sm text-muted">
                 Members participate in the open working groups.
               </p>
-              <a href="/contribute" className="text-sm text-purple hover:underline">
-                How to contribute →
+              <a href="/working-groups" className="text-sm text-purple hover:underline">
+                Explore the working groups →
               </a>
             </div>
             <div className="card">

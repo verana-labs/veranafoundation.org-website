@@ -25,7 +25,6 @@ export async function GET() {
 
   const actions: { label: string; href: string; icon: string }[] = [
     { label: "Account", href: "/account", icon: "user" },
-    { label: "Working groups", href: "/account/working-groups", icon: "users" },
     { label: "Settings", href: "/account/settings", icon: "gear" },
   ];
   if (links.length === 0) {
