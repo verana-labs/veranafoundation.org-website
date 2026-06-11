@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 
 const PARTNERS = [
   { name: "2060", href: "https://2060.io", logo: "/assets/img/logo_2060.svg" },
-  { name: "Intexus", href: "https://intexus.la/", logo: "/assets/img/logo_intexus.svg" },
   { name: "MOSIP", href: "https://www.mosip.io/", logo: "/assets/img/logo_mosip.png" },
   {
     name: "Orchestrating Identity",
@@ -20,11 +19,6 @@ const PARTNERS = [
   { name: "TotalNot", href: "https://www.totalnot.mx/", logo: "/assets/img/logo_totalnot.png" },
   { name: "EAFIT", href: "https://www.eafit.edu.co/", logo: "/assets/img/logo_eafit.svg" },
   { name: "Bitel", href: "https://bitel.com.pe/", logo: "/assets/img/logo_bitel.png" },
-  {
-    name: "Claro",
-    href: "https://www.claro.com.pe/personas/",
-    logo: "/assets/img/logo_claro.svg",
-  },
 ];
 
 export default function EcosystemPage() {
