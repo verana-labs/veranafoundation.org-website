@@ -4,6 +4,11 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/app/lib/db";
 import { currentUser, isManagerOf } from "@/app/lib/authz";
+import {
+  notify,
+  sendAddedToOrgEmail,
+  sendPromotedToAdminEmail,
+} from "@/app/lib/access-emails";
 
 export type AccessState = { error?: string; ok?: boolean };
 
@@ -54,7 +59,11 @@ export async function addAccess(
   }
 
   // If the person already has an account, link them immediately.
-  const existing = await db.user.findUnique({ where: { email } });
+  const [existing, prior, member] = await Promise.all([
+    db.user.findUnique({ where: { email } }),
+    db.memberAccess.findUnique({ where: { memberId_email: { memberId, email } } }),
+    db.member.findUniqueOrThrow({ where: { id: memberId } }),
+  ]);
   const status = existing ? "active" : "invited";
 
   await db.$transaction(async (tx) => {
@@ -81,6 +90,21 @@ export async function addAccess(
       },
     });
   });
+
+  // Tell the person (best effort) — but stay silent on a no-op re-add of an
+  // entry that is already in place with the same role.
+  const noop =
+    prior && prior.status !== "removed" && prior.role === role;
+  if (!noop) {
+    notify(
+      sendAddedToOrgEmail({
+        to: email,
+        orgName: member.legalName,
+        role,
+        hasAccount: !!existing,
+      }),
+    );
+  }
 
   revalidatePath(`/account/org/${memberId}/access`);
   return { ok: true };
@@ -162,6 +186,16 @@ export async function changeRole(formData: FormData) {
       },
     });
   });
+
+  // Notify on promotion only (demotions stay silent), best effort.
+  if (entry.role === "representative" && role === "manager") {
+    const member = await db.member.findUnique({ where: { id: memberId } });
+    if (member) {
+      notify(
+        sendPromotedToAdminEmail({ to: entry.email, orgName: member.legalName }),
+      );
+    }
+  }
 
   revalidatePath(`/account/org/${memberId}/access`);
 }
