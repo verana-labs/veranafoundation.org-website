@@ -20,16 +20,111 @@ function GoogleLogo() {
 export default function LoginForm({ callbackUrl }: { callbackUrl: string }) {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [resent, setResent] = useState(false);
   const [pending, setPending] = useState(false);
+
+  async function sendCode() {
+    setPending(true);
+    setError("");
+    await signIn("nodemailer", {
+      email: email.trim().toLowerCase(),
+      callbackUrl,
+      redirect: false,
+    });
+    setPending(false);
+    setSent(true);
+  }
+
+  /**
+   * Verify the code against Auth.js's email-provider callback. Fetching (not
+   * navigating) lets us keep the form state on a wrong code: the callback 302s
+   * either to the destination (session cookie set) or back to /login?error=….
+   */
+  async function verifyCode() {
+    setPending(true);
+    setError("");
+    const params = new URLSearchParams({
+      email: email.trim().toLowerCase(),
+      token: code.trim(),
+      callbackUrl,
+    });
+    const res = await fetch(`/api/auth/callback/nodemailer?${params}`);
+    if (res.url.includes("error=")) {
+      setPending(false);
+      setCode("");
+      setError("That code is invalid or has expired — try again or resend.");
+      return;
+    }
+    window.location.href = callbackUrl;
+  }
 
   if (sent) {
     return (
-      <div className="text-center py-2">
-        <FontAwesomeIcon icon={faCircleCheck} className="text-green-600 text-3xl" />
-        <p className="text-sm text-muted mt-3">
-          We emailed a sign-in link to{" "}
-          <strong className="text-ink">{email}</strong>. Open it to continue.
-        </p>
+      <div className="py-2">
+        <div className="text-center">
+          <FontAwesomeIcon icon={faCircleCheck} className="text-green-600 text-3xl" />
+          <p className="text-sm text-muted mt-3">
+            We emailed a 6-digit code to{" "}
+            <strong className="text-ink">{email}</strong>.
+          </p>
+        </div>
+        <form
+          className="flex flex-col gap-2 mt-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (code.trim().length === 6) void verifyCode();
+          }}
+        >
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            required
+            autoFocus
+            placeholder="000000"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+            className="w-full rounded border border-rule bg-surface px-3 py-2 text-center text-2xl tracking-[0.4em] font-mono"
+            aria-label="Sign-in code"
+          />
+          {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+          <button
+            type="submit"
+            className="btn btn-primary w-full"
+            disabled={pending || code.length !== 6}
+          >
+            {pending ? "Verifying…" : "Verify & continue"}
+          </button>
+        </form>
+        <div className="flex justify-between text-xs text-muted mt-3">
+          <button
+            type="button"
+            className="hover:text-purple underline-offset-2 hover:underline"
+            onClick={() => {
+              setSent(false);
+              setCode("");
+              setError("");
+              setResent(false);
+            }}
+          >
+            Use a different email
+          </button>
+          <button
+            type="button"
+            className="hover:text-purple underline-offset-2 hover:underline disabled:opacity-50"
+            disabled={pending || resent}
+            onClick={async () => {
+              await sendCode();
+              setResent(true);
+            }}
+          >
+            {resent ? "Code resent" : "Resend code"}
+          </button>
+        </div>
       </div>
     );
   }
@@ -59,12 +154,9 @@ export default function LoginForm({ callbackUrl }: { callbackUrl: string }) {
 
       <form
         className="flex flex-col gap-2"
-        onSubmit={async (e) => {
+        onSubmit={(e) => {
           e.preventDefault();
-          setPending(true);
-          await signIn("nodemailer", { email, callbackUrl, redirect: false });
-          setPending(false);
-          setSent(true);
+          void sendCode();
         }}
       >
         <div className="relative">
@@ -82,7 +174,7 @@ export default function LoginForm({ callbackUrl }: { callbackUrl: string }) {
           />
         </div>
         <button type="submit" className="btn btn-primary w-full" disabled={pending}>
-          {pending ? "Sending…" : "Email me a sign-in link"}
+          {pending ? "Sending…" : "Email me a sign-in code"}
         </button>
       </form>
     </div>
