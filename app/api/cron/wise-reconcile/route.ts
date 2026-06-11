@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { reconcileWiseCredits } from "@/app/lib/wise-reconcile";
-import { WiseStatementAccessError } from "@/app/lib/payments/wise";
 
 export const dynamic = "force-dynamic";
 
@@ -21,12 +20,6 @@ export async function GET(req: Request) {
     const result = await reconcileWiseCredits();
     return NextResponse.json(result);
   } catch (e) {
-    if (e instanceof WiseStatementAccessError) {
-      // Known, not-our-side condition (PSD2 SCA retirement / token access):
-      // the webhook degrades to admin alerts; don't page as a 500 every day.
-      console.warn("[wise-cron] statement access unavailable", e.message);
-      return NextResponse.json({ configured: true, statementAccess: false });
-    }
     console.error("[wise-cron] reconcile failed", e);
     return NextResponse.json({ error: "Reconcile failed" }, { status: 500 });
   }

@@ -1,15 +1,16 @@
-import crypto from "node:crypto";
-
 // Read-only Wise Business API client, used to reconcile incoming wires against
 // issued invoices (see wise-reconcile.ts). Wise Business has no API to *create*
-// payment links — collection is Stripe Checkout or a direct wire — but it does
-// expose balances and statements, which is all reconciliation needs. Scope the
-// token read-only; the client never moves money.
+// payment links — collection is Stripe Checkout or a direct wire — but credits
+// can be read back. Scope the token read-only; the client never moves money.
+//
+// Data path: the balance-statement endpoint is dead for us (Wise retired
+// signature SCA for personal API tokens under PSD2). Instead, per Wise
+// support: the ACTIVITIES feed indexes every credit with a TRANSFER resource
+// id — both Wise-to-Wise and external SEPA pushes (verified live) — and
+// GET /v1/transfers/{id} is NOT SCA-gated and returns the payment reference.
 //
 // Env: WISE_API_TOKEN, WISE_PROFILE_ID, optional WISE_API_URL (default
-// production; sandbox: https://api.sandbox.transferwise.tech) and
-// WISE_SCA_PRIVATE_KEY (PEM) — the balance-statement endpoint is SCA-protected
-// for business profiles, so upload the matching public key in Wise's settings.
+// production; sandbox: https://api.sandbox.transferwise.tech).
 
 const API_URL = process.env.WISE_API_URL ?? "https://api.transferwise.com";
 
@@ -18,97 +19,57 @@ export function wiseConfigured(): boolean {
 }
 
 export type WiseCredit = {
-  /** Wise's transaction reference, e.g. "TRANSFER-123456" — our providerRef. */
+  /** The Wise transfer id — our providerRef / idempotency key. */
   referenceNumber: string;
   date: string;
-  /** EUR amount as Wise reports it (major units). */
+  /** Amount as Wise reports it (major units). */
   amount: number;
   currency: string;
-  /** Free text the payer attached + Wise's own description, for matching. */
+  /**
+   * The payment reference, for invoice matching. Banks append scheme junk
+   * (e.g. "VF-2026-0007/SCTINSTOUT…"), so always regex-scan, never compare.
+   */
   text: string;
   senderName: string | null;
 };
 
-async function wiseFetch(path: string, scaHeaders?: Record<string, string>) {
+async function wiseFetch(path: string) {
   return fetch(`${API_URL}${path}`, {
     headers: {
       Authorization: `Bearer ${process.env.WISE_API_TOKEN}`,
       "Content-Type": "application/json",
-      ...scaHeaders,
     },
     cache: "no-store",
   });
 }
 
-/**
- * Wise SCA: a protected endpoint answers 403 with a one-time token in the
- * `x-2fa-approval` header; sign it (RSA-SHA256, base64) with the private key
- * whose public half is registered on the Wise profile, then retry.
- */
-/**
- * Statement access denied by Wise for reasons that aren't fixable from our
- * side (PSD2 retirement of signature SCA, token permissions). Callers fall
- * back to webhook-payload-based admin alerts instead of failing outright.
- */
-export class WiseStatementAccessError extends Error {}
-
-async function wiseFetchSca(path: string): Promise<Response> {
-  const first = await wiseFetch(path);
-  if (first.status !== 403) return first;
-
-  // Diagnose precisely — a bare "403" hides which link in the chain failed.
-  const token = first.headers.get("x-2fa-approval");
-  if (!token) {
-    throw new WiseStatementAccessError(
-      `wise: 403 without an SCA challenge — the token cannot access this endpoint at all ` +
-        `(wrong WISE_PROFILE_ID, or statement access not enabled for this token; ` +
-        `EU business accounts may need Wise support to enable statements). Body: ${await first.text()}`,
-    );
-  }
-  // Tolerate \n-escaped PEMs (single-line env values).
-  const pem = process.env.WISE_SCA_PRIVATE_KEY?.replace(/\\n/g, "\n");
-  if (!pem) {
-    throw new Error(
-      "wise: SCA challenge received but WISE_SCA_PRIVATE_KEY is not configured — " +
-        "generate an RSA keypair, register the public key on the Wise profile " +
-        "(Settings → API tokens → Manage public keys) and set the private PEM.",
-    );
-  }
-  let signature: string;
-  try {
-    signature = crypto.createSign("RSA-SHA256").update(token).sign(pem, "base64");
-  } catch (e) {
-    throw new Error(
-      `wise: WISE_SCA_PRIVATE_KEY is not a usable RSA private key (${(e as Error).message})`,
-    );
-  }
-  const retry = await wiseFetch(path, {
-    "x-2fa-approval": token,
-    "X-Signature": signature,
-  });
-  if (retry.status === 403) {
-    const result = retry.headers.get("x-2fa-approval-result");
-    throw new WiseStatementAccessError(
-      `wise: SCA signature rejected (x-2fa-approval-result: ${result ?? "n/a"}). ` +
-        `Either the registered public key doesn't match WISE_SCA_PRIVATE_KEY, or — per Wise's ` +
-        `PSD2 changes — signature-based SCA is no longer accepted for this account's API tokens ` +
-        `(confirmed key match + by-hand rejection means the latter: contact Wise support). ` +
-        `Body: ${await retry.text()}`,
-    );
-  }
-  return retry;
+/** Activity entries wrap values in pseudo-HTML (<strong>, <positive>). */
+export function stripTags(s: string): string {
+  return s.replace(/<[^>]+>/g, "").trim();
 }
 
-/** The profile's STANDARD balance id for `currency`, or null. */
-export async function findBalanceId(currency = "EUR"): Promise<number | null> {
-  const profileId = process.env.WISE_PROFILE_ID;
-  const res = await wiseFetch(`/v4/profiles/${profileId}/balances?types=STANDARD`);
-  if (!res.ok) throw new Error(`wise: balances ${res.status} ${await res.text()}`);
-  const balances = (await res.json()) as { id: number; currency: string }[];
-  return balances.find((b) => b.currency === currency)?.id ?? null;
+type Activity = {
+  type: string;
+  resource: { type: string; id: string };
+  title: string;
+  primaryAmount: string;
+  status: string;
+  createdOn: string;
+};
+
+/**
+ * A credit is marked by the <positive> wrapper on its amount (outgoing
+ * entries show a plain amount + "Sent"). Verified against live data.
+ */
+export function isSettledCredit(a: Activity): boolean {
+  return (
+    a.status === "COMPLETED" &&
+    a.resource?.type === "TRANSFER" &&
+    a.primaryAmount.includes("<positive>")
+  );
 }
 
-/** Incoming credits on the EUR balance between `since` and now. */
+/** Incoming credits on the profile between `since` and now. */
 export async function fetchCredits(args: {
   since: Date;
   currency?: string;
@@ -116,44 +77,42 @@ export async function fetchCredits(args: {
   if (!wiseConfigured()) throw new Error("Wise is not configured.");
   const currency = args.currency ?? "EUR";
   const profileId = process.env.WISE_PROFILE_ID;
-  const balanceId = await findBalanceId(currency);
-  if (balanceId == null) throw new Error(`wise: no ${currency} balance found`);
 
-  const qs = new URLSearchParams({
-    currency,
-    intervalStart: args.since.toISOString(),
-    intervalEnd: new Date().toISOString(),
-    type: "COMPACT",
-  });
-  const res = await wiseFetchSca(
-    `/v1/profiles/${profileId}/balance-statements/${balanceId}/statement.json?${qs}`,
+  // The activities feed is the index: newest first; at this volume one page
+  // comfortably covers the scan window.
+  const res = await wiseFetch(`/v1/profiles/${profileId}/activities?size=100`);
+  if (!res.ok) throw new Error(`wise: activities ${res.status} ${await res.text()}`);
+  const { activities = [] } = (await res.json()) as { activities?: Activity[] };
+
+  const credits = activities.filter(
+    (a) => isSettledCredit(a) && new Date(a.createdOn) >= args.since,
   );
-  if (!res.ok) throw new Error(`wise: statement ${res.status} ${await res.text()}`);
 
-  const statement = (await res.json()) as {
-    transactions?: {
-      type: "CREDIT" | "DEBIT";
-      date: string;
-      amount: { value: number; currency: string };
-      referenceNumber: string;
-      details?: {
-        description?: string;
-        paymentReference?: string;
-        senderName?: string;
-      };
-    }[];
-  };
-
-  return (statement.transactions ?? [])
-    .filter((t) => t.type === "CREDIT")
-    .map((t) => ({
-      referenceNumber: t.referenceNumber,
-      date: t.date,
-      amount: t.amount.value,
-      currency: t.amount.currency,
-      text: [t.details?.paymentReference, t.details?.description]
-        .filter(Boolean)
-        .join(" "),
-      senderName: t.details?.senderName ?? null,
-    }));
+  const out: WiseCredit[] = [];
+  for (const a of credits) {
+    // The transfer detail carries the payment reference + settled amount.
+    const tRes = await wiseFetch(`/v1/transfers/${a.resource.id}`);
+    if (!tRes.ok) {
+      console.error(`[wise] transfer ${a.resource.id} fetch failed: ${tRes.status}`);
+      continue; // re-covered by the next scan
+    }
+    const t = (await tRes.json()) as {
+      id: number;
+      reference?: string | null;
+      details?: { reference?: string | null };
+      targetValue: number;
+      targetCurrency: string;
+      created: string;
+    };
+    if (t.targetCurrency !== currency) continue;
+    out.push({
+      referenceNumber: String(t.id),
+      date: a.createdOn,
+      amount: t.targetValue,
+      currency: t.targetCurrency,
+      text: t.details?.reference ?? t.reference ?? "",
+      senderName: stripTags(a.title) || null,
+    });
+  }
+  return out;
 }
