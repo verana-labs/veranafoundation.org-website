@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How the Verana Foundation (in formation, represented by 2060 OÜ) collects, uses, and retains personal data on veranafoundation.org, and your rights under the GDPR.",
+    "How the Verana Foundation (in formation, represented by 2060 OÜ) collects, uses, and retains personal data on veranafoundation.org — accounts, membership, billing — and your rights under the GDPR.",
 };
 
 export default function PrivacyPage() {
@@ -15,7 +15,7 @@ export default function PrivacyPage() {
           <h1 className="display text-4xl sm:text-5xl">Privacy Policy</h1>
           <div className="accent-line mt-6" />
           <p className="text-xs tracking-wider uppercase text-muted mt-8">
-            <strong className="text-ink">Last updated.</strong> 2026-06-06
+            <strong className="text-ink">Last updated.</strong> 2026-06-11
           </p>
         </div>
       </section>
@@ -27,16 +27,18 @@ export default function PrivacyPage() {
           <strong>2060 OÜ</strong>, collects through{" "}
           <strong>veranafoundation.org</strong>, why we collect it, how long we
           keep it, and your rights under the EU General Data Protection
-          Regulation (GDPR). It covers the <strong>contact form</strong> on{" "}
-          <code>/contact</code> and any cookies or anti-abuse signals set by the
-          site.
+          Regulation (GDPR). The site is more than an informational website: it
+          hosts <strong>member accounts</strong>, the{" "}
+          <strong>membership application and e-signature flow</strong>,{" "}
+          <strong>invoicing and dues payment</strong>, and a{" "}
+          <strong>public member directory</strong> — this policy covers all of
+          them, plus the contact form and cookies.
         </p>
         <p>
-          We do not sell data and do not run ad targeting or remarketing. The
-          only data we collect is what you explicitly send through the contact
-          form, what our hosting provider logs for security, and — with your
-          consent — aggregate usage measurements so we can see which pages people
-          read.
+          We do not sell data and do not run ad targeting or remarketing. We
+          collect what you give us to operate your membership, what payment and
+          sign-in providers necessarily share with us, and — with your consent —
+          aggregate usage measurements.
         </p>
 
         <h2>Data controller</h2>
@@ -47,74 +49,187 @@ export default function PrivacyPage() {
           thereafter the incorporated Foundation. For privacy matters, use the{" "}
           <a href="/contact">contact form</a> with inquiry type{" "}
           <em>General inquiry</em> and begin the message with{" "}
-          <em>&ldquo;Legal:&rdquo;</em>. We do not publish a direct privacy
-          email; routing is handled internally.
+          <em>&ldquo;Legal:&rdquo;</em>.
         </p>
 
         <h2>What we collect and why</h2>
-        <p>When you submit the form on {""}<code>/contact</code>, we receive:</p>
+
+        <h3>Accounts and sign-in</h3>
         <ul>
           <li>
-            <strong>Required.</strong> Inquiry type, name, email, message,
-            consent.
+            <strong>Identity.</strong> Your verified email address is your
+            account key, with your name and avatar if provided by a sign-in
+            provider. Sign-in works via Google, GitHub, or a one-time code we
+            email you; with OAuth we receive only your basic profile and
+            verified email — never your password.
           </li>
           <li>
-            <strong>Conditionally required.</strong> Organization (for
-            membership, partnership, or press inquiries).
-          </li>
-          <li>
-            <strong>Optional.</strong> Role or title, website/LinkedIn, referral
-            source.
-          </li>
-        </ul>
-        <p>Automatically, as part of submission security:</p>
-        <ul>
-          <li>
-            <strong>IP address and user-agent</strong>, from our hosting
-            provider, used only for rate limiting and honeypot-based abuse
-            detection — not for tracking or profiling.
+            <strong>Session.</strong> A strictly necessary, encrypted session
+            cookie keeps you signed in. One-time sign-in codes are stored
+            hashed and expire after 10 minutes.
           </li>
         </ul>
         <p>
-          <strong>Purpose.</strong> To respond to your inquiry and route it to
-          the right person. <strong>Legal basis.</strong> Your consent (GDPR Art.
-          6(1)(a)) and our legitimate interest in answering inbound inquiries
+          <strong>Legal basis.</strong> Performance of a contract (GDPR Art.
+          6(1)(b)) — operating your account.
+        </p>
+
+        <h3>Membership applications and e-signatures</h3>
+        <ul>
+          <li>
+            <strong>Member details.</strong> Legal name; for organizations:
+            entity type, country, registered address, optional VAT number,
+            optional billing email, optional logo; for individuals: country of
+            residence.
+          </li>
+          <li>
+            <strong>Signature record.</strong> When you e-sign the Membership
+            Agreement we record the signer&rsquo;s name and title, timestamp,
+            agreement version and document hash, and the{" "}
+            <strong>IP address and browser user-agent</strong> at signing — kept
+            as evidence that the agreement was validly executed — plus the
+            personalised signed PDF.
+          </li>
+          <li>
+            <strong>Organization access lists.</strong> Org managers may add
+            colleagues&rsquo; email addresses to grant them access; those people
+            are notified by email and linked to the organization when they sign
+            in.
+          </li>
+        </ul>
+        <p>
+          <strong>Legal basis.</strong> Performance of the Membership Agreement
+          (Art. 6(1)(b)) and our legitimate interest in evidencing contracts
           (Art. 6(1)(f)).
+        </p>
+
+        <h3>Billing and payments</h3>
+        <ul>
+          <li>
+            <strong>Invoices.</strong> We issue and retain dues invoices
+            (member identity, amounts, VAT treatment, VAT number where
+            applicable) as our accounting records.
+          </li>
+          <li>
+            <strong>Card payments</strong> are processed by{" "}
+            <strong>Stripe</strong>; card numbers never touch our servers. We
+            store Stripe&rsquo;s customer and payment identifiers to match
+            payments to invoices.
+          </li>
+          <li>
+            <strong>Bank transfers</strong> arrive on our{" "}
+            <strong>Wise</strong> business account. To match a wire to an
+            invoice we read, via Wise&rsquo;s API, the transfer&rsquo;s amount,
+            date, payment reference, and sender name.
+          </li>
+        </ul>
+        <p>
+          <strong>Legal basis.</strong> Performance of the Membership Agreement
+          (Art. 6(1)(b)) and our legal obligations under Estonian accounting and
+          tax law (Art. 6(1)(c)).
+        </p>
+
+        <h3>Public member directory</h3>
+        <p>
+          The <a href="/members">/members</a> page lists members of the
+          Foundation. Listing is curated by Foundation administrators, and an
+          organization&rsquo;s logo appears only with the{" "}
+          <strong>explicit consent</strong> given at upload (&ldquo;We may
+          display this logo on veranafoundation.org&rdquo;). You can withdraw at
+          any time: remove the logo from your membership card, or ask us to
+          unlist the membership entirely. <strong>Legal basis.</strong> Consent
+          (Art. 6(1)(a)) and legitimate interest in presenting the
+          Foundation&rsquo;s membership (Art. 6(1)(f)).
+        </p>
+
+        <h3>Transactional email</h3>
+        <p>
+          We send operational email tied to your membership: sign-in codes,
+          executed-agreement copies, payment requests, reminders and receipts,
+          renewal and expiry notices, and access notifications. These are part
+          of operating the service, not marketing; we send no newsletters
+          without separate consent.
+        </p>
+
+        <h3>Contact form</h3>
+        <p>
+          Submissions on <code>/contact</code> (inquiry type, name, email,
+          message, optional organization/role/links) are stored in our{" "}
+          <strong>self-hosted Relaticle CRM</strong> (<code>crm.2060.io</code>)
+          so we can respond. IP address and user-agent are used only for rate
+          limiting and abuse detection.
+        </p>
+
+        <h3>Administration and security</h3>
+        <p>
+          Administrative actions on member records (e.g. marking an invoice
+          paid, updating an address, listing a member) are written to an{" "}
+          <strong>audit log</strong> recording who did what and when. Hosting
+          logs (IP, user-agent) serve security and rate limiting only.
         </p>
 
         <h2>Cookies and analytics</h2>
         <p>
-          Analytics, if enabled, are consent-gated: a banner offers{" "}
-          <strong>Accept all</strong> or <strong>Essential only</strong>, and any
-          analytics tag loads only after consent. Your choice is stored in your
-          browser&rsquo;s <code>localStorage</code> (not a cookie) so the banner
-          does not reappear. No ad networks, no cross-site trackers; IP addresses
-          anonymized. The specific analytics provider and measurement ID will be
-          listed here once finalized.
+          The only cookie required by the site is the{" "}
+          <strong>strictly necessary session cookie</strong> for signed-in
+          users. Analytics, if enabled, are consent-gated: a banner offers{" "}
+          <strong>Accept all</strong> or <strong>Essential only</strong>, and
+          any analytics tag loads only after consent; your choice is stored in{" "}
+          <code>localStorage</code>. No ad networks, no cross-site trackers; IP
+          addresses anonymized. See the <a href="/cookies">cookie policy</a>.
         </p>
 
-        <h2>Where data is processed</h2>
+        <h2>Processors and where data goes</h2>
+        <ul>
+          <li>
+            <strong>Stripe</strong> (Ireland/US) — card payments and checkout.
+          </li>
+          <li>
+            <strong>Wise</strong> (Belgium/UK) — our business bank account for
+            dues received by transfer.
+          </li>
+          <li>
+            <strong>Google / GitHub</strong> — only if you choose them for
+            sign-in.
+          </li>
+          <li>
+            <strong>Our email provider</strong> — delivery of transactional
+            email.
+          </li>
+          <li>
+            <strong>Our hosting provider (EU)</strong> and our self-hosted CRM,
+            operated by 2060 OÜ.
+          </li>
+        </ul>
         <p>
-          Contact-form submissions are stored in our <strong>self-hosted
-          Relaticle CRM</strong> (<code>crm.2060.io</code>), operated by 2060 OÜ
-          on our own infrastructure, so we can respond to and manage your
-          inquiry. No third-party CRM or marketing platform receives this data.
-          Spam protection is self-hosted (honeypot, time-to-submit, rate
-          limiting); no third-party captcha is used. Site hosting and any
-          cross-border transfer rely on an EC adequacy decision, the EU-US Data
-          Privacy Framework, or Standard Contractual Clauses as applicable.
+          Cross-border transfers rely on an EC adequacy decision, the EU-US Data
+          Privacy Framework, or Standard Contractual Clauses as applicable. No
+          third-party marketing platform receives your data.
         </p>
 
         <h2>How long we keep it</h2>
         <ul>
           <li>
-            <strong>Contact-form correspondence</strong> — up to 24 months from
-            the last interaction, then deleted or anonymized unless an
-            engagement is ongoing.
+            <strong>Account and member records</strong> — for the life of the
+            membership and up to 24 months after it ends, then deleted or
+            anonymized except where retention below applies.
           </li>
           <li>
-            <strong>Spam-protection logs</strong> (IP, user-agent) — up to 30
-            days.
+            <strong>Invoices, payments, and signed agreements</strong> — up to{" "}
+            <strong>7 years</strong>, as required by Estonian accounting law and
+            to evidence the contract.
+          </li>
+          <li>
+            <strong>Signature evidence</strong> (IP, user-agent at signing) —
+            kept with the signed agreement.
+          </li>
+          <li>
+            <strong>One-time sign-in codes</strong> — 10 minutes;{" "}
+            <strong>spam/abuse logs</strong> — up to 30 days.
+          </li>
+          <li>
+            <strong>Contact-form correspondence</strong> — up to 24 months from
+            the last interaction.
           </li>
           <li>
             <strong>Analytics</strong> — minimum provider retention; aggregate
@@ -126,11 +241,16 @@ export default function PrivacyPage() {
         <p>Under the GDPR, you may:</p>
         <ul>
           <li>access the personal data we hold about you;</li>
-          <li>rectify inaccurate data;</li>
+          <li>rectify inaccurate data (organization managers can correct the
+            registered address directly from the membership card);</li>
           <li>erase your data where we have no lawful basis to keep it;</li>
           <li>restrict or object to processing;</li>
           <li>receive a portable copy of the data you gave us;</li>
-          <li>withdraw consent at any time;</li>
+          <li>
+            withdraw consent at any time (e.g. remove your logo or ask to be
+            unlisted from <a href="/members">/members</a>) — without affecting
+            prior processing;
+          </li>
           <li>
             lodge a complaint with a supervisory authority — while stewarded by
             2060 OÜ, the{" "}
@@ -141,9 +261,12 @@ export default function PrivacyPage() {
           </li>
         </ul>
         <p>
-          To exercise any right, use the <a href="/contact">contact form</a>{" "}
-          (inquiry type <em>General</em>, message prefixed{" "}
-          <em>&ldquo;Legal:&rdquo;</em>). We respond within 30 days.
+          Note that invoices, payment records, and executed agreements are
+          retained despite erasure requests while a legal obligation or the
+          contract-evidence interest applies. To exercise any right, use the{" "}
+          <a href="/contact">contact form</a> (inquiry type <em>General</em>,
+          message prefixed <em>&ldquo;Legal:&rdquo;</em>). We respond within 30
+          days.
         </p>
 
         <h2>Changes</h2>
