@@ -192,6 +192,41 @@ spec:
                   name: veranafoundation-website-secrets
                   key: CRON_SECRET
                   optional: true
+            # Working groups (ADR-0003): Google Calendar sync (service account
+            # with domain-wide delegation impersonating the meetings@ role
+            # account) + the public minutes repository. All optional: schedules
+            # save with a visible "not configured" notice and minutes stay
+            # drafts until these exist.
+            - name: GOOGLE_SA_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: GOOGLE_SA_EMAIL
+                  optional: true
+            - name: GOOGLE_SA_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: GOOGLE_SA_PRIVATE_KEY
+                  optional: true
+            - name: GOOGLE_CALENDAR_IMPERSONATE
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: GOOGLE_CALENDAR_IMPERSONATE
+                  optional: true
+            - name: MINUTES_REPO
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: MINUTES_REPO
+                  optional: true
+            - name: MINUTES_GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: MINUTES_GITHUB_TOKEN
+                  optional: true
           resources:
             requests:
               cpu: "50m"

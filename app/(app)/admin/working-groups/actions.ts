@@ -4,6 +4,18 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
+import { slugify } from "@/app/lib/working-groups";
+import { deleteScheduleEvent } from "@/app/lib/google-calendar";
+
+/** A slug from the name, suffixed on collision. Slugs are stable after create
+ * (they name URLs and the minutes-repo folder), so renames don't touch them. */
+async function uniqueSlug(name: string): Promise<string> {
+  const base = slugify(name) || "wg";
+  for (let i = 0; ; i++) {
+    const slug = i === 0 ? base : `${base}-${i + 1}`;
+    if (!(await db.workingGroup.findUnique({ where: { slug } }))) return slug;
+  }
+}
 
 export type WgState = { error?: string; ok?: boolean };
 
@@ -51,7 +63,11 @@ export async function createWg(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
   const wg = await db.workingGroup.create({
-    data: { ...parsed.data, description: parsed.data.description ?? null },
+    data: {
+      ...parsed.data,
+      slug: await uniqueSlug(parsed.data.name),
+      description: parsed.data.description ?? null,
+    },
   });
   await db.adminAction.create({
     data: {
@@ -147,6 +163,15 @@ export async function toggleState(id: string) {
 export async function deleteWg(formData: FormData) {
   const user = await assertAdmin();
   const id = String(formData.get("id"));
+  // Cancel the Calendar series first (best effort — the WG goes away anyway).
+  const schedule = await db.wgSchedule.findUnique({ where: { wgId: id } });
+  if (schedule?.googleEventId) {
+    try {
+      await deleteScheduleEvent(schedule.googleEventId);
+    } catch {
+      /* attendees keep a stale event; acceptable on force-delete */
+    }
+  }
   await db.workingGroup.delete({ where: { id } });
   await db.adminAction.create({
     data: {

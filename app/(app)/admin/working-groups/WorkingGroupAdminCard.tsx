@@ -1,12 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEllipsisVertical } from "@fortawesome/free-solid-svg-icons";
+import { faEllipsisVertical, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { updateWg, toggleShowOnHome, toggleState } from "./actions";
+import {
+  addLead,
+  removeLead,
+  type ActionState,
+} from "@/app/(marketing)/working-groups/[slug]/actions";
+import PersonAvatars from "@/app/components/PersonAvatars";
+
+export type AdminLead = {
+  userId: string;
+  name: string;
+  email: string;
+  image: string | null;
+};
 
 export type AdminWg = {
   id: string;
+  slug: string;
   name: string;
   description: string | null;
   requiredClass: "any" | "associate";
@@ -16,7 +30,72 @@ export type AdminWg = {
   priority: number;
   /** ISO timestamp of when it last became disabled, or null. */
   disabledAt: string | null;
+  leads: AdminLead[];
 };
+
+// Admin-side lead management: the ADR-0003 invariant (never zero leads once
+// set) is enforced by the server action; errors surface inline.
+function LeadsEditor({ wg }: { wg: AdminWg }) {
+  const [state, addAction, adding] = useActionState<ActionState, FormData>(
+    addLead,
+    {},
+  );
+  const [removeError, setRemoveError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function onRemove(userId: string) {
+    startTransition(async () => {
+      const res = await removeLead(wg.id, userId);
+      setRemoveError(res.error ?? null);
+    });
+  }
+
+  return (
+    <div className="mt-3 border-t border-rule pt-3">
+      <p className="text-sm text-muted mb-2">Leads</p>
+      {wg.leads.length === 0 ? (
+        <p className="text-sm text-muted">
+          None yet — assign at least one lead.
+        </p>
+      ) : (
+        <ul className="space-y-1">
+          {wg.leads.map((l) => (
+            <li key={l.userId} className="flex items-center gap-2 text-sm">
+              <PersonAvatars people={[l]} size={22} />
+              <span>{l.name}</span>
+              <span className="text-muted truncate">{l.email}</span>
+              <button
+                type="button"
+                aria-label={`Remove lead ${l.name}`}
+                className="text-muted hover:text-ink px-1"
+                disabled={pending}
+                onClick={() => onRemove(l.userId)}
+              >
+                <FontAwesomeIcon icon={faXmark} className="w-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form action={addAction} className="mt-2 flex items-center gap-2">
+        <input type="hidden" name="wgId" value={wg.id} />
+        <input
+          name="email"
+          type="email"
+          required
+          placeholder="lead@example.org"
+          className="text-sm flex-1 min-w-0"
+        />
+        <button type="submit" className="btn text-sm" disabled={adding}>
+          {adding ? "Adding…" : "Add lead"}
+        </button>
+      </form>
+      {(state.error || removeError) && (
+        <p className="text-sm text-red-600 mt-2">{state.error ?? removeError}</p>
+      )}
+    </div>
+  );
+}
 
 export default function WorkingGroupAdminCard({ wg }: { wg: AdminWg }) {
   const [editing, setEditing] = useState(false);
@@ -171,6 +250,12 @@ export default function WorkingGroupAdminCard({ wg }: { wg: AdminWg }) {
           {wg.description && <p className="text-sm text-muted mt-1">{wg.description}</p>}
 
           <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+            <dt className="text-muted">Page</dt>
+            <dd className="truncate">
+              <a href={`/working-groups/${wg.slug}`} className="text-purple hover:underline">
+                /working-groups/{wg.slug}
+              </a>
+            </dd>
             <dt className="text-muted">External link</dt>
             <dd className="truncate">
               <a href={wg.link} target="_blank" rel="noopener noreferrer" className="text-purple hover:underline">
@@ -188,6 +273,8 @@ export default function WorkingGroupAdminCard({ wg }: { wg: AdminWg }) {
             <dt className="text-muted">Priority</dt>
             <dd>{wg.priority}</dd>
           </dl>
+
+          <LeadsEditor wg={wg} />
         </>
       )}
     </div>

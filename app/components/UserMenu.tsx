@@ -9,6 +9,7 @@ import {
   faUsers,
   faShieldHalved,
   faIdCard,
+  faGear,
   faRightFromBracket,
   type IconDefinition,
 } from "@fortawesome/free-solid-svg-icons";
@@ -21,6 +22,7 @@ const ICONS: Record<string, IconDefinition> = {
   users: faUsers,
   "shield-halved": faShieldHalved,
   "id-card": faIdCard,
+  gear: faGear,
 };
 
 /** Avatar label: name initials, else first-of-local + first-of-domain. */
