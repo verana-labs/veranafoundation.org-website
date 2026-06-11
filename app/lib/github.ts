@@ -2,10 +2,13 @@
  * Live statistics for the `verana-labs` GitHub organization, fetched server-side
  * with ISR (revalidated daily). Used by the Home "living commons" section.
  *
- * Works unauthenticated (a few requests/day, well under the 60/hr anonymous
- * limit). Set `GITHUB_TOKEN` to raise the limit. All calls are wrapped so a
- * failure or rate-limit returns `null` and the page renders a static fallback —
- * the build and runtime never break on GitHub being unreachable.
+ * Authentication matters in production: the 60/hr *anonymous* limit is shared
+ * per egress IP (the whole cluster), so unauthenticated calls get rate-limited
+ * and the home falls back to placeholder initials. Any valid token lifts the
+ * limit to 5,000/hr — `GITHUB_TOKEN` if set, else the minutes-repo PAT
+ * (`MINUTES_GITHUB_TOKEN`, already deployed; fine-grained PATs can always read
+ * public org data). All calls are wrapped so a failure returns `null` and the
+ * page renders a static fallback — build and runtime never break on GitHub.
  */
 
 const ORG = "verana-labs";
@@ -49,7 +52,7 @@ function headers(): HeadersInit {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
   };
-  const token = process.env.GITHUB_TOKEN;
+  const token = process.env.GITHUB_TOKEN || process.env.MINUTES_GITHUB_TOKEN;
   if (token) h.Authorization = `Bearer ${token}`;
   return h;
 }
@@ -76,18 +79,17 @@ export async function getOrgStats(): Promise<OrgStats | null> {
     const lastActivity = byPush[0]?.pushed_at ?? null;
     const lastActivityRepo = byPush[0]?.name ?? null;
 
-    // Aggregate contributors across the most-starred repos (cap the number of
-    // repos so we stay within rate limits).
-    const topRepos = [...active]
-      .sort((a, b) => b.stargazers_count - a.stargazers_count)
-      .slice(0, 8);
+    // Aggregate contributors across every active repo (already sorted by
+    // pushed_at; capped only as a safety bound — with auth this is a handful
+    // of requests once a day).
+    const topRepos = active.slice(0, 30);
 
     const merged = new Map<string, ContributorRaw>();
     await Promise.all(
       topRepos.map(async (r) => {
         try {
           const cr = await fetch(
-            `${API}/repos/${ORG}/${r.name}/contributors?per_page=30`,
+            `${API}/repos/${ORG}/${r.name}/contributors?per_page=100`,
             { headers: headers(), next: { revalidate: REVALIDATE } }
           );
           if (!cr.ok) return;
@@ -108,7 +110,7 @@ export async function getOrgStats(): Promise<OrgStats | null> {
 
     const contributors = [...merged.values()]
       .sort((a, b) => b.contributions - a.contributions)
-      .slice(0, 14)
+      .slice(0, 32)
       .map(({ login, avatar_url, html_url }) => ({
         login,
         avatar_url,
