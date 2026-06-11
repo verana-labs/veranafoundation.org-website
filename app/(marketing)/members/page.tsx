@@ -85,7 +85,12 @@ export default async function MembersPage() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
               {associates.map((m) => (
-                <div key={m.id} className="logo-wall-item flex-col gap-3 py-6">
+                <div
+                  key={m.id}
+                  className="logo-wall-item"
+                  title={m.legalName}
+                  aria-label={m.legalName}
+                >
                   {m.logoUri ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -94,16 +99,11 @@ export default async function MembersPage() {
                       loading="lazy"
                     />
                   ) : (
-                    <span
-                      aria-hidden="true"
-                      className="flex h-12 w-12 items-center justify-center rounded-full bg-surface border border-rule text-lg font-semibold text-purple"
-                    >
-                      {m.legalName.charAt(0).toUpperCase()}
+                    // No logo uploaded yet: the name stands in for it.
+                    <span className="text-sm font-semibold text-center leading-snug">
+                      {m.legalName}
                     </span>
                   )}
-                  <span className="text-sm font-medium text-center leading-snug">
-                    {m.legalName}
-                  </span>
                 </div>
               ))}
             </div>
