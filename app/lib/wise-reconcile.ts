@@ -53,6 +53,28 @@ export async function reconcileWiseCredits(): Promise<ReconcileResult> {
         problems.push({ key: `${credit.referenceNumber}:${number}`, message: problem });
       }
     }
+    // No invoice reference in the wire (member forgot it, or unrelated
+    // revenue): alert only when the amount exactly matches an open invoice —
+    // a strong manual-settlement candidate without auto-settling ambiguity.
+    if (numbers.length === 0) {
+      const cents = Math.round(credit.amount * 100);
+      const candidates = await db.invoice.findMany({
+        where: { status: "issued", currency: credit.currency, grossAmount: cents },
+        include: { membership: { include: { member: true } } },
+      });
+      if (candidates.length) {
+        const list = candidates
+          .map((c) => `${c.number} (${c.membership.member.legalName})`)
+          .join(", ");
+        problems.push({
+          key: `${credit.referenceNumber}:noref`,
+          message:
+            `credit of ${credit.amount} ${credit.currency} on ${credit.date.slice(0, 10)}` +
+            `${credit.senderName ? ` from ${credit.senderName}` : ""} carries no invoice ` +
+            `reference but matches by amount: ${list} — verify and mark paid`,
+        });
+      }
+    }
   }
 
   // The scan window re-covers past days on every run, so an unresolved anomaly
@@ -167,49 +189,5 @@ async function alertAdmins(alerts: string[]): Promise<boolean> {
   } catch (e) {
     console.error("[wise-reconcile] admin alert failed", e);
     return false;
-  }
-}
-
-/**
- * Fallback when Wise statement access is unavailable (PSD2 SCA retirement —
- * see WiseStatementAccessError): the `balances#credit` webhook payload still
- * tells us an amount arrived, so alert the admins with exact-amount matches
- * among open invoices for one-click manual settlement. Deduped per credit.
- */
-export async function alertIncomingCredit(credit: {
-  amount: number; // major units, as Wise sends it
-  currency: string;
-  occurredAt: string;
-}): Promise<void> {
-  const key = `credit:${credit.occurredAt}:${credit.amount}${credit.currency}`;
-  const seen = await db.adminAction.findFirst({
-    where: { action: "wise_reconcile.credit_alert", targetType: "WiseCredit", targetId: key },
-    select: { id: true },
-  });
-  if (seen) return;
-
-  const cents = Math.round(credit.amount * 100);
-  const candidates = await db.invoice.findMany({
-    where: { status: "issued", currency: credit.currency, grossAmount: cents },
-    include: { membership: { include: { member: true } } },
-  });
-  const lines = candidates.map(
-    (inv) =>
-      `exact-amount match: ${inv.number} — ${inv.membership.member.legalName} (${formatEur(inv.grossAmount)})`,
-  );
-  const sent = await alertAdmins([
-    `incoming credit of ${credit.amount} ${credit.currency} on the Wise balance (${credit.occurredAt.slice(0, 10)}) — statement access is unavailable, reconcile manually`,
-    ...(lines.length ? lines : ["no open invoice matches this amount exactly"]),
-  ]);
-  if (sent) {
-    await db.adminAction.create({
-      data: {
-        actorEmail: "system:wise-reconcile",
-        action: "wise_reconcile.credit_alert",
-        targetType: "WiseCredit",
-        targetId: key,
-        after: { amount: credit.amount, currency: credit.currency, candidates: lines },
-      },
-    });
   }
 }

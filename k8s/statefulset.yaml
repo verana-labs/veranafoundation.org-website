@@ -174,12 +174,6 @@ spec:
                   name: veranafoundation-website-secrets
                   key: WISE_PROFILE_ID
                   optional: true
-            - name: WISE_SCA_PRIVATE_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: veranafoundation-website-secrets
-                  key: WISE_SCA_PRIVATE_KEY
-                  optional: true
             - name: WISE_WEBHOOK_PUBLIC_KEY
               valueFrom:
                 secretKeyRef:
