@@ -108,7 +108,7 @@ export default async function AdminMembersPage({
                           </span>
                           <button
                             type="submit"
-                            className="btn text-xs"
+                            className="text-purple hover:underline"
                             title={
                               ms.listed
                                 ? "Remove from the public /members page"
