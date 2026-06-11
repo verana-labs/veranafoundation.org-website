@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
+import { personName } from "@/app/lib/working-groups";
 import { PageHero, Section } from "@/app/components/PageHero";
 import WorkingGroupsAdmin from "./WorkingGroupsAdmin";
 
@@ -11,7 +12,15 @@ export default async function AdminWorkingGroupsPage() {
   const user = await currentUser();
   if (!user || !(await isAdmin(user.email))) notFound();
 
-  const groups = await db.workingGroup.findMany({ orderBy: { createdAt: "desc" } });
+  const groups = await db.workingGroup.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      leads: {
+        include: { user: { select: { id: true, displayName: true, name: true, email: true, image: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
 
   return (
     <>
@@ -29,6 +38,7 @@ export default async function AdminWorkingGroupsPage() {
         <WorkingGroupsAdmin
           groups={groups.map((g) => ({
             id: g.id,
+            slug: g.slug,
             name: g.name,
             description: g.description,
             requiredClass: g.requiredClass,
@@ -37,6 +47,12 @@ export default async function AdminWorkingGroupsPage() {
             state: g.state,
             priority: g.priority,
             disabledAt: g.disabledAt?.toISOString() ?? null,
+            leads: g.leads.map((l) => ({
+              userId: l.user.id,
+              name: personName(l.user),
+              email: l.user.email ?? "",
+              image: l.user.image,
+            })),
           }))}
         />
       </Section>

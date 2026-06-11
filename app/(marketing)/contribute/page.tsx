@@ -65,8 +65,9 @@ export default async function ContributePage() {
           <div className="accent-line mt-4 mb-10" />
           <WorkingGroupCards groups={workingGroups} />
           <p className="text-xs text-muted mt-4">
-            Meeting cadence and charters published per working group
-            (pre-incorporation: details to follow).
+            Each group's page shows its leads, meeting schedule and published
+            minutes; members join and are invited to the meetings in their own
+            calendar.
           </p>
         </div>
       </section>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { isAdmin, effectiveMemberships } from "@/app/lib/authz";
+import { db } from "@/app/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -14,14 +15,18 @@ export async function GET() {
     return NextResponse.json({ user: null, actions: [], isMember: false });
   }
 
-  const [admin, links] = await Promise.all([
+  const [admin, links, record] = await Promise.all([
     isAdmin(user.email),
     user.id ? effectiveMemberships(user.id) : Promise.resolve([]),
+    user.id
+      ? db.user.findUnique({ where: { id: user.id }, select: { displayName: true } })
+      : Promise.resolve(null),
   ]);
 
   const actions: { label: string; href: string; icon: string }[] = [
     { label: "Account", href: "/account", icon: "user" },
     { label: "Working groups", href: "/account/working-groups", icon: "users" },
+    { label: "Settings", href: "/account/settings", icon: "gear" },
   ];
   if (links.length === 0) {
     actions.push({ label: "Join", href: "/apply", icon: "id-card" });
@@ -32,7 +37,8 @@ export async function GET() {
 
   return NextResponse.json({
     user: {
-      name: user.name ?? null,
+      // The user-chosen display name wins everywhere (ADR-0003).
+      name: record?.displayName ?? user.name ?? null,
       email: user.email,
       image: user.image ?? null,
     },

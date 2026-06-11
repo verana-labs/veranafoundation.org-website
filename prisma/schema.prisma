@@ -21,7 +21,8 @@ datasource db {
 
 model User {
   id            String    @id @default(cuid())
-  name          String?
+  name          String? // provider-supplied; refreshed on OAuth sign-in
+  displayName   String? // user-chosen (ADR-0003); never touched by providers
   email         String?   @unique // the verified email is the identity key (ADR-0002)
   emailVerified DateTime?
   image         String?
@@ -31,6 +32,9 @@ model User {
   memberships   UserMember[] // orgs/individuals this user can act for
   adminActions  AdminAction[]
   notifications Notification[]
+  wgLeads       WgLead[]
+  wgParticipations WgParticipant[]
+  wgSessions    WgSession[] // sessions this user recorded
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -293,6 +297,7 @@ model SignatureRecord {
 
 model WorkingGroup {
   id            String            @id @default(cuid())
+  slug          String            @unique // URL + minutes-repo folder name (ADR-0003)
   name          String
   description   String?
   requiredClass RequiredClass     @default(any)
@@ -302,6 +307,11 @@ model WorkingGroup {
   priority      Int               @default(0) // higher shows first in public listings
   disabledAt    DateTime? // when state last became disabled (admin grace window)
 
+  leads        WgLead[]
+  participants WgParticipant[]
+  schedule     WgSchedule?
+  sessions     WgSession[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -309,6 +319,115 @@ model WorkingGroup {
 enum WorkingGroupState {
   enabled
   disabled
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Working Group leads / participants / schedule / sessions (ADR-0003)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Leads run the group. Invariant (enforced in actions): never zero leads.
+model WgLead {
+  id            String       @id @default(cuid())
+  wgId          String
+  wg            WorkingGroup @relation(fields: [wgId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addedByUserId String?
+  createdAt     DateTime     @default(now())
+
+  @@unique([wgId, userId])
+  @@index([userId])
+}
+
+// Explicit membership in a WG: who gets Calendar invites and appears in the
+// attendance picker. Access is still re-checked against canAccessWg per request.
+model WgParticipant {
+  id       String       @id @default(cuid())
+  wgId     String
+  wg       WorkingGroup @relation(fields: [wgId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime     @default(now())
+  leftAt   DateTime?
+
+  @@unique([wgId, userId])
+  @@index([userId])
+}
+
+// One recurring meeting series per WG. The DB is canonical; Google Calendar is
+// the delivery rail (event on the meetings@ role account, one-way DB→Google).
+model WgSchedule {
+  id          String       @id @default(cuid())
+  wgId        String       @unique
+  wg          WorkingGroup @relation(fields: [wgId], references: [id], onDelete: Cascade)
+  startsAt    DateTime // first occurrence (DTSTART)
+  durationMin Int
+  timezone    String // IANA, e.g. "Europe/Paris"
+  rrule       String // RFC 5545, e.g. "FREQ=WEEKLY;BYDAY=WE"
+
+  // Google sync state — set after a successful Calendar API push.
+  googleEventId String?
+  meetLink      String? // auto-created Meet link, participants-only
+  syncedAt      DateTime?
+  syncError     String? // last push failure; UI offers retry while set
+
+  exceptions WgScheduleException[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// A cancelled occurrence ("skip next week"), mirrored to the Calendar instance.
+model WgScheduleException {
+  id            String     @id @default(cuid())
+  scheduleId    String
+  schedule      WgSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  originalStart DateTime // the occurrence's scheduled start (UTC)
+  note          String?
+  createdAt     DateTime   @default(now())
+
+  @@unique([scheduleId, originalStart])
+}
+
+// A meeting's record: attendance + Markdown minutes. Published minutes are
+// committed to the public minutes repo; the DB copy renders the history pages.
+model WgSession {
+  id           String          @id @default(cuid())
+  wgId         String
+  wg           WorkingGroup    @relation(fields: [wgId], references: [id], onDelete: Cascade)
+  occurredAt   DateTime
+  status       WgSessionStatus @default(draft)
+  notesMd      String          @default("") @db.Text
+  recordedById String
+  recordedBy   User            @relation(fields: [recordedById], references: [id])
+
+  // GitHub publish state (minutes repo path + commit, for the citable record)
+  notesPath      String?
+  notesCommitSha String?
+
+  attendees WgSessionAttendee[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([wgId, occurredAt])
+  @@index([wgId, status])
+}
+
+// Attendance snapshot: name is frozen at recording time; guests have no userId.
+model WgSessionAttendee {
+  id        String    @id @default(cuid())
+  sessionId String
+  session   WgSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId    String?
+  name      String
+
+  @@index([sessionId])
+}
+
+enum WgSessionStatus {
+  draft
+  published
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

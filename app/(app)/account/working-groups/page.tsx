@@ -21,9 +21,9 @@ export default async function WorkingGroupsPage() {
           <div className="accent-line mt-6" />
           <p className="mt-8 text-lg text-muted max-w-2xl leading-relaxed">
             The working groups author the specifications, build and maintain the
-            open-source software, and shape the open trust layer. The ones you
-            can open are those your membership grants — across every organization
-            you belong to.
+            open-source software, and shape the open trust layer. Join the ones
+            your membership grants — across every organization you belong to —
+            and the meetings land straight in your calendar.
           </p>
         </div>
       </section>
