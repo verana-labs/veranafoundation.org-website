@@ -39,7 +39,12 @@ export async function sendAddedToOrgEmail(args: {
         ${access}
         <p style="margin:0;">If you weren't expecting this, you can ignore this
         email or contact the organization's administrator.</p>`,
-      button: { label: args.hasAccount ? "Open your account" : "Sign in", href: `${SITE_URL}/login` },
+      // /account is the destination either way for an existing account: when
+      // already signed in it opens directly; otherwise middleware bounces
+      // through /login first. Only true newcomers get sent to /login itself.
+      button: args.hasAccount
+        ? { label: "Open your account", href: `${SITE_URL}/account` }
+        : { label: "Sign in", href: `${SITE_URL}/login` },
     }),
   });
 }
