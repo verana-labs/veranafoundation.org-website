@@ -1,68 +1,81 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { currentUser } from "@/app/lib/authz";
-import { listWorkingGroupsWithAccess } from "@/app/lib/working-groups";
+import {
+  listWorkingGroupsWithAccess,
+  userActiveClasses,
+} from "@/app/lib/working-groups";
 import WorkingGroupCards from "@/app/components/WorkingGroupCards";
 
 export const metadata: Metadata = {
-  title: "Contribute",
+  title: "Working groups",
   description:
-    "Participate in the Verana Foundation's open working groups and contribute to the specifications and software. Working-group participation requires Foundation membership (Associate or Contributor).",
+    "The Verana Foundation's working groups author the specifications and build the open-source software of the open trust layer. Participation requires Foundation membership (Associate or Contributor).",
 };
 
-// Per-user clickability of the working-group tiles makes this page dynamic.
+// Per-user content (join state, membership notice) makes this page dynamic.
 export const dynamic = "force-dynamic";
 
-export default async function ContributePage() {
+export default async function WorkingGroupsPage() {
   const user = await currentUser();
-  const workingGroups = await listWorkingGroupsWithAccess(user?.id ?? null);
+  const [workingGroups, classes] = await Promise.all([
+    listWorkingGroupsWithAccess(user?.id ?? null),
+    user?.id
+      ? userActiveClasses(user.id)
+      : Promise.resolve(new Set<"contributor" | "associate">()),
+  ]);
+  // Signed-out visitors and signed-in users without an active membership get
+  // the "membership required" explainer; members don't need it.
+  const showMembershipNotice = !user || classes.size === 0;
 
   return (
     <>
+      {/* Hero */}
       <section className="border-b border-rule">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <p className="tag mb-4">Contribute</p>
+          <p className="tag mb-4">Working groups</p>
           <h1 className="display text-4xl sm:text-5xl leading-tight max-w-3xl">
-            Build the open trust layer with us
+            Where the work happens
           </h1>
           <div className="accent-line mt-6" />
           <p className="mt-8 text-lg text-muted max-w-2xl leading-relaxed">
-            The specifications and software are developed in the open. Here is
-            how to take part — and where membership is required.
+            The working groups author the specifications, build and maintain the
+            open-source software, and shape the open trust layer. Join the ones
+            your membership grants — across every organization you belong to —
+            and the meetings land straight in your calendar.
           </p>
         </div>
       </section>
 
-      {/* Membership-required notice */}
-      <section className="border-b border-rule reveal">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="card border-l-[3px]" style={{ borderLeftColor: "var(--color-purple)" }}>
-            <h2 className="display text-xl">
-              Working-group participation requires membership
-            </h2>
-            <p className="text-sm text-muted leading-relaxed">
-              Joining a working group requires Foundation membership. Most are open
-              to <strong className="text-ink">Associate</strong> or{" "}
-              <strong className="text-ink">Contributor</strong> members; the{" "}
-              <strong className="text-ink">Business Cases WG</strong> requires{" "}
-              <strong className="text-ink">Associate</strong> membership.{" "}
-              <Link href="/join" className="text-purple hover:underline">
-                Compare &amp; join →
-              </Link>{" "}
-              Anyone may still use, fork, read, and file issues against the public
-              open-source code and specifications; working-group participation and
-              formal contributions are members-only.
-            </p>
+      {/* Membership-required notice — only for visitors who can't join yet */}
+      {showMembershipNotice && (
+        <section className="border-b border-rule reveal">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="card border-l-[3px]" style={{ borderLeftColor: "var(--color-purple)" }}>
+              <h2 className="display text-xl">
+                Working-group participation requires membership
+              </h2>
+              <p className="text-sm text-muted leading-relaxed">
+                Joining a working group requires Foundation membership. Most are open
+                to <strong className="text-ink">Associate</strong> or{" "}
+                <strong className="text-ink">Contributor</strong> members; the{" "}
+                <strong className="text-ink">Business Cases WG</strong> requires{" "}
+                <strong className="text-ink">Associate</strong> membership.{" "}
+                <Link href="/join" className="text-purple hover:underline">
+                  Compare &amp; join →
+                </Link>{" "}
+                Anyone may still use, fork, read, and file issues against the public
+                open-source code and specifications; working-group participation and
+                formal contributions are members-only.
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Working groups */}
+      {/* Working-group board */}
       <section className="border-b border-rule reveal">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <p className="tag mb-3">Working groups</p>
-          <h2 className="display text-3xl">Where the work happens</h2>
-          <div className="accent-line mt-4 mb-10" />
           <WorkingGroupCards groups={workingGroups} />
           <p className="text-xs text-muted mt-4">
             Each group's page shows its leads, meeting schedule and published

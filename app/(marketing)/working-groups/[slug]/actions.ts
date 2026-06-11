@@ -58,8 +58,7 @@ async function audit(
 async function revalidateWg(wgId: string) {
   const wg = await db.workingGroup.findUnique({ where: { id: wgId } });
   if (wg) revalidatePath(`/working-groups/${wg.slug}`);
-  revalidatePath("/account/working-groups");
-  revalidatePath("/contribute");
+  revalidatePath("/working-groups");
 }
 
 /** Push the attendee list / schedule to Google; never blocks the user action. */
