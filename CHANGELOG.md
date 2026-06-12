@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.6.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.5.0...veranafoundation-website-v0.6.0) (2026-06-12)
+
+
+### Features
+
+* **access:** email the person when added to an org's access list ([#96](https://github.com/verana-labs/veranafoundation.org-website/issues/96)) ([ed99170](https://github.com/verana-labs/veranafoundation.org-website/commit/ed99170d614f4010218b23c550e545928299fce1))
+* **wise:** reconcile via activities + transferget; retire SCA entirely ([#99](https://github.com/verana-labs/veranafoundation.org-website/issues/99)) ([f733d04](https://github.com/verana-labs/veranafoundation.org-website/commit/f733d0470172043a6049c110a5b4fe087649cdce))
+
+
+### Bug Fixes
+
+* **access:** 'Open your account' email button links to /account, not /login ([#98](https://github.com/verana-labs/veranafoundation.org-website/issues/98)) ([22120e4](https://github.com/verana-labs/veranafoundation.org-website/commit/22120e4563244cd9908a9f1c6e79ba127eb75775))
+* **ecosystem:** remove Intexus and Claro from the partner logos ([#101](https://github.com/verana-labs/veranafoundation.org-website/issues/101)) ([2afd3c7](https://github.com/verana-labs/veranafoundation.org-website/commit/2afd3c709d4a35053a2703a4691979d14452196d))
+* **fees:** the active agreement version is the single pricing switch ([#103](https://github.com/verana-labs/veranafoundation.org-website/issues/103)) ([2b2af0d](https://github.com/verana-labs/veranafoundation.org-website/commit/2b2af0d1b66f8f22c4aedbebf72bb72394fc1a19))
+* **home:** real contributor avatars — authenticate GitHub calls, scan all repos ([#102](https://github.com/verana-labs/veranafoundation.org-website/issues/102)) ([91640a2](https://github.com/verana-labs/veranafoundation.org-website/commit/91640a210f6ff494381eaa5242a2b5d138556052))
+
 ## [0.5.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.4.0...veranafoundation-website-v0.5.0) (2026-06-11)
 
 
