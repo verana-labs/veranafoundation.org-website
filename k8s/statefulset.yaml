@@ -124,6 +124,10 @@ spec:
               value: no-reply@veranafoundation.org
             - name: MAIL_FROM_NAME
               value: Verana Foundation
+            # Raster wordmark for email headers (PNG; SVG/remote images render
+            # unreliably in email clients). Served by this site itself.
+            - name: EMAIL_LOGO_URL
+              value: https://veranafoundation.org/assets/img/email-logo.png
             - name: STRIPE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
