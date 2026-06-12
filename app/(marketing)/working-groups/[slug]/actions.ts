@@ -18,7 +18,7 @@ import {
   restoreOccurrence,
 } from "@/app/lib/google-calendar";
 import { buildRrule, wallToUtc, type Frequency } from "@/app/lib/recurrence";
-import { minutesUrl, publishMinutes } from "@/app/lib/minutes";
+import { publishMinutes } from "@/app/lib/minutes";
 
 export type ActionState = { error?: string; ok?: boolean };
 
@@ -422,12 +422,4 @@ export async function deleteSession(sessionId: string): Promise<ActionState> {
   await audit(user, "wg.session.delete", session.wgId, { sessionId });
   await revalidateWg(session.wgId);
   return { ok: true };
-}
-
-/** Public URL of the committed minutes file, for the history page. */
-export async function publishedMinutesUrl(
-  path: string,
-  sha: string,
-): Promise<string | null> {
-  return minutesUrl(path, sha);
 }

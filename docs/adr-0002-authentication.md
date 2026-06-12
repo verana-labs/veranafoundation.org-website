@@ -99,6 +99,11 @@ MemberAccess {                                        # org-managed email allowl
 
 ## Working Group access
 
+> Working Groups grew into first-class pages with leads, explicit participants,
+> a Google-Calendar-synced schedule and published minutes — see
+> [ADR-0003](./adr-0003-working-groups.md). The access rule below is unchanged
+> and still gates joining.
+
 WG access is **computed** from the user's effective membership set, not stored per user. A **Working Group is a first-class entity** managed by Foundation admins; it declares the membership class it requires and the external space it links to:
 
 ```text

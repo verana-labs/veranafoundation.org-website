@@ -160,7 +160,8 @@ export async function syncScheduleToGoogle(
     return { ok: false, error: "Google Calendar is not configured." };
   }
 
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://veranafoundation.org";
+  // Same base-URL source as every other absolute link (emails, invoices).
+  const base = process.env.AUTH_URL ?? "https://veranafoundation.org";
   const input = {
     summary: `Verana — ${wg.name}`,
     description: `${wg.description ?? ""}\n\nWorking group page: ${base}/working-groups/${wg.slug}`.trim(),
