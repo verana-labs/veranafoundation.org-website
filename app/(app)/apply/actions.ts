@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser } from "@/app/lib/authz";
 import { tierAmount, formatEur } from "@/app/lib/dues";
+import { activeFeeSchedule } from "@/app/lib/fees";
 import { createMembershipInvoice } from "@/app/lib/invoices";
 import { sendPaymentRequestEmail } from "@/app/lib/billing-emails";
 import { saveMemberLogo } from "@/app/lib/logo";
@@ -318,7 +319,7 @@ export async function applyMember(
       return { error: parsed.error.issues[0]?.message ?? "Please check the form." };
     }
     const d = parsed.data;
-    const net = tierAmount(d.tier);
+    const net = tierAmount(d.tier, await activeFeeSchedule());
     if (net == null) return { error: "Choose a valid dues tier." };
 
     const created = await db.$transaction(async (tx) => {

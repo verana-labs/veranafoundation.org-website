@@ -8,7 +8,9 @@
 // silently diverge.
 //
 // To change fees: add the new schedule under the new agreement version's key,
-// flip ACTIVE_FEE_SCHEDULE, and map the new template file below. An agreement
+// map the new template file below, and activate that version in
+// /admin/settings — activation is the single switch that flips both the legal
+// text and the pricing (resolved at runtime by lib/fees.ts). An agreement
 // version that does NOT change fees simply maps to the older schedule key.
 
 export type AssociateTier =
@@ -40,7 +42,11 @@ export const FEE_SCHEDULES: Record<string, FeeTier[]> = {
   ],
 };
 
-/** The schedule new invoices (applications, renewals, reissues) price from. */
+/**
+ * Fallback schedule, used only when the AgreementDocument catalog can't
+ * answer (fresh/unreachable DB, unmapped file). At runtime the schedule in
+ * force is derived from the ACTIVE agreement version — see lib/fees.ts.
+ */
 export const ACTIVE_FEE_SCHEDULE = "v2";
 
 /** Which fee schedule each agreement template's Annex D snapshots (tested). */
@@ -49,13 +55,8 @@ export const AGREEMENT_FEE_SCHEDULE: Record<string, string> = {
   "membership-agreement-v2.md": "v2",
 };
 
-/** The active schedule's tiers — what the apply form offers. */
-export const ASSOCIATE_TIERS: FeeTier[] = FEE_SCHEDULES[ACTIVE_FEE_SCHEDULE];
-
-export function tierAmount(
-  id: string,
-  schedule: string = ACTIVE_FEE_SCHEDULE,
-): number | null {
+/** Price of a tier under an explicit schedule (callers resolve it via fees.ts). */
+export function tierAmount(id: string, schedule: string): number | null {
   return FEE_SCHEDULES[schedule]?.find((t) => t.id === id)?.amount ?? null;
 }
 
