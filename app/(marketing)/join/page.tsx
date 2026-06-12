@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { formatEur } from "@/app/lib/dues";
+import { activeTiers } from "@/app/lib/fees";
 
 export const metadata: Metadata = {
   title: "Join",
   description:
     "Join the Verana Foundation. Two membership classes: Associate Member (supporters; dues by org size) and Contributor Member (technical contributors via working groups; €0). Compare and apply.",
 };
+
+// Dues come from the fee schedule in force (the active agreement's — see
+// lib/fees.ts), so this page can never quote prices the apply flow won't charge.
+export const dynamic = "force-dynamic";
 
 const ROWS: { label: string; assoc: string; contrib: string }[] = [
   {
@@ -29,12 +35,8 @@ const ROWS: { label: string; assoc: string; contrib: string }[] = [
     contrib:
       "Materially greater: follow coding/schema standards & WG procedures; license all contributions per the IP rules (open-source licenses for code, e.g. Apache 2.0 / MIT / AGPL; CC BY-SA 4.0 plus a W3C Royalty-Free patent commitment for specs; CC0 / CC-BY-4.0 for schemas); disclose essential patents.",
   },
-  {
-    label: "Annual dues",
-    assoc:
-      "Sliding scale by org size: €1,500 (1–10 employees) up to €50,000 (10,001+). Non-refundable; hardship & non-profit/government adjustments at the Foundation's discretion.",
-    contrib: "free.",
-  },
+  // "Annual dues" is built per request from the active fee schedule — see
+  // duesRow() in the page component.
   {
     label: "Governance",
     assoc:
@@ -43,7 +45,23 @@ const ROWS: { label: string; assoc: string; contrib: string }[] = [
   },
 ];
 
-export default function JoinPage() {
+async function duesRow(): Promise<(typeof ROWS)[number]> {
+  const tiers = await activeTiers();
+  const lowest = tiers[0];
+  const highest = tiers[tiers.length - 1];
+  return {
+    label: "Annual dues",
+    assoc:
+      lowest && highest
+        ? `Sliding scale by org size: ${formatEur(lowest.amount)} (${lowest.label}) up to ${formatEur(highest.amount)} (${highest.label}). Non-refundable; hardship & non-profit/government adjustments at the Foundation's discretion.`
+        : "Sliding scale by organization size — see the application form. Non-refundable; hardship & non-profit/government adjustments at the Foundation's discretion.",
+    contrib: "free.",
+  };
+}
+
+export default async function JoinPage() {
+  const rows = [...ROWS];
+  rows.splice(3, 0, await duesRow()); // after "Obligations", before "Governance"
   return (
     <>
       <section className="border-b border-rule">
@@ -106,7 +124,7 @@ export default function JoinPage() {
                 </tr>
               </thead>
               <tbody>
-                {ROWS.map((r) => (
+                {rows.map((r) => (
                   <tr key={r.label} className="border-t border-rule align-top">
                     <th className="text-left p-3 font-medium text-ink">
                       {r.label}

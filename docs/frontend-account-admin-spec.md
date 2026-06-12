@@ -27,7 +27,7 @@ Principles:
 | `/apply` | public | Onboarding/sign flow (creates `Member`) — see below |
 | `/account` | member-scoped role | Dashboard: your memberships + WG access |
 | `/account/profile` | member | Your user profile + connected sign-in methods |
-| `/account/working-groups` | member | WGs you can access (and why others are locked) |
+| `/working-groups` · `/working-groups/[slug]` | public (richer when signed in) | WG board + per-group pages (join, schedule, minutes) — replaced `/account/working-groups`; see ADR-0003 |
 | `/account/org/[memberId]` | `manager` of that org | Org overview |
 | `/account/org/[memberId]/access` | `manager` | Manage Admins + Representatives lists |
 | `/account/org/[memberId]/billing` | `manager` | Invoices, VAT ID, Stripe portal handoff |
@@ -62,7 +62,7 @@ This is the canonical place a user sees **which organizations they are a member 
 
 Plus:
 
-- **Working Group access** — summary line ("You can access N working groups") → link to `/account/working-groups`.
+- **Working Group access** — summary line ("You can access N working groups") → link to the public `/working-groups` board.
 - **Action needed** banners — e.g. org `past_due` (if you're a manager) → "Pay outstanding invoice."
 - **Empty state** — signed in but no membership: "You're not part of any membership yet. Ask your organization's admin to add your email, or [apply]." (Covers a verified user whose email isn't on any access list.)
 
@@ -71,11 +71,13 @@ Plus:
 - Name, primary email; **connected sign-in methods** (Google / GitHub / email) with add/remove (must keep ≥1).
 - No password anywhere.
 
-### `/account/working-groups`
+### Working groups (superseded)
 
-- List of `WorkingGroup` entities with an **access state** per WG: accessible, or **locked** with the reason ("requires an active Associate membership").
-- For accessible WGs: an **external link** out to the WG's space (from `WorkingGroup.link`).
-- Reflects the computed rule (ADR-0002 §Working Group access): access if any linked membership is active and satisfies the WG's `requiredClass`.
+> The members-only `/account/working-groups` list described in earlier drafts
+> was replaced by the public `/working-groups` board and per-group pages
+> (leads, join/leave, Google-Calendar schedule, session minutes) —
+> [ADR-0003](./adr-0003-working-groups.md). The computed access rule
+> (ADR-0002 §Working Group access) is unchanged and gates joining.
 
 ## Organization admin (manager-only, scoped by `[memberId]`)
 
@@ -171,7 +173,7 @@ A switcher lets a user managing multiple orgs pick which one. All pages 403 unle
 ## Build order (aligns with invoicing spec)
 
 1. Auth + app shell + `/login` + route guards.
-2. `/account` dashboard + `/account/profile` + `/account/working-groups` (read-only, driven by entitlements).
+2. `/account` dashboard + `/account/settings` + the public `/working-groups` board (ADR-0003).
 3. Org `access` list management (the new multi-admin UI).
 4. Org `billing` (Stripe portal handoff) — after the Associate payment flow exists.
 5. Admin area: members → invoices → working-groups → admins → audit.
