@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useActionState } from "react";
-import { ASSOCIATE_TIERS, formatEur } from "@/app/lib/dues";
+import { formatEur, type FeeTier } from "@/app/lib/dues";
 import { EU_COUNTRIES } from "@/app/lib/eu";
 import { countryName } from "@/app/lib/countries";
 import CountrySelect from "@/app/components/CountrySelect";
@@ -12,10 +12,13 @@ import { applyMember, previewAgreement, type ApplyState } from "./actions";
 
 export default function ApplyForm({
   agreementVersion,
+  tiers,
   initialClass = "contributor",
   hasIndividual = false,
 }: {
   agreementVersion: string;
+  /** Associate dues tiers of the fee schedule in force (lib/fees.ts). */
+  tiers: FeeTier[];
   initialClass?: "contributor" | "associate";
   /** The signed-in user already holds an individual membership. */
   hasIndividual?: boolean;
@@ -234,7 +237,7 @@ export default function ApplyForm({
                   <option value="" disabled>
                     Choose by headcount…
                   </option>
-                  {ASSOCIATE_TIERS.map((t) => (
+                  {tiers.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.label} — {formatEur(t.amount)}
                     </option>

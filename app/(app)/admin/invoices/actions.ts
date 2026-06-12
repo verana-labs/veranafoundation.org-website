@@ -5,6 +5,7 @@ import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
 import { createMembershipInvoice, markInvoicePaid } from "@/app/lib/invoices";
 import { tierAmount, formatEur } from "@/app/lib/dues";
+import { activeFeeSchedule } from "@/app/lib/fees";
 import { sendPaymentRequestEmail } from "@/app/lib/billing-emails";
 
 export async function markPaid(formData: FormData) {
@@ -57,7 +58,7 @@ export async function reissueInvoice(formData: FormData) {
     select: { id: true },
   });
   if (open) throw new Error("An open invoice already exists for this membership.");
-  const net = m.tier ? tierAmount(m.tier) : null;
+  const net = m.tier ? tierAmount(m.tier, await activeFeeSchedule()) : null;
   if (net == null) throw new Error("Membership has no resolvable tier.");
 
   const inv = await createMembershipInvoice({

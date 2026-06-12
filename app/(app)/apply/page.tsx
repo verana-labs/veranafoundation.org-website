@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getActiveAgreement } from "@/app/lib/agreement";
+import { activeTiers } from "@/app/lib/fees";
 import { currentUser } from "@/app/lib/authz";
 import { db } from "@/app/lib/db";
 import ApplyForm from "./ApplyForm";
@@ -49,6 +50,7 @@ export default async function ApplyPage({
           {agreement ? (
             <ApplyForm
               agreementVersion={agreement.version}
+              tiers={await activeTiers()}
               initialClass={initialClass}
               hasIndividual={hasIndividual}
             />

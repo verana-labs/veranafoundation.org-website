@@ -22,6 +22,7 @@ import {
   EXPIRE_DAYS,
 } from "@/app/lib/invoices";
 import { tierAmount, formatEur } from "@/app/lib/dues";
+import { activeFeeSchedule } from "@/app/lib/fees";
 import {
   sendPaymentRequestEmail,
   sendPaymentReminderEmail,
@@ -81,7 +82,7 @@ async function issueRenewals(now: Date, result: DunningResult) {
   });
 
   for (const m of due) {
-    const net = m.tier ? tierAmount(m.tier) : null;
+    const net = m.tier ? tierAmount(m.tier, await activeFeeSchedule()) : null;
     if (net == null) {
       console.error(`[dunning] membership ${m.id} has no resolvable tier — skipped`);
       continue;
