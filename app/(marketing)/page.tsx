@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getOrgStats, formatCount, formatRelative } from "@/app/lib/github";
 import HomeWorkingGroups from "@/app/components/HomeWorkingGroups";
+import HeroGraph from "@/app/components/HeroGraph";
 
 // Revalidate the live GitHub stats roughly once a day (ISR).
 export const revalidate = 86400;
@@ -71,8 +72,12 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="border-b border-rule">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <section className="hero-glow relative overflow-hidden border-b border-rule">
+        <HeroGraph />
+        {/* Surface wash above the canvas, below the copy, so the headline
+            reads while the network still goes full-bleed at the edges. */}
+        <div className="hero-vignette" />
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <p className="tag mb-4">Verana Foundation</p>
           <h1 className="display text-4xl sm:text-5xl lg:text-6xl leading-[1.05] max-w-4xl">
             The non-profit steward of the open trust layer.
