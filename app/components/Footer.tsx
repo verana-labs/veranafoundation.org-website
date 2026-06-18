@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { CONSENT_EVENT } from "./Analytics";
 
 const CONSENT_KEY = "vf-cookie-consent";
 
@@ -16,6 +17,8 @@ export default function Footer() {
   function setConsent(value: "all" | "essential") {
     try {
       localStorage.setItem(CONSENT_KEY, value);
+      // Let the Analytics component pick up the choice without a reload.
+      window.dispatchEvent(new Event(CONSENT_EVENT));
     } catch {}
     setShowBanner(false);
   }
