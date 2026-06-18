@@ -1,10 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import "./globals.css";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
+import Analytics from "./components/Analytics";
+import JsonLd from "./components/JsonLd";
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, OG_IMAGE } from "./lib/site";
 
 // We import the Font Awesome CSS ourselves (above); stop it auto-injecting.
 config.autoAddCss = false;
@@ -30,29 +33,38 @@ const ibmPlexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
-const SITE_URL = "https://veranafoundation.org";
+const HOME_TITLE =
+  "Verana Foundation: the non-profit steward of the open trust layer";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Verana Foundation: the non-profit steward of the open trust layer",
+    default: HOME_TITLE,
     template: "%s · Verana Foundation",
   },
-  description:
-    "The Verana Foundation is the non-profit that owns the Verifiable Trust and VPR specifications, stewards the open-source software, grows the ecosystem, and issues the VNA utility token it does not own. In formation, stewarded by 2060 OÜ.",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
   alternates: { canonical: "/" },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Verana",
+    statusBarStyle: "default",
+  },
   icons: {
     icon: [{ url: "/assets/img/favicon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/assets/img/foundation-logo.png" }],
   },
   openGraph: {
     type: "website",
     url: SITE_URL,
-    title: "Verana Foundation: the non-profit steward of the open trust layer",
+    siteName: SITE_NAME,
+    title: HOME_TITLE,
     description:
       "Owns the specifications. Stewards the open-source software. Grows the ecosystem. Two membership classes: Associate and Contributor.",
     images: [
       {
-        url: "/assets/img/og-default.jpg",
+        url: OG_IMAGE,
         width: 1200,
         height: 630,
         type: "image/jpeg",
@@ -61,8 +73,20 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    images: ["/assets/img/og-default.jpg"],
+    title: HOME_TITLE,
+    description: SITE_DESCRIPTION,
+    site: "@Verana_io",
+    images: [OG_IMAGE],
   },
+};
+
+// Browser UI tinting — matches the manifest theme_color (Verana purple), per
+// light/dark scheme.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#763ef0" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0d11" },
+  ],
 };
 
 // Set the theme before paint to avoid a flash of the wrong color scheme.
@@ -93,8 +117,10 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <JsonLd />
       </head>
       <body className="bg-surface text-ink">
+        <Analytics />
         <Nav />
         <main>{children}</main>
         <Footer />
