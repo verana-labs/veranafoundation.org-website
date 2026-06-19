@@ -15,7 +15,7 @@ export default function PrivacyPage() {
           <h1 className="display text-4xl sm:text-5xl">Privacy Policy</h1>
           <div className="accent-line mt-6" />
           <p className="text-xs tracking-wider uppercase text-muted mt-8">
-            <strong className="text-ink">Last updated.</strong> 2026-06-11
+            <strong className="text-ink">Last updated.</strong> 2026-06-19
           </p>
         </div>
       </section>
@@ -172,15 +172,27 @@ export default function PrivacyPage() {
         <p>
           The only cookie required by the site is the{" "}
           <strong>strictly necessary session cookie</strong> for signed-in
-          users. Analytics, if enabled, are consent-gated: a banner offers{" "}
-          <strong>Accept all</strong> or <strong>Essential only</strong>, and
-          any analytics tag loads only after consent; your choice is stored in{" "}
-          <code>localStorage</code>. No ad networks, no cross-site trackers; IP
-          addresses anonymized. See the <a href="/cookies">cookie policy</a>.
+          users. For analytics we use <strong>Google Analytics 4</strong>{" "}
+          (Google Ireland Ltd.) to measure aggregate page traffic. It is
+          consent-gated: a banner offers <strong>Accept all</strong> or{" "}
+          <strong>Essential only</strong>, and the Google Analytics tag loads —
+          and its cookies are set — <strong>only after you select &ldquo;Accept
+          all&rdquo;</strong>; choosing &ldquo;Essential only&rdquo; (or making
+          no choice) loads nothing. The lawful basis is your{" "}
+          <strong>consent</strong> (GDPR Art. 6(1)(a)), which you can withdraw
+          at any time by clearing the choice stored in <code>localStorage</code>{" "}
+          or via the banner&rsquo;s preferences. IP addresses are anonymized; no
+          ad networks, no cross-site trackers, no selling of data. See the{" "}
+          <a href="/cookies">cookie policy</a>.
         </p>
 
         <h2>Processors and where data goes</h2>
         <ul>
+          <li>
+            <strong>Google (Analytics)</strong> — Google Analytics 4, only after
+            you consent to analytics. Aggregate traffic measurement; no profile
+            data is shared.
+          </li>
           <li>
             <strong>Stripe</strong> (Ireland/US) — card payments and checkout.
           </li>
