@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.6.0...veranafoundation-website-v0.7.0) (2026-06-19)
+
+
+### Features
+
+* add animated trust-graph hero background to home page ([#107](https://github.com/verana-labs/veranafoundation.org-website/issues/107)) ([d144350](https://github.com/verana-labs/veranafoundation.org-website/commit/d144350852a37b01d2aae516624037b4789e0f32))
+* **email:** branded PNG wordmark for email headers ([#106](https://github.com/verana-labs/veranafoundation.org-website/issues/106)) ([d75df17](https://github.com/verana-labs/veranafoundation.org-website/commit/d75df1713bbfae578e666ce56058e58878659cb2))
+* **seo:** add robots, sitemap, manifest, JSON-LD and consent-gated GA ([#109](https://github.com/verana-labs/veranafoundation.org-website/issues/109)) ([a1bc7bc](https://github.com/verana-labs/veranafoundation.org-website/commit/a1bc7bcf81e3a918a6eba7ae00b0b2a17a477fb0))
+
 ## [0.6.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.5.0...veranafoundation-website-v0.6.0) (2026-06-12)
 
 
