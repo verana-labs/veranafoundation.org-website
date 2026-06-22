@@ -1,13 +1,10 @@
 # veranafoundation.org
 
-The institutional website of the **Verana Foundation** — the non-profit steward of
-the open trust layer. The Foundation owns the specifications, stewards the
+The institutional website of the **Verana Foundation** — the non-profit steward of the open trust layer. The Foundation owns the specifications, stewards the
 open-source software (Apache 2.0), grows the ecosystem (grants, devrel,
 partnerships), and runs two membership classes (Associate and Contributor).
 
-Built with **Next.js 15** (App Router, standalone output) and **Tailwind CSS v4**,
-backed by **PostgreSQL** via **Prisma**. Sister site to
-[veranacouncil.org](https://github.com/verana-labs/veranacouncil.org-website):
+Built with **Next.js 15** (App Router, standalone output) and **Tailwind CSS v4**, backed by **PostgreSQL** via **Prisma**. Sister site to [veranacouncil.org](https://github.com/verana-labs/veranacouncil.org-website):
 it shares the information architecture but has its own *open-source commons*
 personality (Space Grotesk display type, purple + green palette, GitHub-flavored
 layout).
