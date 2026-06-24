@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.8.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.7.0...veranafoundation-website-v0.8.0) (2026-06-24)
+
+
+### Features
+
+* **blog:** render posts from external repo (verana-labs/social-posts) ([#112](https://github.com/verana-labs/veranafoundation.org-website/issues/112)) ([c34e839](https://github.com/verana-labs/veranafoundation.org-website/commit/c34e8396a428d4cf5f0dc642359bd328799000b4))
+
+
+### Bug Fixes
+
+* **fees:** add v3 fee schedule for membership-agreement-v3 ([#111](https://github.com/verana-labs/veranafoundation.org-website/issues/111) follow-up) ([#113](https://github.com/verana-labs/veranafoundation.org-website/issues/113)) ([b79f055](https://github.com/verana-labs/veranafoundation.org-website/commit/b79f055011f8521fa82e0e650f318c784191f616))
+
 ## [0.7.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.6.0...veranafoundation-website-v0.7.0) (2026-06-19)
 
 
