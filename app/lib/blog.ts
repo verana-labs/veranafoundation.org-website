@@ -42,6 +42,7 @@ export type PostMeta = {
   excerpt: string;
   author: string;
   authorAvatar: string | null; // validated image URL, or null
+  authorSocial: string | null; // author's social profile URL (http/https), or null
 };
 
 export type Post = PostMeta & { bodyMarkdown: string };
@@ -89,7 +90,14 @@ function toMeta(slug: string, data: RawFrontMatter): PostMeta {
     author: data.author ?? "Verana Foundation",
     // raw value here; resolveAvatar() validates it returns an image before use.
     authorAvatar: data.authoravatar?.trim() || null,
+    authorSocial: sanitizeUrl(data.authorsocial),
   };
+}
+
+/** Accept only well-formed http(s) URLs (front matter is trusted-ish, but be safe). */
+function sanitizeUrl(value: string | undefined): string | null {
+  const v = value?.trim();
+  return v && /^https?:\/\//i.test(v) ? v : null;
 }
 
 /**

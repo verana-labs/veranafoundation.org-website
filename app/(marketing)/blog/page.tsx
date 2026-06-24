@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { listPostsWithPreview } from "@/app/lib/blog";
 import { Markdown } from "@/app/components/Markdown";
+import { AuthorByline } from "@/app/components/AuthorByline";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -63,22 +64,15 @@ export default async function BlogPage() {
                   ) : null}
 
                   <div className="blog-card-body">
-                    {/* meta row: avatar + author + tag/date */}
-                    <div className="flex items-center gap-3">
-                      {p.authorAvatar ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={p.authorAvatar}
-                          alt={p.author}
-                          width={36}
-                          height={36}
-                          className="rounded-full object-cover"
-                          style={{ width: 36, height: 36 }}
-                        />
-                      ) : null}
+                    {/* meta row: clickable author (avatar + name) and tag/date */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                      <AuthorByline
+                        author={p.author}
+                        avatar={p.authorAvatar}
+                        social={p.authorSocial}
+                        size={36}
+                      />
                       <p className="text-xs uppercase tracking-wider text-muted font-mono">
-                        {p.author}
-                        <span className="mx-2">·</span>
                         {p.tag}
                         {p.date ? ` · ${formatDate(p.date)}` : ""}
                       </p>
