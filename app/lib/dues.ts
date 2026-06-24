@@ -55,9 +55,11 @@ export const FEE_SCHEDULES: Record<string, FeeTier[]> = {
 /**
  * Fallback schedule, used only when the AgreementDocument catalog can't
  * answer (fresh/unreachable DB, unmapped file). At runtime the schedule in
- * force is derived from the ACTIVE agreement version — see lib/fees.ts.
+ * force is derived from the ACTIVE agreement version via AGREEMENT_FEE_SCHEDULE
+ * — see lib/fees.ts. This constant is NOT the live selector; it is the
+ * last-resort default when that lookup yields nothing.
  */
-export const ACTIVE_FEE_SCHEDULE = "v2";
+export const FALLBACK_FEE_SCHEDULE = "v2";
 
 /** Which fee schedule each agreement template's Annex D snapshots (tested). */
 export const AGREEMENT_FEE_SCHEDULE: Record<string, string> = {
@@ -77,7 +79,7 @@ export function tierLabel(
 ): string | null {
   if (!id) return null;
   return (
-    FEE_SCHEDULES[schedule ?? ACTIVE_FEE_SCHEDULE]?.find((t) => t.id === id)
+    FEE_SCHEDULES[schedule ?? FALLBACK_FEE_SCHEDULE]?.find((t) => t.id === id)
       ?.label ?? null
   );
 }
