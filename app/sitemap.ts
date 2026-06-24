@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/app/lib/site";
+import { listPosts } from "@/app/lib/blog";
 
 // Public marketing routes. The working-group detail pages (/working-groups/[slug])
 // are intentionally omitted: they are force-dynamic and membership-gated, so they
@@ -24,12 +25,24 @@ const ROUTES: {
   { path: "/cookies", changeFrequency: "yearly", priority: 0.3 },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
-  return ROUTES.map(({ path, changeFrequency, priority }) => ({
+  const staticRoutes = ROUTES.map(({ path, changeFrequency, priority }) => ({
     url: `${SITE_URL}${path}`,
     lastModified,
     changeFrequency,
     priority,
   }));
+
+  // Blog post detail pages, sourced from the blog repo. `listPosts()` returns []
+  // if the source is unreachable, so the sitemap build never breaks on GitHub.
+  const posts = await listPosts();
+  const blogRoutes: MetadataRoute.Sitemap = posts.map((p) => ({
+    url: `${SITE_URL}/blog/${p.slug}`,
+    lastModified: p.date ? new Date(`${p.date}T00:00:00Z`) : lastModified,
+    changeFrequency: "monthly",
+    priority: 0.5,
+  }));
+
+  return [...staticRoutes, ...blogRoutes];
 }
