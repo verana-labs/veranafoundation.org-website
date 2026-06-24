@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPost, listPosts } from "@/app/lib/blog";
 import { Markdown } from "@/app/components/Markdown";
+import { AuthorByline } from "@/app/components/AuthorByline";
 
 // ISR: rebuild a post from the source repo at most once an hour.
 export const revalidate = 3600;
@@ -57,7 +58,13 @@ export default async function BlogPostPage({
           </p>
           <h1 className="display text-4xl sm:text-5xl leading-tight">{post.title}</h1>
           <div className="accent-line mt-6" />
-          <p className="text-sm text-muted mt-6 font-mono">By {post.author}</p>
+          <div className="mt-6">
+            <AuthorByline
+              author={post.author}
+              avatar={post.authorAvatar}
+              social={post.authorSocial}
+            />
+          </div>
         </div>
       </section>
 

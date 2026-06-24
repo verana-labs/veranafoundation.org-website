@@ -41,9 +41,17 @@ export type PostMeta = {
   tag: string;
   excerpt: string;
   author: string;
+  authorAvatar: string | null; // validated image URL, or null
+  authorSocial: string | null; // author's social profile URL (http/https), or null
 };
 
 export type Post = PostMeta & { bodyMarkdown: string };
+
+/** A post enriched for the list page: a media preview and a text teaser. */
+export type PostPreview = PostMeta & {
+  media: { kind: "image" | "video"; url: string } | null;
+  teaser: string; // first body paragraphs (plain-ish markdown, media stripped)
+};
 
 type RawFrontMatter = Record<string, string>;
 
@@ -80,7 +88,74 @@ function toMeta(slug: string, data: RawFrontMatter): PostMeta {
     tag: data.tag ?? "Blog",
     excerpt: data.excerpt ?? "",
     author: data.author ?? "Verana Foundation",
+    // raw value here; resolveAvatar() validates it returns an image before use.
+    authorAvatar: data.authoravatar?.trim() || null,
+    authorSocial: sanitizeUrl(data.authorsocial),
   };
+}
+
+/** Accept only well-formed http(s) URLs (front matter is trusted-ish, but be safe). */
+function sanitizeUrl(value: string | undefined): string | null {
+  const v = value?.trim();
+  return v && /^https?:\/\//i.test(v) ? v : null;
+}
+
+/**
+ * Validate that a URL actually serves an image. Returns the URL if it responds
+ * 200 with an `image/*` content-type, else null. Cached via ISR so it's one
+ * cheap request per post per revalidation window. Any error → null (omit).
+ */
+async function resolveAvatar(url: string | null): Promise<string | null> {
+  if (!url || !/^https?:\/\//i.test(url)) return null;
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      next: { revalidate: REVALIDATE },
+    });
+    if (!res.ok) return null;
+    const type = res.headers.get("content-type") ?? "";
+    return type.toLowerCase().startsWith("image/") ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+/** First media reference in the body: Markdown image, <img>, or <video>/<source>. */
+function firstMedia(
+  markdown: string,
+): { kind: "image" | "video"; url: string } | null {
+  // Markdown image: ![alt](url)
+  const mdImg = /!\[[^\]]*\]\(\s*<?([^)\s>]+)>?[^)]*\)/.exec(markdown);
+  // HTML <img src="...">
+  const htmlImg = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i.exec(markdown);
+  // HTML <video src="..."> or <video><source src="...">
+  const htmlVideo =
+    /<video\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i.exec(markdown) ??
+    /<source\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i.exec(markdown);
+
+  // Pick whichever appears earliest in the document.
+  const candidates: { kind: "image" | "video"; url: string; at: number }[] = [];
+  if (mdImg) candidates.push({ kind: "image", url: mdImg[1], at: mdImg.index });
+  if (htmlImg) candidates.push({ kind: "image", url: htmlImg[1], at: htmlImg.index });
+  if (htmlVideo) candidates.push({ kind: "video", url: htmlVideo[1], at: htmlVideo.index });
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => a.at - b.at);
+  const { kind, url } = candidates[0];
+  return { kind, url };
+}
+
+/** First N body paragraphs as a teaser, with media/headings/HTML stripped. */
+function teaserParagraphs(markdown: string, max = 3): string {
+  const blocks = markdown
+    .split(/\n{2,}/)
+    .map((b) => b.trim())
+    .filter(Boolean)
+    // drop media-only blocks, headings, html tags, and hr
+    .filter((b) => !/^!\[/.test(b))
+    .filter((b) => !/^<(img|video|source|figure)/i.test(b))
+    .filter((b) => !/^#{1,6}\s/.test(b))
+    .filter((b) => b !== "---");
+  return blocks.slice(0, max).join("\n\n");
 }
 
 function isDraft(data: RawFrontMatter): boolean {
@@ -148,8 +223,51 @@ export async function getPost(slug: string): Promise<Post | null> {
     if (raw == null) return null;
     const { data, body } = parseFrontMatter(raw);
     if (isDraft(data)) return null;
-    return { ...toMeta(slug, data), bodyMarkdown: body };
+    const meta = toMeta(slug, data);
+    const authorAvatar = await resolveAvatar(meta.authorAvatar);
+    return { ...meta, authorAvatar, bodyMarkdown: body };
   } catch {
     return null;
+  }
+}
+
+/**
+ * Posts enriched for the list page: each with a validated avatar, the first
+ * media in the body, and a short text teaser. Fetches each post's body (one
+ * extra request per post, ISR-cached). Returns [] if GitHub is unreachable.
+ */
+export async function listPostsWithPreview(): Promise<PostPreview[]> {
+  try {
+    const url = `${API}/repos/${REPO}/contents/${PATH}?ref=${encodeURIComponent(BRANCH)}`;
+    const res = await fetch(url, { headers: headers(), next: { revalidate: REVALIDATE } });
+    if (!res.ok) return [];
+    const entries = (await res.json()) as DirEntry[];
+    const files = entries.filter(
+      (e) => e.type === "file" && /\.md$/i.test(e.name) && e.name.toLowerCase() !== "readme.md",
+    );
+
+    const posts = await Promise.all(
+      files.map(async (f) => {
+        if (!f.download_url) return null;
+        const raw = await fetchRaw(f.download_url);
+        if (raw == null) return null;
+        const { data, body } = parseFrontMatter(raw);
+        if (isDraft(data)) return null;
+        const meta = toMeta(slugFromFilename(f.name), data);
+        const authorAvatar = await resolveAvatar(meta.authorAvatar);
+        return {
+          ...meta,
+          authorAvatar,
+          media: firstMedia(body),
+          teaser: teaserParagraphs(body),
+        } satisfies PostPreview;
+      }),
+    );
+
+    return posts
+      .filter((p): p is PostPreview => p !== null)
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  } catch {
+    return [];
   }
 }
