@@ -57,7 +57,20 @@ export default async function BlogPostPage({
           </p>
           <h1 className="display text-4xl sm:text-5xl leading-tight">{post.title}</h1>
           <div className="accent-line mt-6" />
-          <p className="text-sm text-muted mt-6 font-mono">By {post.author}</p>
+          <div className="flex items-center gap-3 mt-6">
+            {post.authorAvatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={post.authorAvatar}
+                alt={post.author}
+                width={40}
+                height={40}
+                className="rounded-full object-cover"
+                style={{ width: 40, height: 40 }}
+              />
+            ) : null}
+            <p className="text-sm text-muted font-mono">By {post.author}</p>
+          </div>
         </div>
       </section>
 

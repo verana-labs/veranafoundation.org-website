@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { listPosts } from "@/app/lib/blog";
+import { listPostsWithPreview } from "@/app/lib/blog";
+import { Markdown } from "@/app/components/Markdown";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -24,7 +25,7 @@ function formatDate(date: string): string {
 }
 
 export default async function BlogPage() {
-  const posts = await listPosts();
+  const posts = await listPostsWithPreview();
 
   return (
     <>
@@ -39,23 +40,75 @@ export default async function BlogPage() {
       </section>
 
       <section>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {posts.length === 0 ? (
             <p className="text-sm text-muted">
               No posts yet. More to come as the Foundation incorporates and the
               working groups publish their milestones.
             </p>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col gap-10">
               {posts.map((p) => (
-                <Link key={p.slug} href={`/blog/${p.slug}`} className="card reveal block">
-                  <p className="text-xs uppercase tracking-wider text-muted font-mono">
-                    {p.tag}
-                    {p.date ? ` · ${formatDate(p.date)}` : ""}
-                  </p>
-                  <h3 className="mt-1">{p.title}</h3>
-                  <p className="text-sm text-muted leading-relaxed">{p.excerpt}</p>
-                </Link>
+                <article key={p.slug} className="blog-card reveal">
+                  {/* media preview */}
+                  {p.media ? (
+                    <Link href={`/blog/${p.slug}`} className="blog-card-media block">
+                      {p.media.kind === "image" ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.media.url} alt="" loading="lazy" />
+                      ) : (
+                        <video src={p.media.url} controls preload="metadata" />
+                      )}
+                    </Link>
+                  ) : null}
+
+                  <div className="blog-card-body">
+                    {/* meta row: avatar + author + tag/date */}
+                    <div className="flex items-center gap-3">
+                      {p.authorAvatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.authorAvatar}
+                          alt={p.author}
+                          width={36}
+                          height={36}
+                          className="rounded-full object-cover"
+                          style={{ width: 36, height: 36 }}
+                        />
+                      ) : null}
+                      <p className="text-xs uppercase tracking-wider text-muted font-mono">
+                        {p.author}
+                        <span className="mx-2">·</span>
+                        {p.tag}
+                        {p.date ? ` · ${formatDate(p.date)}` : ""}
+                      </p>
+                    </div>
+
+                    <h2 className="display text-2xl sm:text-3xl leading-tight mt-3">
+                      <Link href={`/blog/${p.slug}`} className="hover:underline">
+                        {p.title}
+                      </Link>
+                    </h2>
+
+                    {p.excerpt ? (
+                      <p className="text-base text-muted leading-relaxed mt-3">
+                        {p.excerpt}
+                      </p>
+                    ) : null}
+
+                    {p.teaser ? (
+                      <div className="blog-card-teaser mt-3">
+                        <Markdown source={p.teaser} />
+                      </div>
+                    ) : null}
+
+                    <div className="mt-5">
+                      <Link href={`/blog/${p.slug}`} className="blog-readmore">
+                        Read more →
+                      </Link>
+                    </div>
+                  </div>
+                </article>
               ))}
             </div>
           )}

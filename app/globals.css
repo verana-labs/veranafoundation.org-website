@@ -357,6 +357,70 @@ body {
   color: var(--color-ink);
 }
 
+/* Blog list — full-width feature cards with media, avatar, teaser --- */
+.blog-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-rule);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+.blog-card:hover {
+  border-color: var(--color-muted);
+}
+.blog-card-media {
+  position: relative;
+  width: 100%;
+  background: var(--color-elevated);
+  line-height: 0;
+}
+.blog-card-media img,
+.blog-card-media video {
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  display: block;
+}
+.blog-card-body {
+  padding: 1.75rem;
+}
+@media (min-width: 640px) {
+  .blog-card-body {
+    padding: 2rem 2.25rem;
+  }
+}
+/* Teaser: show the opening of the post, clamped with a soft fade. */
+.blog-card-teaser {
+  position: relative;
+  max-height: 8.5rem;
+  overflow: hidden;
+}
+.blog-card-teaser::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3rem;
+  background: linear-gradient(to bottom, transparent, var(--color-card));
+}
+.blog-card-teaser .prose-body p {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+.blog-readmore {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-purple);
+}
+.blog-readmore:hover {
+  text-decoration: underline;
+}
+
 /* Repo / software card — GitHub-flavored, with a mono header ------- */
 .repo-card {
   background: var(--color-card);
