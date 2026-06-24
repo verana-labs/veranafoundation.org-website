@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { listPosts } from "@/app/lib/blog";
 
 export const metadata: Metadata = {
   title: "Blog",
@@ -6,31 +8,24 @@ export const metadata: Metadata = {
     "Announcements and the public record of the Verana Foundation: new members, grant rounds, spec releases and working-group milestones, partnerships, and incorporation updates.",
 };
 
-const POSTS = [
-  {
-    date: "2026-Q2",
-    tag: "Formation",
-    title: "The Verana Foundation, in formation",
-    excerpt:
-      "2060 OÜ acts as organizer and steward while the Foundation is established. Founding members: 2060 OÜ, Mobiera, and Orchestrating Identity.",
-  },
-  {
-    date: "2026-Q2",
-    tag: "Specifications",
-    title: "Verifiable Trust v4 and VPR v4 owned and hosted by the Foundation",
-    excerpt:
-      "The two specifications, authored in the open, are owned and hosted by the Foundation and maintained by their working groups.",
-  },
-  {
-    date: "2026-Q2",
-    tag: "Open source",
-    title: "Reference implementations stewarded as open source",
-    excerpt:
-      "Indexer, VS-Agent, and the reference Frontend are Apache 2.0; the Verifiable Public Registry is AGPL-3.0. Hosted and maintained in public; copyright held by contributors.",
-  },
-];
+// ISR: rebuild from the source repo at most once an hour.
+export const revalidate = 3600;
 
-export default function BlogPage() {
+function formatDate(date: string): string {
+  if (!date) return "";
+  const d = new Date(`${date}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return date;
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+export default async function BlogPage() {
+  const posts = await listPosts();
+
   return (
     <>
       <section className="border-b border-rule">
@@ -45,21 +40,25 @@ export default function BlogPage() {
 
       <section>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {POSTS.map((p) => (
-              <article key={p.title} className="card reveal">
-                <p className="text-xs uppercase tracking-wider text-muted font-mono">
-                  {p.tag} · {p.date}
-                </p>
-                <h3 className="mt-1">{p.title}</h3>
-                <p className="text-sm text-muted leading-relaxed">{p.excerpt}</p>
-              </article>
-            ))}
-          </div>
-          <p className="text-sm text-muted mt-10">
-            More to come as the Foundation incorporates and the working groups
-            publish their milestones.
-          </p>
+          {posts.length === 0 ? (
+            <p className="text-sm text-muted">
+              No posts yet. More to come as the Foundation incorporates and the
+              working groups publish their milestones.
+            </p>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {posts.map((p) => (
+                <Link key={p.slug} href={`/blog/${p.slug}`} className="card reveal block">
+                  <p className="text-xs uppercase tracking-wider text-muted font-mono">
+                    {p.tag}
+                    {p.date ? ` · ${formatDate(p.date)}` : ""}
+                  </p>
+                  <h3 className="mt-1">{p.title}</h3>
+                  <p className="text-sm text-muted leading-relaxed">{p.excerpt}</p>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>
