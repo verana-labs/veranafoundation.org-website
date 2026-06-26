@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { FEE_SCHEDULES, ACTIVE_FEE_SCHEDULE, AGREEMENT_FEE_SCHEDULE } from "./dues";
+import { FEE_SCHEDULES, FALLBACK_FEE_SCHEDULE, AGREEMENT_FEE_SCHEDULE } from "./dues";
 
 // The Fee Schedule is versioned data (dues.ts); each agreement template's
 // Annex D embeds a snapshot of it. These tests fail the build when they
@@ -43,7 +43,7 @@ describe("fee schedules ⇄ agreement Annex D", () => {
   });
 
   it("the active schedule exists", () => {
-    expect(FEE_SCHEDULES[ACTIVE_FEE_SCHEDULE]).toBeTruthy();
+    expect(FEE_SCHEDULES[FALLBACK_FEE_SCHEDULE]).toBeTruthy();
   });
 
   for (const f of readdirSync(LEGAL_DIR).filter((x) =>
