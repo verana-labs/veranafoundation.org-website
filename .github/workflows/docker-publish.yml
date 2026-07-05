@@ -118,6 +118,7 @@ jobs:
           KUBECONFIG_DATA: ${{ secrets.KUBECONFIG_2060_PROD }}
           # All values come from GitHub Actions secrets — nothing in cleartext.
           RELATICLE_API_TOKEN: ${{ secrets.RELATICLE_API_TOKEN }}
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
           # DATABASE_URL is derived from POSTGRES_PASSWORD below — single source of truth.
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
@@ -151,6 +152,7 @@ jobs:
           # re-applied on every deploy. Empty values are simply blank keys.
           kubectl -n web create secret generic veranafoundation-website-secrets \
             --from-literal=RELATICLE_API_TOKEN="${RELATICLE_API_TOKEN}" \
+            --from-literal=ALERT_WEBHOOK_URL="${ALERT_WEBHOOK_URL}" \
             --from-literal=POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
             --from-literal=DATABASE_URL="${DATABASE_URL}" \
             --from-literal=AUTH_SECRET="${AUTH_SECRET}" \
