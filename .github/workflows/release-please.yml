@@ -35,7 +35,7 @@ jobs:
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - id: release
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
@@ -45,7 +45,7 @@ jobs:
   discord-notify:
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
-    uses: 2060-io/organization/.github/workflows/discord-release-notify-call.yml@main
+    uses: 2060-io/organization/.github/workflows/discord-release-notify-call.yml@d199fdc55832f78f90158117a93d227709ca2746 # main
     with:
       tag_name: ${{ needs.release-please.outputs.tag_name }}
     # Pass explicitly rather than `secrets: inherit`: the reusable workflow lives
@@ -60,7 +60,7 @@ jobs:
   # tag that was already released.
   discord-notify-manual:
     if: github.event_name == 'workflow_dispatch'
-    uses: 2060-io/organization/.github/workflows/discord-release-notify-call.yml@main
+    uses: 2060-io/organization/.github/workflows/discord-release-notify-call.yml@d199fdc55832f78f90158117a93d227709ca2746 # main
     with:
       tag_name: ${{ inputs.notify_tag }}
     secrets:
