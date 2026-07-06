@@ -9,7 +9,6 @@ export const metadata: Metadata = {
 
 const PARTNERS = [
   { name: "2060", href: "https://2060.io", logo: "/assets/img/logo_2060.svg" },
-  { name: "MOSIP", href: "https://www.mosip.io/", logo: "/assets/img/logo_mosip.png" },
   {
     name: "Orchestrating Identity",
     href: "https://www.oidentity.com/",
