@@ -2,9 +2,18 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faDiscord, faLinkedinIn, faXTwitter } from "@fortawesome/free-brands-svg-icons";
 import { CONSENT_EVENT } from "./Analytics";
 
 const CONSENT_KEY = "vf-cookie-consent";
+
+// Same icon row as verana.io's footer; URLs mirror SOCIAL_LINKS in lib/site.ts.
+const SOCIALS = [
+  { label: "Discord", href: "https://discord.gg/edjaFn252q", icon: faDiscord },
+  { label: "LinkedIn", href: "https://www.linkedin.com/company/verana-foundation/", icon: faLinkedinIn },
+  { label: "X", href: "https://x.com/Verana_io", icon: faXTwitter },
+] as const;
 
 export default function Footer() {
   const [showBanner, setShowBanner] = useState(false);
@@ -119,20 +128,36 @@ export default function Footer() {
               </a>
               )
             </p>
-            <ul className="flex flex-wrap gap-4">
-              <li>
-                <Link href="/members">Members</Link>
-              </li>
-              <li>
-                <Link href="/privacy">Privacy</Link>
-              </li>
-              <li>
-                <Link href="/terms">Terms</Link>
-              </li>
-              <li>
-                <Link href="/cookies">Cookies</Link>
-              </li>
-            </ul>
+            <div className="flex flex-wrap items-center gap-6">
+              <ul className="flex flex-wrap gap-4">
+                <li>
+                  <Link href="/members">Members</Link>
+                </li>
+                <li>
+                  <Link href="/privacy">Privacy</Link>
+                </li>
+                <li>
+                  <Link href="/terms">Terms</Link>
+                </li>
+                <li>
+                  <Link href="/cookies">Cookies</Link>
+                </li>
+              </ul>
+              <div className="flex items-center gap-4">
+                {SOCIALS.map((s) => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={s.label}
+                    className="text-muted transition-colors hover:text-ink"
+                  >
+                    <FontAwesomeIcon icon={s.icon} className="h-5 w-5" />
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </footer>
