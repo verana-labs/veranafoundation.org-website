@@ -68,6 +68,11 @@ layout).
   Associate-only).
 - **Leads** — assigned by Foundation admins, then self-managed; a group can
   never drop to zero leads; mutations audited.
+- **Email invites** — leads and admins can invite any email address (as lead
+  or participant), including people who aren't members yet: the person is
+  emailed to join the Foundation (Contributor, free, or Associate) and enters
+  the group automatically as soon as their membership is active. Pending
+  invites are listed in the lead console (resend/revoke).
 - **Meetings via Google Calendar** — the lead sets a recurring schedule
   (weekly / biweekly / monthly, timezone-aware); the site maintains one Google
   Calendar event as the `meetings@` role account: auto-created **Google Meet**

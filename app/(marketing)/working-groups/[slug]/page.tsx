@@ -266,6 +266,11 @@ export default async function WorkingGroupPage({
               }))}
               leads={leads}
               participants={participants}
+              invites={wg.invites.map((i) => ({
+                id: i.id,
+                email: i.email,
+                role: i.role,
+              }))}
             />
           </div>
         </section>
