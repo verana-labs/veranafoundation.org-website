@@ -7,10 +7,13 @@ import {
   addLead,
   cancelMeeting,
   deleteSchedule,
+  inviteParticipant,
   removeLead,
   removeParticipant,
+  resendInvite,
   restoreMeeting,
   retrySync,
+  revokeInvite,
   saveSchedule,
   type ActionState,
 } from "./actions";
@@ -29,6 +32,12 @@ export type OccurrenceView = {
   startIso: string;
   label: string;
   cancelled: boolean;
+};
+
+export type InviteView = {
+  id: string;
+  email: string;
+  role: "lead" | "participant";
 };
 
 /** datetime-local value of an ISO instant, in the schedule's timezone. */
@@ -54,6 +63,7 @@ export default function LeadConsole({
   occurrences,
   leads,
   participants,
+  invites,
 }: {
   wgId: string;
   calendarReady: boolean;
@@ -61,6 +71,7 @@ export default function LeadConsole({
   occurrences: OccurrenceView[];
   leads: Person[];
   participants: Person[];
+  invites: InviteView[];
 }) {
   const [saveState, saveAction, saving] = useActionState<ActionState, FormData>(
     saveSchedule,
@@ -70,6 +81,10 @@ export default function LeadConsole({
     addLead,
     {},
   );
+  const [inviteState, inviteAction, inviting] = useActionState<
+    ActionState,
+    FormData
+  >(inviteParticipant, {});
   const [pending, startTransition] = useTransition();
   const [opError, setOpError] = useState<string | null>(null);
   const [cancelNote, setCancelNote] = useState("");
@@ -267,7 +282,16 @@ export default function LeadConsole({
             {adding ? "Adding…" : "Add"}
           </button>
         </form>
+        <p className="text-xs text-muted mt-2">
+          No account with that email yet? They're invited to join the
+          Foundation and become a lead once their membership is active.
+        </p>
         {addState.error && <p className="text-sm text-red-600 mt-2">{addState.error}</p>}
+        {addState.ok && addState.message && !adding && (
+          <p className="text-sm mt-2" style={{ color: "var(--color-green)" }}>
+            {addState.message}
+          </p>
+        )}
 
         <h3 className="display text-lg mt-10">Participants</h3>
         {participants.length === 0 ? (
@@ -289,6 +313,68 @@ export default function LeadConsole({
               </li>
             ))}
           </ul>
+        )}
+        <form action={inviteAction} className="mt-3 flex items-center gap-2 max-w-sm">
+          <input type="hidden" name="wgId" value={wgId} />
+          <input
+            name="email"
+            type="email"
+            required
+            placeholder="Invite a participant by email"
+            className="text-sm flex-1 min-w-0"
+          />
+          <button type="submit" className="btn text-sm" disabled={inviting}>
+            {inviting ? "Inviting…" : "Invite"}
+          </button>
+        </form>
+        <p className="text-xs text-muted mt-2">
+          Members join directly; anyone else is invited to join the Foundation
+          as a Contributor or Associate and enters the group once their
+          membership is active.
+        </p>
+        {inviteState.error && (
+          <p className="text-sm text-red-600 mt-2">{inviteState.error}</p>
+        )}
+        {inviteState.ok && inviteState.message && !inviting && (
+          <p className="text-sm mt-2" style={{ color: "var(--color-green)" }}>
+            {inviteState.message}
+          </p>
+        )}
+
+        {invites.length > 0 && (
+          <>
+            <h3 className="display text-lg mt-10">Pending invitations</h3>
+            <p className="text-sm text-muted mt-1">
+              Invited by email; they join the group automatically once their
+              Foundation membership is active.
+            </p>
+            <ul className="mt-3 space-y-2">
+              {invites.map((i) => (
+                <li key={i.id} className="flex items-center gap-2 text-sm">
+                  <span className="flex-1 min-w-0 truncate">{i.email}</span>
+                  <span className={`badge ${i.role === "lead" ? "badge-purple" : ""}`}>
+                    {i.role}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn text-sm"
+                    disabled={pending}
+                    onClick={() => run(() => resendInvite(wgId, i.id))}
+                  >
+                    Resend
+                  </button>
+                  <button
+                    type="button"
+                    className="btn text-sm"
+                    disabled={pending}
+                    onClick={() => run(() => revokeInvite(wgId, i.id))}
+                  >
+                    Revoke
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
         {opError && <p className="text-sm text-red-600 mt-4">{opError}</p>}
       </div>

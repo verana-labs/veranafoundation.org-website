@@ -9,6 +9,7 @@ import {
   sendAddedToOrgEmail,
   sendPromotedToAdminEmail,
 } from "@/app/lib/access-emails";
+import { convertWgInvitesForEmails } from "@/app/lib/wg-invites";
 
 export type AccessState = { error?: string; ok?: boolean };
 
@@ -105,6 +106,10 @@ export async function addAccess(
       }),
     );
   }
+
+  // Being linked to this org may satisfy a pending working-group invite
+  // (e.g. the org's membership is already active).
+  if (existing) await convertWgInvitesForEmails([email]);
 
   revalidatePath(`/account/org/${memberId}/access`);
   return { ok: true };

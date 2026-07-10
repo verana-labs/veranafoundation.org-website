@@ -100,6 +100,8 @@ export async function getWgBySlug(slug: string) {
         include: { user: { select: personSelect } },
         orderBy: { joinedAt: "asc" },
       },
+      // Pending email invites (lead console only; converted ones have rows above)
+      invites: { where: { acceptedAt: null }, orderBy: { createdAt: "asc" } },
       schedule: { include: { exceptions: { orderBy: { originalStart: "asc" } } } },
       sessions: {
         orderBy: { occurredAt: "desc" },

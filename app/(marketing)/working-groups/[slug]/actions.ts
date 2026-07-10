@@ -19,8 +19,13 @@ import {
 } from "@/app/lib/google-calendar";
 import { buildRrule, wallToUtc, type Frequency } from "@/app/lib/recurrence";
 import { publishMinutes } from "@/app/lib/minutes";
+import { notify } from "@/app/lib/access-emails";
+import {
+  sendWgInviteEmail,
+  sendWgJoinedEmail,
+} from "@/app/lib/wg-invite-emails";
 
-export type ActionState = { error?: string; ok?: boolean };
+export type ActionState = { error?: string; ok?: boolean; message?: string };
 
 async function requireUser() {
   const user = await currentUser();
@@ -116,7 +121,48 @@ export async function removeParticipant(
   return { ok: true };
 }
 
-// ── Leads ────────────────────────────────────────────────────────────────────
+// ── Leads & email invites ────────────────────────────────────────────────────
+
+const inviteMessage =
+  "Invitation sent — they've been asked to join the Foundation and will " +
+  "enter the group as soon as their membership is active.";
+
+/** Record a pending invite and email the person to join the Foundation. */
+async function createInvite(
+  actor: { id: string; email: string },
+  wg: { id: string; name: string; requiredClass: "any" | "associate" },
+  email: string,
+  role: "lead" | "participant",
+): Promise<ActionState> {
+  const existing = await db.wgInvite.findUnique({
+    where: { wgId_email: { wgId: wg.id, email } },
+  });
+  const resending =
+    existing && !existing.acceptedAt && existing.role === role;
+  await db.wgInvite.upsert({
+    where: { wgId_email: { wgId: wg.id, email } },
+    create: { wgId: wg.id, email, role, invitedByUserId: actor.id },
+    update: { role, invitedByUserId: actor.id, acceptedAt: null },
+  });
+  await audit(actor, resending ? "wg.invite.resend" : "wg.invite.add", wg.id, {
+    email,
+    role,
+  });
+  const inviter = await db.user.findUnique({ where: { id: actor.id } });
+  notify(
+    sendWgInviteEmail({
+      to: email,
+      wgName: wg.name,
+      role,
+      requiredClass: wg.requiredClass,
+      invitedByName: inviter ? personName(inviter) : "The Verana Foundation",
+    }),
+  );
+  return {
+    ok: true,
+    message: resending ? "Already invited — invitation re-sent." : inviteMessage,
+  };
+}
 
 export async function addLead(
   _prev: ActionState,
@@ -125,10 +171,17 @@ export async function addLead(
   const wgId = String(formData.get("wgId"));
   const user = await requireManager(wgId);
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  if (!email) return { error: "Email is required." };
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: "A valid email is required." };
+  }
+  const wg = await db.workingGroup.findUniqueOrThrow({ where: { id: wgId } });
   const target = await db.user.findUnique({ where: { email } });
   if (!target) {
-    return { error: "No account with that email — they must sign in once first." };
+    // No account yet: invite instead — the person is emailed to join the
+    // Foundation and becomes a lead once their membership is active.
+    const res = await createInvite(user, wg, email, "lead");
+    await revalidateWg(wgId);
+    return res;
   }
   await db.wgLead.upsert({
     where: { wgId_userId: { wgId, userId: target.id } },
@@ -139,6 +192,98 @@ export async function addLead(
   await trySync(wgId); // leads are Calendar attendees too
   await revalidateWg(wgId);
   return { ok: true };
+}
+
+/** Lead/admin invites an email as a participant. Qualifying accounts are added
+ * directly; everyone else gets a pending invite + a join-the-Foundation email. */
+export async function inviteParticipant(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const wgId = String(formData.get("wgId"));
+  const user = await requireManager(wgId);
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: "A valid email is required." };
+  }
+  const wg = await db.workingGroup.findUniqueOrThrow({ where: { id: wgId } });
+  const target = await db.user.findUnique({ where: { email } });
+  const qualifies =
+    !!target && canAccessWg(wg.requiredClass, await userActiveClasses(target.id));
+
+  if (!target || !qualifies) {
+    const res = await createInvite(user, wg, email, "participant");
+    await revalidateWg(wgId);
+    return res;
+  }
+
+  const prior = await db.wgParticipant.findUnique({
+    where: { wgId_userId: { wgId, userId: target.id } },
+  });
+  if (prior && !prior.leftAt) {
+    return { ok: true, message: "They're already a participant." };
+  }
+  await db.wgParticipant.upsert({
+    where: { wgId_userId: { wgId, userId: target.id } },
+    create: { wgId, userId: target.id },
+    update: { leftAt: null, joinedAt: new Date() },
+  });
+  await audit(user, "wg.participant.add", wgId, { email });
+  notify(
+    sendWgJoinedEmail({
+      to: email,
+      wgName: wg.name,
+      wgSlug: wg.slug,
+      role: "participant",
+    }),
+  );
+  await trySync(wgId);
+  await revalidateWg(wgId);
+  return { ok: true, message: "Added — they're a participant now." };
+}
+
+/** Withdraw a pending invite (the audit log keeps the trace). */
+export async function revokeInvite(
+  wgId: string,
+  inviteId: string,
+): Promise<ActionState> {
+  const user = await requireManager(wgId);
+  const invite = await db.wgInvite.findUnique({ where: { id: inviteId } });
+  if (!invite || invite.wgId !== wgId) return { error: "Invite not found." };
+  if (invite.acceptedAt) return { error: "This invite was already accepted." };
+  await db.wgInvite.delete({ where: { id: inviteId } });
+  await audit(user, "wg.invite.revoke", wgId, {
+    email: invite.email,
+    role: invite.role,
+  });
+  await revalidateWg(wgId);
+  return { ok: true };
+}
+
+/** Re-send the join-the-Foundation email for a pending invite. */
+export async function resendInvite(
+  wgId: string,
+  inviteId: string,
+): Promise<ActionState> {
+  const user = await requireManager(wgId);
+  const invite = await db.wgInvite.findUnique({
+    where: { id: inviteId },
+    include: { wg: true },
+  });
+  if (!invite || invite.wgId !== wgId) return { error: "Invite not found." };
+  if (invite.acceptedAt) return { error: "This invite was already accepted." };
+  const inviter = await db.user.findUnique({ where: { id: user.id } });
+  notify(
+    sendWgInviteEmail({
+      to: invite.email,
+      wgName: invite.wg.name,
+      role: invite.role,
+      requiredClass: invite.wg.requiredClass,
+      invitedByName: inviter ? personName(inviter) : "The Verana Foundation",
+    }),
+  );
+  await audit(user, "wg.invite.resend", wgId, { email: invite.email });
+  return { ok: true, message: "Invitation re-sent." };
 }
 
 export async function removeLead(

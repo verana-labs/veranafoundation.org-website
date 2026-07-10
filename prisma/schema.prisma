@@ -309,6 +309,7 @@ model WorkingGroup {
 
   leads        WgLead[]
   participants WgParticipant[]
+  invites      WgInvite[]
   schedule     WgSchedule?
   sessions     WgSession[]
 
@@ -352,6 +353,31 @@ model WgParticipant {
 
   @@unique([wgId, userId])
   @@index([userId])
+}
+
+// An email invited into a WG (as lead or participant) by an admin or a lead —
+// possibly before any account or membership exists. The invite converts into a
+// WgLead/WgParticipant row only once a user with that verified email holds an
+// active membership satisfying the group's requiredClass (strict gate); until
+// then the person is nudged by email to join the Foundation. Pending = null
+// acceptedAt; revocation deletes the row (audited in AdminAction).
+model WgInvite {
+  id              String       @id @default(cuid())
+  wgId            String
+  wg              WorkingGroup @relation(fields: [wgId], references: [id], onDelete: Cascade)
+  email           String // lowercased verified-email key (ADR-0002)
+  role            WgInviteRole
+  invitedByUserId String?
+  createdAt       DateTime     @default(now())
+  acceptedAt      DateTime? // set when converted into a lead/participant row
+
+  @@unique([wgId, email])
+  @@index([email])
+}
+
+enum WgInviteRole {
+  lead
+  participant
 }
 
 // One recurring meeting series per WG. The DB is canonical; Google Calendar is

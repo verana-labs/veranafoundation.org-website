@@ -4,6 +4,7 @@ import Nodemailer from "next-auth/providers/nodemailer";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/app/lib/db";
 import { linkMemberAccess } from "@/app/lib/access";
+import { convertWgInvitesForEmails } from "@/app/lib/wg-invites";
 import { smtpServer, mailFrom } from "@/app/lib/smtp";
 import { sendEmail } from "@/app/lib/email";
 import { emailLayout } from "@/app/lib/email-layout";
@@ -55,9 +56,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   adapter: PrismaAdapter(db),
   events: {
-    // On every sign-in, link the user to any org that allowlisted their email.
+    // On every sign-in, link the user to any org that allowlisted their email,
+    // then convert any working-group invites their memberships now satisfy.
     async signIn({ user }) {
-      if (user.id && user.email) await linkMemberAccess(user.id, user.email);
+      if (user.id && user.email) {
+        await linkMemberAccess(user.id, user.email);
+        await convertWgInvitesForEmails([user.email]);
+      }
     },
   },
 });

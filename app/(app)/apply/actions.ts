@@ -16,6 +16,7 @@ import { persistSignedAgreement } from "@/app/lib/signed-agreement";
 import { loadActiveAgreement, type ActiveAgreement } from "@/app/lib/agreement-versions";
 import { sendEmail, escapeHtml } from "@/app/lib/email";
 import { emailLayout } from "@/app/lib/email-layout";
+import { convertWgInvitesForEmails } from "@/app/lib/wg-invites";
 
 const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
 
@@ -302,6 +303,9 @@ export async function applyMember(
       documentHash: documentHash ?? null,
       agreementPdf: pdf,
     });
+    // The contributor membership is active now — convert any pending
+    // working-group invites addressed to this email.
+    await convertWgInvitesForEmails([user.email!]);
     redirect("/account");
   }
 

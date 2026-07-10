@@ -3,6 +3,10 @@ import { db } from "@/app/lib/db";
 import { computeVat, type VatResult } from "@/app/lib/vat";
 import { activeFeeSchedule } from "@/app/lib/fees";
 import { sendPaymentReceiptEmail } from "@/app/lib/billing-emails";
+import {
+  convertWgInvitesForEmails,
+  memberReachableEmails,
+} from "@/app/lib/wg-invites";
 
 const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
 
@@ -161,6 +165,12 @@ export async function markInvoicePaid(args: {
       data: { status: "active", periodStart: base, periodEnd },
     }),
   ]);
+
+  // The membership just became active: convert any pending working-group
+  // invites addressed to this member's people (best-effort, never throws).
+  await convertWgInvitesForEmails(
+    await memberReachableEmails(invoice.membership.memberId),
+  );
 
   try {
     await sendPaymentReceiptEmail({

@@ -31,6 +31,30 @@ Constraints: keep the verified-email/computed-entitlement model of ADR-0002 unto
 - Cards show lead avatars (the GitHub-contributor avatar style already used on the home page): `User.image`, falling back to initials.
 - All lead/schedule mutations are logged to `AdminAction` (`wg.lead.add`, `wg.schedule.update`, …) with the acting user, even when the actor is a lead rather than a Foundation admin.
 
+### 2b. Email invites (amendment, 2026-07)
+
+- Leads and Foundation admins can invite **any email address** into a group —
+  as **lead** or as **participant** — including people with no account or
+  membership yet. The invite is a `WgInvite (wgId, email, role)` row; the
+  person receives an email asking them to join the Foundation as a
+  Contributor (free) or Associate (Associate expected for
+  `requiredClass = associate` groups), with a link to `/join`.
+- **The membership gate stays strict.** A pending invite converts into a real
+  `WgLead`/`WgParticipant` row (Calendar attendee, shown on the page) only
+  once a user with that verified email holds an **active membership
+  satisfying the group's `requiredClass`**. Conversion
+  (`convertWgInvitesForEmails`) runs at every point the gate can newly hold:
+  sign-in, contributor application, invoice payment (Associate activation),
+  admin membership-status changes, and org access-list additions. It is
+  idempotent and best-effort — payment webhooks and sign-in never fail on it.
+- Direct adds are unchanged: inviting a user who already qualifies adds them
+  immediately; adding an **existing account** as lead still works without a
+  membership check (leads assigned pre-membership remain possible, as before).
+- Pending invites are listed in the lead console (resend / revoke); pending
+  **lead** invites do not count toward the "never zero leads" invariant.
+- Audit: `wg.invite.add` / `wg.invite.resend` / `wg.invite.revoke` /
+  `wg.invite.accept` in `AdminAction`.
+
 ### 3. Schedule: Google Calendar is the delivery rail, the database is the canonical record
 
 The Foundation's Google Workspace hosts the meetings. A **service account with domain-wide delegation** impersonates a dedicated role account (e.g. `meetings@verana.io`), which is the **organizer of every WG meeting**:
@@ -105,6 +129,7 @@ User          { + displayName? }
 WorkingGroup  { + slug (unique), leads[], participants[], schedule?, sessions[] }
 WgLead        { wgId, userId, addedByUserId, @@unique(wgId,userId) }
 WgParticipant { wgId, userId, joinedAt, leftAt?, @@unique(wgId,userId) }
+WgInvite      { wgId, email, role (lead|participant), invitedByUserId?, acceptedAt?, @@unique(wgId,email) }
 WgSchedule / WgScheduleException / WgSession / WgSessionAttendee   (as above)
 ```
 

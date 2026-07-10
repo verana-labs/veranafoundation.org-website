@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
+import {
+  convertWgInvitesForEmails,
+  memberReachableEmails,
+} from "@/app/lib/wg-invites";
 import { MEMBERSHIP_TRANSITIONS, type MembershipStatus } from "./transitions";
 
 async function assertAdmin() {
@@ -38,5 +42,9 @@ export async function setMembershipStatus(
       after: { status },
     },
   });
+  // An admin activation counts like any other: convert pending WG invites.
+  if (status === "active") {
+    await convertWgInvitesForEmails(await memberReachableEmails(memberId));
+  }
   revalidatePath(`/admin/members/${memberId}`);
 }
