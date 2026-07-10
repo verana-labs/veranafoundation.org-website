@@ -7,6 +7,8 @@ import { updateWg, toggleShowOnHome, toggleState } from "./actions";
 import {
   addLead,
   removeLead,
+  resendInvite,
+  revokeInvite,
   type ActionState,
 } from "@/app/(marketing)/working-groups/[slug]/actions";
 import PersonAvatars from "@/app/components/PersonAvatars";
@@ -16,6 +18,11 @@ export type AdminLead = {
   name: string;
   email: string;
   image: string | null;
+};
+
+export type AdminLeadInvite = {
+  id: string;
+  email: string;
 };
 
 export type AdminWg = {
@@ -31,6 +38,8 @@ export type AdminWg = {
   /** ISO timestamp of when it last became disabled, or null. */
   disabledAt: string | null;
   leads: AdminLead[];
+  /** Pending lead invites — emails waiting on an active membership. */
+  leadInvites: AdminLeadInvite[];
 };
 
 // Admin-side lead management: the ADR-0003 invariant (never zero leads once
@@ -41,6 +50,7 @@ function LeadsEditor({ wg }: { wg: AdminWg }) {
     {},
   );
   const [removeError, setRemoveError] = useState<string | null>(null);
+  const [inviteNote, setInviteNote] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   function onRemove(userId: string) {
@@ -50,10 +60,18 @@ function LeadsEditor({ wg }: { wg: AdminWg }) {
     });
   }
 
+  function onInviteAction(fn: () => Promise<ActionState>) {
+    startTransition(async () => {
+      const res = await fn();
+      setRemoveError(res.error ?? null);
+      setInviteNote(res.error ? null : (res.message ?? null));
+    });
+  }
+
   return (
     <div className="mt-3 border-t border-rule pt-3">
       <p className="text-sm text-muted mb-2">Leads</p>
-      {wg.leads.length === 0 ? (
+      {wg.leads.length === 0 && wg.leadInvites.length === 0 ? (
         <p className="text-sm text-muted">
           None yet — assign at least one lead.
         </p>
@@ -70,6 +88,31 @@ function LeadsEditor({ wg }: { wg: AdminWg }) {
                 className="text-muted hover:text-ink px-1"
                 disabled={pending}
                 onClick={() => onRemove(l.userId)}
+              >
+                <FontAwesomeIcon icon={faXmark} className="w-3" />
+              </button>
+            </li>
+          ))}
+          {/* Pending lead invites: no account/membership yet — they become
+              leads automatically once their membership is active. */}
+          {wg.leadInvites.map((i) => (
+            <li key={i.id} className="flex items-center gap-2 text-sm">
+              <span className="text-muted truncate">{i.email}</span>
+              <span className="badge badge-amber">Invited</span>
+              <button
+                type="button"
+                className="text-purple hover:underline text-xs"
+                disabled={pending}
+                onClick={() => onInviteAction(() => resendInvite(wg.id, i.id))}
+              >
+                Resend
+              </button>
+              <button
+                type="button"
+                aria-label={`Revoke invitation for ${i.email}`}
+                className="text-muted hover:text-ink px-1"
+                disabled={pending}
+                onClick={() => onInviteAction(() => revokeInvite(wg.id, i.id))}
               >
                 <FontAwesomeIcon icon={faXmark} className="w-3" />
               </button>
@@ -92,6 +135,16 @@ function LeadsEditor({ wg }: { wg: AdminWg }) {
       </form>
       {(state.error || removeError) && (
         <p className="text-sm text-red-600 mt-2">{state.error ?? removeError}</p>
+      )}
+      {!state.error && state.ok && state.message && !adding && (
+        <p className="text-sm mt-2" style={{ color: "var(--color-green)" }}>
+          {state.message}
+        </p>
+      )}
+      {inviteNote && !pending && (
+        <p className="text-sm mt-2" style={{ color: "var(--color-green)" }}>
+          {inviteNote}
+        </p>
       )}
     </div>
   );

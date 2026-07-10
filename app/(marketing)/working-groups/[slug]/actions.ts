@@ -64,6 +64,8 @@ async function revalidateWg(wgId: string) {
   const wg = await db.workingGroup.findUnique({ where: { id: wgId } });
   if (wg) revalidatePath(`/working-groups/${wg.slug}`);
   revalidatePath("/working-groups");
+  // The admin board reuses these actions (leads, invites) in its cards.
+  revalidatePath("/admin/working-groups");
 }
 
 /** Push the attendee list / schedule to Google; never blocks the user action. */

@@ -19,6 +19,12 @@ export default async function AdminWorkingGroupsPage() {
         include: { user: { select: { id: true, displayName: true, name: true, email: true, image: true } } },
         orderBy: { createdAt: "asc" },
       },
+      // Pending lead invites: emails invited as lead, waiting on an active
+      // membership (participant invites live on the group's own page).
+      invites: {
+        where: { acceptedAt: null, role: "lead" },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 
@@ -52,6 +58,10 @@ export default async function AdminWorkingGroupsPage() {
               name: personName(l.user),
               email: l.user.email ?? "",
               image: l.user.image,
+            })),
+            leadInvites: g.invites.map((i) => ({
+              id: i.id,
+              email: i.email,
             })),
           }))}
         />
