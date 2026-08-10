@@ -1,0 +1,51 @@
+# Hourly cache warmer for the /admin/contributors dashboard: calls the app's
+# /api/cron/warm-insights (guarded by CRON_SECRET), which recomputes the GitHub
+# contributor insights for every window so no admin ever hits the multi-minute
+# cold path — including right after a deploy, when the data cache starts empty.
+# Harmless when no GitHub token is configured: the route reports ok:false per
+# window and the dashboard shows its "unavailable" state.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: warm-insights
+  namespace: web
+  labels:
+    app.kubernetes.io/name: veranafoundation-website
+spec:
+  # Offset from the top of the hour to avoid the :00 cron crowd.
+  schedule: "13 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # The 90-day window can take a few minutes cold (post-deploy); give the
+      # full warm run generous room before k8s kills it.
+      activeDeadlineSeconds: 900
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: curl
+              image: curlimages/curl:8.10.1
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: veranafoundation-website-secrets
+                      key: CRON_SECRET
+                      optional: true
+              command: ["/bin/sh", "-c"]
+              args:
+                - >-
+                  curl -fsS --max-time 840
+                  -H "Authorization: Bearer ${CRON_SECRET}"
+                  http://veranafoundation-website.web.svc.cluster.local/api/cron/warm-insights
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi

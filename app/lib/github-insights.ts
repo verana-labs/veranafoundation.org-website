@@ -765,12 +765,18 @@ export async function computeInsights(windowDays: WindowDays): Promise<Insights 
   }
 }
 
+/** Cache tag covering every window's entry — revalidated by the warm cron. */
+export const INSIGHTS_CACHE_TAG = "github-insights";
+
 /** Cached insights for a window; null when GitHub is unreachable / no token. */
 export async function getInsights(windowDays: WindowDays): Promise<Insights | null> {
   const cached = unstable_cache(
     () => computeInsights(windowDays),
     ["github-insights", String(windowDays)],
-    { revalidate: REVALIDATE_SECONDS }
+    // The hourly warm cron (/api/cron/warm-insights) revalidates the tag and
+    // recomputes all windows; the time-based revalidate stays as a safety net
+    // so data still refreshes (stale-while-revalidate) if the cron stops.
+    { revalidate: REVALIDATE_SECONDS, tags: [INSIGHTS_CACHE_TAG] }
   );
   return cached();
 }
