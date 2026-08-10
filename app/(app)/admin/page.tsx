@@ -6,6 +6,7 @@ import {
   faUsers,
   faFileInvoiceDollar,
   faDiagramProject,
+  faChartLine,
   faUserShield,
   faGear,
   faClockRotateLeft,
@@ -39,6 +40,13 @@ const FEATURES: {
     label: "Working groups",
     description: "Create and manage the working groups shown across the site.",
     icon: faDiagramProject,
+  },
+  {
+    href: "/admin/contributors",
+    label: "Contributor insights",
+    description:
+      "GitHub activity across the organizations, compared per contributor.",
+    icon: faChartLine,
   },
   {
     href: "/admin/admins",
