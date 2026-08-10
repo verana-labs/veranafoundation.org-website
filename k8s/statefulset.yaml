@@ -232,6 +232,15 @@ spec:
                   name: veranafoundation-website-secrets
                   key: MINUTES_GITHUB_TOKEN
                   optional: true
+            # Admin contributor-insights dashboard (classic PAT, repo scope,
+            # member of every insights org). Optional: the page degrades to an
+            # "unavailable" state without it.
+            - name: INSIGHTS_GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: INSIGHTS_GITHUB_TOKEN
+                  optional: true
           resources:
             requests:
               cpu: "50m"
