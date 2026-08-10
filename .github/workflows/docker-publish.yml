@@ -143,6 +143,8 @@ jobs:
           GOOGLE_CALENDAR_IMPERSONATE: ${{ secrets.GOOGLE_CALENDAR_IMPERSONATE }}
           MINUTES_REPO: ${{ secrets.MINUTES_REPO }}
           MINUTES_GITHUB_TOKEN: ${{ secrets.MINUTES_GITHUB_TOKEN }}
+          # Admin contributor-insights dashboard (classic PAT, repo scope).
+          INSIGHTS_GITHUB_TOKEN: ${{ secrets.INSIGHTS_GITHUB_TOKEN }}
         run: |
           echo "$KUBECONFIG_DATA" > /tmp/kubeconfig
           export KUBECONFIG=/tmp/kubeconfig
@@ -176,6 +178,7 @@ jobs:
             --from-literal=GOOGLE_CALENDAR_IMPERSONATE="${GOOGLE_CALENDAR_IMPERSONATE}" \
             --from-literal=MINUTES_REPO="${MINUTES_REPO}" \
             --from-literal=MINUTES_GITHUB_TOKEN="${MINUTES_GITHUB_TOKEN}" \
+            --from-literal=INSIGHTS_GITHUB_TOKEN="${INSIGHTS_GITHUB_TOKEN}" \
             --dry-run=client -o yaml | kubectl apply -f -
           kubectl apply -f k8s/
           # Wait for Postgres, then apply DB migrations as a one-off Job before
