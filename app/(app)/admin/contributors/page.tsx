@@ -13,7 +13,7 @@ import {
 } from "@/app/lib/github-insights";
 import { PageHero, Section } from "@/app/components/PageHero";
 
-// Admin-only page (linked from the admin home), kept out of the index
+// Unlisted admin page: not linked from the admin home, kept out of the index
 // (robots.txt already disallows /admin/**; this is belt and braces).
 export const metadata: Metadata = {
   title: "Contributor insights · Admin",
