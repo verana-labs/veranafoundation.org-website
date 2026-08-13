@@ -4,77 +4,8 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Ecosystem",
   description:
-    "How the Verana Foundation grows the open trust layer: grants, developer relations, partnerships and integrations, and adoption in the wild.",
+    "How the Verana Foundation grows the open trust layer: grants, developer relations, the live playground, and adoption in the wild.",
 };
-
-type Partner = {
-  name: string;
-  href: string;
-  logo: string;
-};
-
-const PARTNERSHIPS: Partner[] = [
-  { name: "MOSIP", href: "https://www.mosip.io/", logo: "/assets/img/logo_mosip.png" },
-  {
-    name: "France Identité",
-    href: "https://france-identite.gouv.fr/",
-    logo: "/assets/img/logo_france_identite.png",
-  },
-  {
-    name: "European Commission",
-    href: "https://ec.europa.eu",
-    logo: "/assets/img/logo_eudi.svg",
-  },
-  {
-    name: "Swiss Confederation",
-    href: "https://www.eid.admin.ch",
-    logo: "/assets/img/logo_swiyu.webp",
-  },
-  {
-    name: "Government of British Columbia",
-    href: "https://digital.gov.bc.ca/digital-trust/",
-    logo: "/assets/img/logo_bcwallet.webp",
-  },
-  { name: "MinBZK", href: "https://edi.pleio.nl", logo: "/assets/img/logo_nl_wallet.png" },
-  { name: "Animo Solutions", href: "https://animo.id", logo: "/assets/img/logo_paradym.webp" },
-  { name: "Procivis", href: "https://www.procivis.ch", logo: "/assets/img/logo_procivis.webp" },
-  { name: "Sphereon", href: "https://sphereon.com", logo: "/assets/img/logo_sphereon.webp" },
-  { name: "Talao", href: "https://talao.io", logo: "/assets/img/logo_talao.webp" },
-  { name: "Authbound", href: "https://authbound.io", logo: "/assets/img/logo_authbound.webp" },
-  { name: "wwWallet", href: "https://wwwallet.org", logo: "/assets/img/logo_wwwallet.svg" },
-  { name: "Mobai", href: "https://www.mobai.bio/", logo: "/assets/img/logo_mobai.png" },
-  { name: "Bitel", href: "https://bitel.com.pe/", logo: "/assets/img/logo_bitel.png" },
-  { name: "EAFIT", href: "https://www.eafit.edu.co/", logo: "/assets/img/logo_eafit.svg" },
-];
-
-const INTEGRATORS: Partner[] = [
-  { name: "2060", href: "https://2060.io", logo: "/assets/img/logo_2060.svg" },
-  {
-    name: "Orchestrating Identity",
-    href: "https://www.oidentity.com/",
-    logo: "/assets/img/logo_oidentity.svg",
-  },
-  { name: "Intexus", href: "https://intexus.la/", logo: "/assets/img/logo_intexus.svg" },
-  { name: "Mobiera", href: "https://www.mobiera.com/", logo: "/assets/img/logo_mobiera.svg" },
-  { name: "Bigdavi", href: "https://bigdavi.com/", logo: "/assets/img/logo_bigdavi.png" },
-  { name: "TotalNot", href: "https://www.totalnot.mx/", logo: "/assets/img/logo_totalnot.png" },
-];
-
-function PartnerGrid({ items, cols }: { items: Partner[]; cols: string }) {
-  return (
-    <div className={`grid gap-3 ${cols}`}>
-      {items.map((p) => (
-        <a key={p.name} href={p.href} rel="noopener" className="partner-card" title={p.name}>
-          <span className="partner-logo">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={p.logo} alt={`${p.name} logo`} loading="lazy" />
-          </span>
-          <span className="partner-name">{p.name}</span>
-        </a>
-      ))}
-    </div>
-  );
-}
 
 export default function EcosystemPage() {
   return (
@@ -130,26 +61,55 @@ export default function EcosystemPage() {
 
       <section className="border-b border-rule reveal">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <p className="tag mb-3">Partnerships &amp; integrations</p>
-          <h2 className="display text-3xl">Adopting the open trust layer</h2>
-          <div className="accent-line mt-4 mb-10" />
-          <p className="text-xs text-muted uppercase tracking-wider mb-4">
-            Partnerships, integrations &amp; pilots
+          <p className="tag mb-3">Playground</p>
+          <h2 className="display text-3xl">See the open trust layer working</h2>
+          <div className="accent-line mt-4 mb-8" />
+          <p className="text-muted max-w-2xl leading-relaxed">
+            The playground is a live demo environment anchored to the Verana
+            testnet. Demo ecosystems issue real credentials, verifiable
+            services prove who they are before you share anything, and you can
+            take part with a wallet on your own phone.
           </p>
-          <PartnerGrid
-            items={PARTNERSHIPS}
-            cols="grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
-          />
-          <p className="text-xs text-muted uppercase tracking-wider mt-10 mb-4">
-            Integrators
-          </p>
-          <PartnerGrid items={INTEGRATORS} cols="grid-cols-2 sm:grid-cols-3" />
-          <p className="text-sm text-muted mt-6">
-            Interested in partnering or integrating?{" "}
-            <Link href="/contact" className="text-purple hover:underline">
-              Get in touch →
-            </Link>
-          </p>
+          <div className="grid md:grid-cols-3 gap-6 mt-10">
+            <div className="card">
+              <h3>Bring your wallet</h3>
+              <p className="text-sm text-muted leading-relaxed">
+                Sixteen wallets and agents already interoperate on the
+                playground, including the EUDI reference wallet, swiyu, BC
+                Wallet, NL Wallet, Inji, Paradym, Hologram, and more.
+              </p>
+            </div>
+            <div className="card">
+              <h3>Real credentials, real checks</h3>
+              <p className="text-sm text-muted leading-relaxed">
+                Receive credentials, present them to services, and watch trust
+                resolution happen against the testnet registry: nothing is
+                mocked.
+              </p>
+            </div>
+            <div className="card">
+              <h3>Open standards</h3>
+              <p className="text-sm text-muted leading-relaxed">
+                Everything runs over W3C Verifiable Credentials, DIDComm, and
+                OpenID4VC, the same rails ecosystems will use in production.
+              </p>
+            </div>
+          </div>
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <a
+              href="https://playground.testnet.verana.network"
+              rel="noopener"
+              className="btn btn-primary"
+            >
+              Open the playground ↗
+            </a>
+            <p className="text-sm text-muted">
+              Interested in partnering or integrating?{" "}
+              <Link href="/contact" className="text-purple hover:underline">
+                Get in touch →
+              </Link>
+            </p>
+          </div>
         </div>
       </section>
 

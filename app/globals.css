@@ -540,50 +540,6 @@ body {
   display: block;
 }
 
-/* Partner card — logo on a steady white chip with the organization name
-   underneath, so both the mark and the name read in light and dark ------- */
-.partner-card {
-  display: flex;
-  flex-direction: column;
-  background: var(--color-card);
-  border: 1px solid var(--color-rule);
-  border-radius: 10px;
-  overflow: hidden;
-  text-decoration: none;
-  transition: border-color 120ms ease, transform 120ms ease;
-}
-.partner-card:hover {
-  border-color: var(--color-purple);
-  transform: translateY(-2px);
-}
-.partner-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 3.5rem;
-  padding: 0.5rem 0.75rem;
-  background: #ffffff;
-  border-bottom: 1px solid var(--color-rule);
-}
-.partner-logo img {
-  max-height: 1.75rem;
-  width: auto;
-  max-width: 100%;
-  display: block;
-}
-.partner-name {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.4rem 0.5rem;
-  text-align: center;
-  font-size: 0.72rem;
-  font-weight: 600;
-  line-height: 1.25;
-  color: var(--color-ink);
-}
-
 /* Contributor avatar (placeholder) -------------------------------- */
 .avatar {
   width: 2.75rem;
