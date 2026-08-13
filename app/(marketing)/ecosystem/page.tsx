@@ -7,65 +7,92 @@ export const metadata: Metadata = {
     "How the Verana Foundation grows the open trust layer: grants, developer relations, partnerships and integrations, and adoption in the wild.",
 };
 
-const PARTNERSHIPS = [
-  { name: "MOSIP", href: "https://www.mosip.io/", logo: "/assets/img/logo_mosip.png" },
+type Partner = {
+  name: string;
+  sub?: string;
+  href: string;
+  logo: string;
+};
+
+const PARTNERSHIPS: Partner[] = [
+  {
+    name: "MOSIP",
+    sub: "Inji Wallet",
+    href: "https://www.mosip.io/",
+    logo: "/assets/img/logo_mosip.png",
+  },
   {
     name: "France Identité",
+    sub: "EUDIW Unfold",
     href: "https://france-identite.gouv.fr/",
     logo: "/assets/img/logo_france_identite.png",
   },
   {
-    name: "European Commission (EUDI Wallet)",
+    name: "European Commission",
+    sub: "EUDI Wallet",
     href: "https://ec.europa.eu",
     logo: "/assets/img/logo_eudi.svg",
   },
   {
-    name: "Swiss Confederation (swiyu Wallet)",
+    name: "Swiss Confederation",
+    sub: "swiyu Wallet",
     href: "https://www.eid.admin.ch",
     logo: "/assets/img/logo_swiyu.webp",
   },
   {
-    name: "Government of British Columbia (BC Wallet)",
+    name: "Government of British Columbia",
+    sub: "BC Wallet",
     href: "https://digital.gov.bc.ca/digital-trust/",
     logo: "/assets/img/logo_bcwallet.webp",
   },
   {
-    name: "MinBZK (NL Wallet)",
+    name: "MinBZK",
+    sub: "NL Wallet",
     href: "https://edi.pleio.nl",
     logo: "/assets/img/logo_nl_wallet.png",
   },
   {
-    name: "Animo Solutions (Paradym Wallet)",
+    name: "Animo Solutions",
+    sub: "Paradym Wallet",
     href: "https://animo.id",
     logo: "/assets/img/logo_paradym.webp",
   },
   {
-    name: "Procivis (Procivis One Wallet)",
+    name: "Procivis",
+    sub: "Procivis One Wallet",
     href: "https://www.procivis.ch",
     logo: "/assets/img/logo_procivis.webp",
   },
   {
-    name: "Sphereon (Sphereon Wallet)",
+    name: "Sphereon",
+    sub: "Sphereon Wallet",
     href: "https://sphereon.com",
     logo: "/assets/img/logo_sphereon.webp",
   },
   {
-    name: "Talao (Altme Wallet)",
+    name: "Talao",
+    sub: "Altme Wallet",
     href: "https://talao.io",
     logo: "/assets/img/logo_talao.webp",
   },
   {
-    name: "Authbound (Authbound Wallet)",
+    name: "Authbound",
+    sub: "Authbound Wallet",
     href: "https://authbound.io",
     logo: "/assets/img/logo_authbound.webp",
   },
-  { name: "wwWallet", href: "https://wwwallet.org", logo: "/assets/img/logo_wwwallet.svg" },
+  {
+    name: "wwWallet",
+    sub: "browser wallet",
+    href: "https://wwwallet.org",
+    logo: "/assets/img/logo_wwwallet.svg",
+  },
   { name: "Mobai", href: "https://www.mobai.bio/", logo: "/assets/img/logo_mobai.png" },
   { name: "Bitel", href: "https://bitel.com.pe/", logo: "/assets/img/logo_bitel.png" },
   { name: "EAFIT", href: "https://www.eafit.edu.co/", logo: "/assets/img/logo_eafit.svg" },
 ];
 
-const INTEGRATORS = [
+const INTEGRATORS: Partner[] = [
   { name: "2060", href: "https://2060.io", logo: "/assets/img/logo_2060.svg" },
   {
     name: "Orchestrating Identity",
@@ -77,6 +104,25 @@ const INTEGRATORS = [
   { name: "Bigdavi", href: "https://bigdavi.com/", logo: "/assets/img/logo_bigdavi.png" },
   { name: "TotalNot", href: "https://www.totalnot.mx/", logo: "/assets/img/logo_totalnot.png" },
 ];
+
+function PartnerGrid({ items, cols }: { items: Partner[]; cols: string }) {
+  return (
+    <div className={`grid gap-4 ${cols}`}>
+      {items.map((p) => (
+        <a key={p.name} href={p.href} rel="noopener" className="partner-card" title={p.name}>
+          <span className="partner-logo">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={p.logo} alt={`${p.name} logo`} loading="lazy" />
+          </span>
+          <span className="partner-name">
+            {p.name}
+            {p.sub ? <span className="partner-sub">{p.sub}</span> : null}
+          </span>
+        </a>
+      ))}
+    </div>
+  );
+}
 
 export default function EcosystemPage() {
   return (
@@ -138,39 +184,14 @@ export default function EcosystemPage() {
           <p className="text-xs text-muted uppercase tracking-wider mb-4">
             Partnerships, integrations &amp; pilots
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {PARTNERSHIPS.map((p) => (
-              <a
-                key={p.name}
-                href={p.href}
-                rel="noopener"
-                className="logo-wall-item"
-                title={p.name}
-                aria-label={p.name}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.logo} alt={`${p.name} logo`} loading="lazy" />
-              </a>
-            ))}
-          </div>
+          <PartnerGrid
+            items={PARTNERSHIPS}
+            cols="grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"
+          />
           <p className="text-xs text-muted uppercase tracking-wider mt-10 mb-4">
             Integrators
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {INTEGRATORS.map((p) => (
-              <a
-                key={p.name}
-                href={p.href}
-                rel="noopener"
-                className="logo-wall-item"
-                title={p.name}
-                aria-label={p.name}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.logo} alt={`${p.name} logo`} loading="lazy" />
-              </a>
-            ))}
-          </div>
+          <PartnerGrid items={INTEGRATORS} cols="grid-cols-2 sm:grid-cols-3" />
           <p className="text-sm text-muted mt-6">
             Interested in partnering or integrating?{" "}
             <Link href="/contact" className="text-purple hover:underline">
