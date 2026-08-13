@@ -14,7 +14,52 @@ const PARTNERSHIPS = [
     href: "https://france-identite.gouv.fr/",
     logo: "/assets/img/logo_france_identite.png",
   },
-  { name: "Trialog", href: "https://www.trialog.com/", logo: "/assets/img/logo_trialog.png" },
+  {
+    name: "European Commission (EUDI Wallet)",
+    href: "https://ec.europa.eu",
+    logo: "/assets/img/logo_eudi.svg",
+  },
+  {
+    name: "Swiss Confederation (swiyu Wallet)",
+    href: "https://www.eid.admin.ch",
+    logo: "/assets/img/logo_swiyu.webp",
+  },
+  {
+    name: "Government of British Columbia (BC Wallet)",
+    href: "https://digital.gov.bc.ca/digital-trust/",
+    logo: "/assets/img/logo_bcwallet.webp",
+  },
+  {
+    name: "MinBZK (NL Wallet)",
+    href: "https://edi.pleio.nl",
+    logo: "/assets/img/logo_nl_wallet.png",
+  },
+  {
+    name: "Animo Solutions (Paradym Wallet)",
+    href: "https://animo.id",
+    logo: "/assets/img/logo_paradym.webp",
+  },
+  {
+    name: "Procivis (Procivis One Wallet)",
+    href: "https://www.procivis.ch",
+    logo: "/assets/img/logo_procivis.webp",
+  },
+  {
+    name: "Sphereon (Sphereon Wallet)",
+    href: "https://sphereon.com",
+    logo: "/assets/img/logo_sphereon.webp",
+  },
+  {
+    name: "Talao (Altme Wallet)",
+    href: "https://talao.io",
+    logo: "/assets/img/logo_talao.webp",
+  },
+  {
+    name: "Authbound (Authbound Wallet)",
+    href: "https://authbound.io",
+    logo: "/assets/img/logo_authbound.webp",
+  },
+  { name: "wwWallet", href: "https://wwwallet.org", logo: "/assets/img/logo_wwwallet.svg" },
   { name: "Mobai", href: "https://www.mobai.bio/", logo: "/assets/img/logo_mobai.png" },
   { name: "Bitel", href: "https://bitel.com.pe/", logo: "/assets/img/logo_bitel.png" },
   { name: "EAFIT", href: "https://www.eafit.edu.co/", logo: "/assets/img/logo_eafit.svg" },
