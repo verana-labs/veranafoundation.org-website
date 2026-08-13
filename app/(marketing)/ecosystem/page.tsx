@@ -9,84 +9,39 @@ export const metadata: Metadata = {
 
 type Partner = {
   name: string;
-  sub?: string;
   href: string;
   logo: string;
 };
 
 const PARTNERSHIPS: Partner[] = [
-  {
-    name: "MOSIP",
-    sub: "Inji Wallet",
-    href: "https://www.mosip.io/",
-    logo: "/assets/img/logo_mosip.png",
-  },
+  { name: "MOSIP", href: "https://www.mosip.io/", logo: "/assets/img/logo_mosip.png" },
   {
     name: "France Identité",
-    sub: "EUDIW Unfold",
     href: "https://france-identite.gouv.fr/",
     logo: "/assets/img/logo_france_identite.png",
   },
   {
     name: "European Commission",
-    sub: "EUDI Wallet",
     href: "https://ec.europa.eu",
     logo: "/assets/img/logo_eudi.svg",
   },
   {
     name: "Swiss Confederation",
-    sub: "swiyu Wallet",
     href: "https://www.eid.admin.ch",
     logo: "/assets/img/logo_swiyu.webp",
   },
   {
     name: "Government of British Columbia",
-    sub: "BC Wallet",
     href: "https://digital.gov.bc.ca/digital-trust/",
     logo: "/assets/img/logo_bcwallet.webp",
   },
-  {
-    name: "MinBZK",
-    sub: "NL Wallet",
-    href: "https://edi.pleio.nl",
-    logo: "/assets/img/logo_nl_wallet.png",
-  },
-  {
-    name: "Animo Solutions",
-    sub: "Paradym Wallet",
-    href: "https://animo.id",
-    logo: "/assets/img/logo_paradym.webp",
-  },
-  {
-    name: "Procivis",
-    sub: "Procivis One Wallet",
-    href: "https://www.procivis.ch",
-    logo: "/assets/img/logo_procivis.webp",
-  },
-  {
-    name: "Sphereon",
-    sub: "Sphereon Wallet",
-    href: "https://sphereon.com",
-    logo: "/assets/img/logo_sphereon.webp",
-  },
-  {
-    name: "Talao",
-    sub: "Altme Wallet",
-    href: "https://talao.io",
-    logo: "/assets/img/logo_talao.webp",
-  },
-  {
-    name: "Authbound",
-    sub: "Authbound Wallet",
-    href: "https://authbound.io",
-    logo: "/assets/img/logo_authbound.webp",
-  },
-  {
-    name: "wwWallet",
-    sub: "browser wallet",
-    href: "https://wwwallet.org",
-    logo: "/assets/img/logo_wwwallet.svg",
-  },
+  { name: "MinBZK", href: "https://edi.pleio.nl", logo: "/assets/img/logo_nl_wallet.png" },
+  { name: "Animo Solutions", href: "https://animo.id", logo: "/assets/img/logo_paradym.webp" },
+  { name: "Procivis", href: "https://www.procivis.ch", logo: "/assets/img/logo_procivis.webp" },
+  { name: "Sphereon", href: "https://sphereon.com", logo: "/assets/img/logo_sphereon.webp" },
+  { name: "Talao", href: "https://talao.io", logo: "/assets/img/logo_talao.webp" },
+  { name: "Authbound", href: "https://authbound.io", logo: "/assets/img/logo_authbound.webp" },
+  { name: "wwWallet", href: "https://wwwallet.org", logo: "/assets/img/logo_wwwallet.svg" },
   { name: "Mobai", href: "https://www.mobai.bio/", logo: "/assets/img/logo_mobai.png" },
   { name: "Bitel", href: "https://bitel.com.pe/", logo: "/assets/img/logo_bitel.png" },
   { name: "EAFIT", href: "https://www.eafit.edu.co/", logo: "/assets/img/logo_eafit.svg" },
@@ -107,17 +62,14 @@ const INTEGRATORS: Partner[] = [
 
 function PartnerGrid({ items, cols }: { items: Partner[]; cols: string }) {
   return (
-    <div className={`grid gap-4 ${cols}`}>
+    <div className={`grid gap-3 ${cols}`}>
       {items.map((p) => (
         <a key={p.name} href={p.href} rel="noopener" className="partner-card" title={p.name}>
           <span className="partner-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={p.logo} alt={`${p.name} logo`} loading="lazy" />
           </span>
-          <span className="partner-name">
-            {p.name}
-            {p.sub ? <span className="partner-sub">{p.sub}</span> : null}
-          </span>
+          <span className="partner-name">{p.name}</span>
         </a>
       ))}
     </div>
