@@ -7,17 +7,30 @@ export const metadata: Metadata = {
     "How the Verana Foundation grows the open trust layer: grants, developer relations, partnerships and integrations, and adoption in the wild.",
 };
 
-const PARTNERS = [
+const PARTNERSHIPS = [
+  { name: "MOSIP", href: "https://www.mosip.io/", logo: "/assets/img/logo_mosip.png" },
+  {
+    name: "France Identité",
+    href: "https://france-identite.gouv.fr/",
+    logo: "/assets/img/logo_france_identite.png",
+  },
+  { name: "Trialog", href: "https://www.trialog.com/", logo: "/assets/img/logo_trialog.png" },
+  { name: "Mobai", href: "https://www.mobai.bio/", logo: "/assets/img/logo_mobai.png" },
+  { name: "Bitel", href: "https://bitel.com.pe/", logo: "/assets/img/logo_bitel.png" },
+  { name: "EAFIT", href: "https://www.eafit.edu.co/", logo: "/assets/img/logo_eafit.svg" },
+];
+
+const INTEGRATORS = [
   { name: "2060", href: "https://2060.io", logo: "/assets/img/logo_2060.svg" },
   {
     name: "Orchestrating Identity",
     href: "https://www.oidentity.com/",
     logo: "/assets/img/logo_oidentity.svg",
   },
-  { name: "Mobai", href: "https://www.mobai.bio/", logo: "/assets/img/logo_mobai.png" },
+  { name: "Intexus", href: "https://intexus.la/", logo: "/assets/img/logo_intexus.svg" },
+  { name: "Mobiera", href: "https://www.mobiera.com/", logo: "/assets/img/logo_mobiera.svg" },
+  { name: "Bigdavi", href: "https://bigdavi.com/", logo: "/assets/img/logo_bigdavi.png" },
   { name: "TotalNot", href: "https://www.totalnot.mx/", logo: "/assets/img/logo_totalnot.png" },
-  { name: "EAFIT", href: "https://www.eafit.edu.co/", logo: "/assets/img/logo_eafit.svg" },
-  { name: "Bitel", href: "https://bitel.com.pe/", logo: "/assets/img/logo_bitel.png" },
 ];
 
 export default function EcosystemPage() {
@@ -77,8 +90,29 @@ export default function EcosystemPage() {
           <p className="tag mb-3">Partnerships &amp; integrations</p>
           <h2 className="display text-3xl">Adopting the open trust layer</h2>
           <div className="accent-line mt-4 mb-10" />
+          <p className="text-xs text-muted uppercase tracking-wider mb-4">
+            Partnerships, integrations &amp; pilots
+          </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-            {PARTNERS.map((p) => (
+            {PARTNERSHIPS.map((p) => (
+              <a
+                key={p.name}
+                href={p.href}
+                rel="noopener"
+                className="logo-wall-item"
+                title={p.name}
+                aria-label={p.name}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.logo} alt={`${p.name} logo`} loading="lazy" />
+              </a>
+            ))}
+          </div>
+          <p className="text-xs text-muted uppercase tracking-wider mt-10 mb-4">
+            Integrators
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            {INTEGRATORS.map((p) => (
               <a
                 key={p.name}
                 href={p.href}
@@ -106,11 +140,11 @@ export default function EcosystemPage() {
           <div className="card">
             <h3>Adoption in the wild</h3>
             <p className="text-sm text-muted leading-relaxed">
-              Independent builders ship on the open protocol — for example 2060&rsquo;s{" "}
+              Independent builders ship on the open protocol, for example 2060&rsquo;s{" "}
               <a href="https://hologram.zone" rel="noopener" className="text-purple hover:underline">
                 Hologram
-              </a>{" "}
-              — evidence that the standards work in production. The Foundation
+              </a>
+              : evidence that the standards work in production. The Foundation
               stewards the neutral protocol underneath; it does not market
               products.
             </p>
