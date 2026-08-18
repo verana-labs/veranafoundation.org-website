@@ -168,22 +168,46 @@ async function fetchRaw(downloadUrl: string): Promise<string | null> {
       headers: headers(),
       next: { revalidate: REVALIDATE },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error(`[blog] raw fetch failed: HTTP ${res.status} for ${downloadUrl}`);
+      return null;
+    }
     return await res.text();
-  } catch {
+  } catch (err) {
+    console.error(`[blog] raw fetch threw for ${downloadUrl}:`, err);
     return null;
   }
 }
 
 type DirEntry = { name: string; type: string; download_url: string | null };
 
+/**
+ * Fetch the blog folder listing from GitHub. On failure the callers degrade
+ * gracefully (Next serves the stale data-cache entry, or an empty list) — which
+ * is invisible in production, so the cause must at least reach the pod logs.
+ */
+async function fetchListing(): Promise<DirEntry[] | null> {
+  const url = `${API}/repos/${REPO}/contents/${PATH}?ref=${encodeURIComponent(BRANCH)}`;
+  try {
+    const res = await fetch(url, { headers: headers(), next: { revalidate: REVALIDATE } });
+    if (!res.ok) {
+      console.error(
+        `[blog] GitHub listing failed: HTTP ${res.status} for ${url} (auth: ${TOKEN ? "token" : "anonymous"})`,
+      );
+      return null;
+    }
+    return (await res.json()) as DirEntry[];
+  } catch (err) {
+    console.error(`[blog] GitHub listing threw for ${url}:`, err);
+    return null;
+  }
+}
+
 /** List published posts (newest first). Returns [] if GitHub is unreachable. */
 export async function listPosts(): Promise<PostMeta[]> {
   try {
-    const url = `${API}/repos/${REPO}/contents/${PATH}?ref=${encodeURIComponent(BRANCH)}`;
-    const res = await fetch(url, { headers: headers(), next: { revalidate: REVALIDATE } });
-    if (!res.ok) return [];
-    const entries = (await res.json()) as DirEntry[];
+    const entries = await fetchListing();
+    if (!entries) return [];
     const files = entries.filter(
       (e) => e.type === "file" && /\.md$/i.test(e.name) && e.name.toLowerCase() !== "readme.md",
     );
@@ -210,10 +234,8 @@ export async function listPosts(): Promise<PostMeta[]> {
 /** Fetch a single post by slug. Returns null if not found / unreachable / draft. */
 export async function getPost(slug: string): Promise<Post | null> {
   try {
-    const url = `${API}/repos/${REPO}/contents/${PATH}?ref=${encodeURIComponent(BRANCH)}`;
-    const res = await fetch(url, { headers: headers(), next: { revalidate: REVALIDATE } });
-    if (!res.ok) return null;
-    const entries = (await res.json()) as DirEntry[];
+    const entries = await fetchListing();
+    if (!entries) return null;
     const file = entries.find(
       (e) => e.type === "file" && /\.md$/i.test(e.name) && slugFromFilename(e.name) === slug,
     );
@@ -238,10 +260,8 @@ export async function getPost(slug: string): Promise<Post | null> {
  */
 export async function listPostsWithPreview(): Promise<PostPreview[]> {
   try {
-    const url = `${API}/repos/${REPO}/contents/${PATH}?ref=${encodeURIComponent(BRANCH)}`;
-    const res = await fetch(url, { headers: headers(), next: { revalidate: REVALIDATE } });
-    if (!res.ok) return [];
-    const entries = (await res.json()) as DirEntry[];
+    const entries = await fetchListing();
+    if (!entries) return [];
     const files = entries.filter(
       (e) => e.type === "file" && /\.md$/i.test(e.name) && e.name.toLowerCase() !== "readme.md",
     );
