@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.9.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.8.0...veranafoundation-website-v0.9.0) (2026-08-18)
+
+
+### Features
+
+* **admin:** hourly cache warmer for contributor insights ([#128](https://github.com/verana-labs/veranafoundation.org-website/issues/128)) ([53d4d94](https://github.com/verana-labs/veranafoundation.org-website/commit/53d4d94870e85b09569f03e2fc0c7eea967e4e64))
+* **admin:** link contributor insights from the admin home ([#127](https://github.com/verana-labs/veranafoundation.org-website/issues/127)) ([77a65bc](https://github.com/verana-labs/veranafoundation.org-website/commit/77a65bcd7f2d52aa87d10ee768d1eb50bcdd95bc))
+* **admin:** show pending lead invites on the working-group cards ([#124](https://github.com/verana-labs/veranafoundation.org-website/issues/124)) ([ebaff5e](https://github.com/verana-labs/veranafoundation.org-website/commit/ebaff5e64ed68c42228be40bca65fc173b151b02))
+* **admin:** unlisted contributor-insights dashboard ([#126](https://github.com/verana-labs/veranafoundation.org-website/issues/126)) ([54eabf7](https://github.com/verana-labs/veranafoundation.org-website/commit/54eabf74dba5357ca3a30633f8bac131cad6726c))
+* **blog:** author avatars, social links, and richer list cards ([#116](https://github.com/verana-labs/veranafoundation.org-website/issues/116)) ([231e882](https://github.com/verana-labs/veranafoundation.org-website/commit/231e882e59d0f86dbd95892bd35b231a0f3f26b2))
+* **ecosystem:** replace the partner logo wall with a Playground section ([#129](https://github.com/verana-labs/veranafoundation.org-website/issues/129)) ([ffd1824](https://github.com/verana-labs/veranafoundation.org-website/commit/ffd1824a2a55a9ff081729213deb825290b3b36c))
+* **fees:** add MA v4 agreement + fee schedule; rename fallback constant ([#115](https://github.com/verana-labs/veranafoundation.org-website/issues/115)) ([360f316](https://github.com/verana-labs/veranafoundation.org-website/commit/360f316cb569e8f811567ca42677291ee5d92506))
+* **footer:** social icon row (Discord, LinkedIn, X) ([#121](https://github.com/verana-labs/veranafoundation.org-website/issues/121)) ([4ec470b](https://github.com/verana-labs/veranafoundation.org-website/commit/4ec470bb84d89014643055d03f6a466b949995ad))
+* **nav:** replace announcement with temporary GDC26 invite banner ([#125](https://github.com/verana-labs/veranafoundation.org-website/issues/125)) ([9d64f82](https://github.com/verana-labs/veranafoundation.org-website/commit/9d64f822a74ed2a59f206d1ae6d5f830de61b8f1))
+* **working-groups:** invite unregistered emails as leads or participants ([#123](https://github.com/verana-labs/veranafoundation.org-website/issues/123)) ([e586864](https://github.com/verana-labs/veranafoundation.org-website/commit/e586864e176b68682a2090233c3d62a4374d8a55))
+
+
+### Bug Fixes
+
+* **blog:** log GitHub fetch failures instead of failing silently ([#130](https://github.com/verana-labs/veranafoundation.org-website/issues/130)) ([0ec4517](https://github.com/verana-labs/veranafoundation.org-website/commit/0ec451743354552b188ed3193163b4974744197f))
+
 ## [0.8.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.7.0...veranafoundation-website-v0.8.0) (2026-06-24)
 
 
