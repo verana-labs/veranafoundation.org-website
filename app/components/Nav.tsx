@@ -4,8 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import UserMenu, { type MeUser, type MeAction } from "@/app/components/UserMenu";
 
 type Me = { user: MeUser | null; actions: MeAction[]; isMember: boolean };
@@ -17,19 +15,15 @@ const NAV_LINKS = [
   { href: "/blog", label: "Blog" },
 ];
 
-// Temporary GDC26 banner: remove after the event (September 3, 2026).
-const ANNOUNCEMENT_KEY = "vf-gdc26-dismissed";
 const THEME_KEY = "vf-theme";
 
 export default function Nav() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [announcementVisible, setAnnouncementVisible] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [me, setMe] = useState<Me | undefined>(undefined);
 
   useEffect(() => {
-    setAnnouncementVisible(localStorage.getItem(ANNOUNCEMENT_KEY) !== "true");
     const current = document.documentElement.getAttribute("data-theme");
     setTheme(current === "dark" ? "dark" : "light");
   }, []);
@@ -54,59 +48,12 @@ export default function Nav() {
     } catch {}
   }
 
-  function dismissAnnouncement() {
-    setAnnouncementVisible(false);
-    try {
-      localStorage.setItem(ANNOUNCEMENT_KEY, "true");
-    } catch {}
-  }
-
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 
   return (
     <>
-      {announcementVisible && (
-        <aside className="announcement">
-          {/* GDC brand barcode strip, tiled at half its native 20px height. */}
-          <div
-            aria-hidden
-            className="h-2.5 w-full"
-            style={{
-              backgroundImage: "url(/assets/img/gdc-barcode.png)",
-              backgroundRepeat: "repeat-x",
-              backgroundSize: "auto 100%",
-            }}
-          />
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center gap-4 justify-center text-center">
-            <span>
-              Meet Verana at the Global Digital Collaboration conference
-              (GDC26), September 1-3, 2026, Palexpo Geneva.{" "}
-              <a
-                href="https://globaldigitalcollaboration.org/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Learn more
-              </a>
-            </span>
-            <button
-              type="button"
-              onClick={dismissAnnouncement}
-              aria-label="Dismiss announcement"
-              className="ml-auto text-white/80 hover:text-white flex-shrink-0"
-            >
-              <FontAwesomeIcon
-                icon={faXmark}
-                className="h-3.5 w-3.5"
-                aria-hidden
-              />
-            </button>
-          </div>
-        </aside>
-      )}
-
       <header className="site-header sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
