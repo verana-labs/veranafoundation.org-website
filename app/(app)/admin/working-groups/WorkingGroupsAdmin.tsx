@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { createWg, type WgState } from "./actions";
 import WorkingGroupAdminCard, { type AdminWg } from "./WorkingGroupAdminCard";
+import { MINUTES_LANGUAGES } from "@/app/lib/languages";
 
 // A just-disabled WG stays visible in the list for this long even when
 // "Show disabled" is off, so disabling doesn't make it vanish instantly.
@@ -86,6 +87,18 @@ export default function WorkingGroupsAdmin({ groups }: { groups: AdminWg[] }) {
           <label className="flex items-center gap-2 text-sm py-2">
             <input type="checkbox" name="showOnHome" /> Show on home page
           </label>
+          <label className="flex items-center gap-2 text-sm py-2">
+            <input type="checkbox" name="autoMinutes" defaultChecked />
+            Transcribe meetings and draft the minutes automatically
+          </label>
+          <div className="form-field">
+            <label htmlFor="wg-language">Language of the drafted minutes</label>
+            <select id="wg-language" name="language" defaultValue="en">
+              {MINUTES_LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
+          </div>
           {state.error && <p className="text-sm text-red-600">{state.error}</p>}
           {state.ok && <p className="text-sm text-green-600">Created.</p>}
           <button type="submit" className="btn btn-primary w-fit" disabled={pending}>

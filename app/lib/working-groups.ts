@@ -5,6 +5,7 @@ import {
   createScheduleEvent,
   updateScheduleEvent,
 } from "@/app/lib/google-calendar";
+import { meetingCodeFromLink, setAutoTranscription } from "@/app/lib/google-meet";
 
 export type WgClass = "contributor" | "associate";
 
@@ -105,7 +106,21 @@ export async function getWgBySlug(slug: string) {
       schedule: { include: { exceptions: { orderBy: { originalStart: "asc" } } } },
       sessions: {
         orderBy: { occurredAt: "desc" },
-        include: { attendees: true, recordedBy: { select: personSelect } },
+        include: {
+          attendees: true,
+          recordedBy: { select: personSelect },
+          // Pipeline state only — the entries JSON stays on the session page.
+          transcript: {
+            select: {
+              status: true,
+              summaryModel: true,
+              lastError: true,
+              entryCount: true,
+              transcriptPath: true,
+              transcriptCommitSha: true,
+            },
+          },
+        },
       },
     },
   });
@@ -164,9 +179,12 @@ export async function syncScheduleToGoogle(
 
   // Same base-URL source as every other absolute link (emails, invoices).
   const base = process.env.AUTH_URL ?? "https://veranafoundation.org";
+  const transcriptionNote = wg.autoMinutes
+    ? "\n\nMeetings are transcribed automatically; an AI assistant drafts the minutes, which a group lead reviews before publication. Transcripts stay internal to the group unless a lead publishes them."
+    : "";
   const input = {
     summary: `Verana — ${wg.name}`,
-    description: `${wg.description ?? ""}\n\nWorking group page: ${base}/working-groups/${wg.slug}`.trim(),
+    description: `${wg.description ?? ""}\n\nWorking group page: ${base}/working-groups/${wg.slug}${transcriptionNote}`.trim(),
     startsAt: schedule.startsAt,
     durationMin: schedule.durationMin,
     timezone: schedule.timezone,
@@ -175,20 +193,33 @@ export async function syncScheduleToGoogle(
   };
 
   try {
+    let link: string | null;
     if (schedule.googleEventId) {
       const { meetLink } = await updateScheduleEvent(schedule.googleEventId, input);
+      link = meetLink ?? schedule.meetLink;
       await db.wgSchedule.update({
         where: { id: schedule.id },
-        data: { meetLink: meetLink ?? schedule.meetLink, syncedAt: new Date(), syncError: null },
+        data: {
+          meetLink: link,
+          meetingCode: meetingCodeFromLink(link),
+          syncedAt: new Date(),
+          syncError: null,
+        },
       });
     } else {
       const { eventId, meetLink } = await createScheduleEvent(input);
+      link = meetLink;
       await db.wgSchedule.update({
         where: { id: schedule.id },
-        data: { googleEventId: eventId, meetLink, syncedAt: new Date(), syncError: null },
+        data: {
+          googleEventId: eventId,
+          meetLink,
+          meetingCode: meetingCodeFromLink(meetLink),
+          syncedAt: new Date(),
+          syncError: null,
+        },
       });
     }
-    return { ok: true };
   } catch (e) {
     const error = e instanceof Error ? e.message : String(e);
     await db.wgSchedule.update({
@@ -197,21 +228,82 @@ export async function syncScheduleToGoogle(
     });
     return { ok: false, error };
   }
+
+  // ADR-0004: the Meet space follows the group's autoMinutes setting. Its own
+  // failure is recorded separately (meetConfigError) and never fails the sync.
+  await syncMeetConfig(wgId);
+  return { ok: true };
 }
 
-/** Upcoming occurrences from the DB schedule, with cancelled ones flagged. */
+/**
+ * Push the group's auto-transcription setting to its Meet space (ADR-0004 §1).
+ * Idempotent and cheap: skipped when the stored state already matches, unless
+ * `force`. Failures land in `meetConfigError`; the lead console retries them
+ * together with the Calendar sync.
+ */
+export async function syncMeetConfig(
+  wgId: string,
+  opts: { force?: boolean } = {},
+): Promise<{ ok: boolean; error?: string }> {
+  const wg = await db.workingGroup.findUnique({
+    where: { id: wgId },
+    include: { schedule: true },
+  });
+  const schedule = wg?.schedule;
+  if (!wg || !schedule) return { ok: true };
+  const meetingCode = schedule.meetingCode ?? meetingCodeFromLink(schedule.meetLink);
+  if (!meetingCode) return { ok: true }; // no Meet link yet (sync pending)
+  const desired = wg.autoMinutes;
+  if (
+    !opts.force &&
+    schedule.meetAutoTranscribe === desired &&
+    !schedule.meetConfigError
+  ) {
+    return { ok: true };
+  }
+  try {
+    const space = await setAutoTranscription(meetingCode, desired);
+    await db.wgSchedule.update({
+      where: { id: schedule.id },
+      data: {
+        meetingCode,
+        meetAutoTranscribe: space.autoTranscription ?? desired,
+        meetConfiguredAt: new Date(),
+        meetConfigError: null,
+      },
+    });
+    return { ok: true };
+  } catch (e) {
+    const error = e instanceof Error ? e.message : String(e);
+    await db.wgSchedule.update({
+      where: { id: schedule.id },
+      data: { meetingCode, meetConfigError: error.slice(0, 1000) },
+    });
+    return { ok: false, error };
+  }
+}
+
+export { occurrenceFor, sessionPhase, type SessionPhase } from "@/app/lib/recurrence";
+
+/**
+ * Upcoming occurrences from the DB schedule, with cancelled ones flagged. The
+ * occurrence in progress is included (so the "current session" stays
+ * reachable until the meeting ends).
+ */
 export function upcomingOccurrences(
   schedule: NonNullable<WgDetail["schedule"]>,
   count = 6,
+  now = new Date(),
 ): { start: Date; cancelled: boolean; note: string | null }[] {
   const cancelled = new Map(
     schedule.exceptions.map((e) => [e.originalStart.getTime(), e.note]),
   );
+  const from = new Date(now.getTime() - schedule.durationMin * 60_000);
   return nextOccurrences(
     schedule.startsAt,
     schedule.timezone,
     schedule.rrule,
-    new Date(),
+    from,
     count,
   ).map((start) => ({
     start,
@@ -219,6 +311,7 @@ export function upcomingOccurrences(
     note: cancelled.get(start.getTime()) ?? null,
   }));
 }
+
 
 /**
  * Working groups featured on the public home page (admin-flagged). Resilient:

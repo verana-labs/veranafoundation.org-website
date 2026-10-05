@@ -3,6 +3,8 @@
 import { useActionState, useState, useTransition } from "react";
 import type { Person } from "@/app/components/PersonAvatars";
 import PersonAvatars from "@/app/components/PersonAvatars";
+import LocalTime from "@/app/components/LocalTime";
+import { MINUTES_LANGUAGES } from "@/app/lib/languages";
 import {
   addLead,
   cancelMeeting,
@@ -15,6 +17,7 @@ import {
   retrySync,
   revokeInvite,
   saveSchedule,
+  updateWgSettings,
   type ActionState,
 } from "./actions";
 
@@ -26,11 +29,15 @@ export type ScheduleView = {
   syncedAt: string | null;
   syncError: string | null;
   meetLink: string | null;
+  // ADR-0004: Meet auto-transcription state
+  meetingCode: string | null;
+  meetAutoTranscribe: boolean | null;
+  meetConfiguredAt: string | null;
+  meetConfigError: string | null;
 };
 
 export type OccurrenceView = {
   startIso: string;
-  label: string;
   cancelled: boolean;
 };
 
@@ -38,6 +45,11 @@ export type InviteView = {
   id: string;
   email: string;
   role: "lead" | "participant";
+};
+
+export type SettingsView = {
+  autoMinutes: boolean;
+  language: string;
 };
 
 /** datetime-local value of an ISO instant, in the schedule's timezone. */
@@ -59,6 +71,8 @@ function frequencyOf(rrule: string): "weekly" | "biweekly" | "monthly" {
 export default function LeadConsole({
   wgId,
   calendarReady,
+  aiReady,
+  settings,
   schedule,
   occurrences,
   leads,
@@ -67,6 +81,8 @@ export default function LeadConsole({
 }: {
   wgId: string;
   calendarReady: boolean;
+  aiReady: boolean;
+  settings: SettingsView;
   schedule: ScheduleView | null;
   occurrences: OccurrenceView[];
   leads: Person[];
@@ -77,6 +93,10 @@ export default function LeadConsole({
     saveSchedule,
     {},
   );
+  const [settingsState, settingsAction, savingSettings] = useActionState<
+    ActionState,
+    FormData
+  >(updateWgSettings, {});
   const [addState, addAction, adding] = useActionState<ActionState, FormData>(
     addLead,
     {},
@@ -110,7 +130,7 @@ export default function LeadConsole({
         <h3 className="display text-lg">Meeting schedule</h3>
         {!calendarReady && (
           <p className="text-sm text-amber-700 mt-2">
-            Google Calendar isn't configured on this server — schedules save,
+            Google Calendar isn&apos;t configured on this server — schedules save,
             but no invitations go out until it is.
           </p>
         )}
@@ -213,8 +233,9 @@ export default function LeadConsole({
           <div className="mt-8">
             <h4 className="font-medium">Upcoming meetings</h4>
             <p className="text-sm text-muted mt-1">
-              Cancel a single date (e.g. nobody can attend) — it's removed from
-              everyone's calendar; restoring puts it back.
+              Cancel a single date (e.g. nobody can attend) — it&apos;s removed from
+              everyone&apos;s calendar; restoring puts it back. Times are in your
+              own timezone.
             </p>
             <input
               type="text"
@@ -227,7 +248,7 @@ export default function LeadConsole({
               {occurrences.map((o) => (
                 <li key={o.startIso} className="flex items-center justify-between gap-3 text-sm">
                   <span className={o.cancelled ? "line-through text-muted" : ""}>
-                    {o.label}
+                    <LocalTime iso={o.startIso} format="long" />
                   </span>
                   <button
                     type="button"
@@ -248,6 +269,81 @@ export default function LeadConsole({
             </ul>
           </div>
         )}
+
+        {/* Automatic minutes (ADR-0004) */}
+        <h3 className="display text-lg mt-10">Automatic minutes</h3>
+        <p className="text-sm text-muted mt-1">
+          Google Meet transcribes each meeting; an AI assistant drafts the minutes
+          from the transcript and emails the leads, who review and publish them from
+          the session page. Nothing is published without a lead&apos;s approval, and
+          transcripts stay internal unless a lead opts in per meeting.
+        </p>
+        <form action={settingsAction} className="space-y-1 mt-3 max-w-md">
+          <input type="hidden" name="wgId" value={wgId} />
+          <label className="flex items-center gap-2 text-sm py-2">
+            <input type="checkbox" name="autoMinutes" defaultChecked={settings.autoMinutes} />
+            Transcribe meetings and draft the minutes automatically
+          </label>
+          <div className="form-field">
+            <label htmlFor="wg-lang">Language of the drafted minutes</label>
+            <select id="wg-lang" name="language" defaultValue={settings.language}>
+              {MINUTES_LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
+          </div>
+          {settingsState.error && (
+            <p className="text-sm text-red-600">{settingsState.error}</p>
+          )}
+          {settingsState.ok && !savingSettings && (
+            <p className="text-sm" style={{ color: "var(--color-green)" }}>
+              {settingsState.message ?? "Saved."}
+            </p>
+          )}
+          <button type="submit" className="btn text-sm" disabled={savingSettings}>
+            {savingSettings ? "Saving…" : "Save settings"}
+          </button>
+        </form>
+        <ul className="text-sm text-muted mt-3 space-y-1">
+          <li>
+            Meet transcription:{" "}
+            {!schedule ? (
+              "no schedule yet."
+            ) : !schedule.meetingCode ? (
+              "waiting for the Meet link (Calendar sync)."
+            ) : schedule.meetConfigError ? (
+              <span className="text-red-600">
+                failed — {schedule.meetConfigError}{" "}
+                <button
+                  type="button"
+                  className="text-purple hover:underline"
+                  disabled={pending}
+                  onClick={() => run(() => retrySync(wgId))}
+                >
+                  Retry
+                </button>
+              </span>
+            ) : schedule.meetAutoTranscribe === null ? (
+              "not configured yet — pushed with the next Calendar sync."
+            ) : (
+              <>
+                automatic transcription {schedule.meetAutoTranscribe ? "on" : "off"}
+                {schedule.meetConfiguredAt && (
+                  <>
+                    {" "}(set <LocalTime iso={schedule.meetConfiguredAt} />)
+                  </>
+                )}
+                .
+              </>
+            )}
+          </li>
+          <li>
+            AI drafting:{" "}
+            {aiReady
+              ? "ready."
+              : "not configured on this server — transcripts are still collected; minutes are written by hand."}
+          </li>
+        </ul>
       </div>
 
       {/* People */}
@@ -283,7 +379,7 @@ export default function LeadConsole({
           </button>
         </form>
         <p className="text-xs text-muted mt-2">
-          No account with that email yet? They're invited to join the
+          No account with that email yet? They&apos;re invited to join the
           Foundation and become a lead once their membership is active.
         </p>
         {addState.error && <p className="text-sm text-red-600 mt-2">{addState.error}</p>}

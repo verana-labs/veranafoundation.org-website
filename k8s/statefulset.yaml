@@ -232,6 +232,15 @@ spec:
                   name: veranafoundation-website-secrets
                   key: MINUTES_GITHUB_TOKEN
                   optional: true
+            # Automatic minutes (ADR-0004): Claude drafts the minutes from the
+            # Meet transcripts. Optional: without it transcripts are still
+            # collected and leads write the minutes by hand.
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: ANTHROPIC_API_KEY
+                  optional: true
             # Admin contributor-insights dashboard (classic PAT, repo scope,
             # member of every insights org). Optional: the page degrades to an
             # "unavailable" state without it.

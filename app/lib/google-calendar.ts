@@ -1,76 +1,23 @@
-import { createSign } from "node:crypto";
+import { googleAccessToken, googleConfigured } from "@/app/lib/google-auth";
 
 /**
- * Google Calendar client for WG meetings (ADR-0003). A service account with
- * domain-wide delegation impersonates the meetings role account
- * (GOOGLE_CALENDAR_IMPERSONATE), which is the organizer of every WG event:
- * Google auto-creates the Meet link and delivers invitations/cancellations to
- * all attendees (Gmail natively; Microsoft/Apple via standard iCalendar email).
+ * Google Calendar client for WG meetings (ADR-0003). The delegated service
+ * account (lib/google-auth.ts) impersonates the meetings role account, which is
+ * the organizer of every WG event: Google auto-creates the Meet link and
+ * delivers invitations/cancellations to all attendees (Gmail natively;
+ * Microsoft/Apple via standard iCalendar email).
  *
- * Plain fetch + a hand-rolled JWT-bearer grant — no googleapis dependency.
- * Callers treat thrown errors as "sync failed" and store them (DB is canonical,
- * sync is retryable); reads never hit this module.
+ * Plain fetch — no googleapis dependency. Callers treat thrown errors as
+ * "sync failed" and store them (DB is canonical, sync is retryable); reads
+ * never hit this module.
  */
 
-const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const API = "https://www.googleapis.com/calendar/v3";
-const SCOPE = "https://www.googleapis.com/auth/calendar.events";
-
-function config() {
-  const email = process.env.GOOGLE_SA_EMAIL;
-  // The key arrives with literal \n in env files.
-  const key = process.env.GOOGLE_SA_PRIVATE_KEY?.replace(/\\n/g, "\n");
-  const impersonate = process.env.GOOGLE_CALENDAR_IMPERSONATE;
-  if (!email || !key || !impersonate) return null;
-  return { email, key, impersonate };
-}
+const SCOPES = ["https://www.googleapis.com/auth/calendar.events"] as const;
 
 /** Whether Calendar sync is configured (env present). UI degrades when not. */
 export function calendarConfigured(): boolean {
-  return config() !== null;
-}
-
-let cachedToken: { token: string; expiresAt: number } | null = null;
-
-async function accessToken(): Promise<string> {
-  const cfg = config();
-  if (!cfg) throw new Error("Google Calendar is not configured (GOOGLE_* env).");
-  if (cachedToken && cachedToken.expiresAt > Date.now() + 60_000) {
-    return cachedToken.token;
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  const enc = (o: object) =>
-    Buffer.from(JSON.stringify(o)).toString("base64url");
-  const unsigned = `${enc({ alg: "RS256", typ: "JWT" })}.${enc({
-    iss: cfg.email,
-    sub: cfg.impersonate, // act as the meetings role account
-    scope: SCOPE,
-    aud: TOKEN_URL,
-    iat: now,
-    exp: now + 3600,
-  })}`;
-  const signature = createSign("RSA-SHA256")
-    .update(unsigned)
-    .sign(cfg.key, "base64url");
-
-  const res = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: `${unsigned}.${signature}`,
-    }),
-  });
-  if (!res.ok) {
-    throw new Error(`Google token exchange failed (${res.status}): ${await res.text()}`);
-  }
-  const data = (await res.json()) as { access_token: string; expires_in: number };
-  cachedToken = {
-    token: data.access_token,
-    expiresAt: Date.now() + data.expires_in * 1000,
-  };
-  return data.access_token;
+  return googleConfigured();
 }
 
 async function api<T>(
@@ -79,7 +26,7 @@ async function api<T>(
   query: Record<string, string>,
   body?: object,
 ): Promise<T> {
-  const token = await accessToken();
+  const token = await googleAccessToken(SCOPES);
   const qs = new URLSearchParams(query).toString();
   const res = await fetch(`${API}${path}${qs ? `?${qs}` : ""}`, {
     method,

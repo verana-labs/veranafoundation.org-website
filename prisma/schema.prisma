@@ -27,14 +27,14 @@ model User {
   emailVerified DateTime?
   image         String?
 
-  accounts      Account[]
-  sessions      Session[]
-  memberships   UserMember[] // orgs/individuals this user can act for
-  adminActions  AdminAction[]
-  notifications Notification[]
-  wgLeads       WgLead[]
+  accounts         Account[]
+  sessions         Session[]
+  memberships      UserMember[] // orgs/individuals this user can act for
+  adminActions     AdminAction[]
+  notifications    Notification[]
+  wgLeads          WgLead[]
   wgParticipations WgParticipant[]
-  wgSessions    WgSession[] // sessions this user recorded
+  wgSessions       WgSession[] // sessions this user recorded
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -134,10 +134,10 @@ model Membership {
   memberId String @unique // one membership per member (1:1)
   member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
-  class       MembershipClass
-  tier        String? // Associate only — e.g. "tier_3" (Annex D bands); dues resolved in code
-  status      MembershipStatus @default(pending)
-  listed      Boolean          @default(false) // admin-curated: shown on the public /members page
+  class  MembershipClass
+  tier   String? // Associate only — e.g. "tier_3" (Annex D bands); dues resolved in code
+  status MembershipStatus @default(pending)
+  listed Boolean          @default(false) // admin-curated: shown on the public /members page
 
   periodStart DateTime?
   periodEnd   DateTime?
@@ -213,10 +213,10 @@ model Invoice {
   vatAmount   Int @default(0)
   grossAmount Int
 
-  vatTreatment VatTreatment
-  status       InvoiceStatus @default(draft)
-  payMethod    PayMethod?
-  providerRef  String? // Stripe invoice id, etc.
+  vatTreatment       VatTreatment
+  status             InvoiceStatus @default(draft)
+  payMethod          PayMethod?
+  providerRef        String? // Stripe invoice id, etc.
   // Which fee schedule priced this invoice (audit; null on legacy rows).
   feeScheduleVersion String?
 
@@ -307,11 +307,16 @@ model WorkingGroup {
   priority      Int               @default(0) // higher shows first in public listings
   disabledAt    DateTime? // when state last became disabled (admin grace window)
 
+  // ADR-0004: Meet auto-transcription → AI-drafted minutes, reviewed by a lead.
+  autoMinutes Boolean @default(true)
+  language    String  @default("en") // language of the drafted minutes (BCP 47)
+
   leads        WgLead[]
   participants WgParticipant[]
   invites      WgInvite[]
   schedule     WgSchedule?
   sessions     WgSession[]
+  transcripts  WgTranscript[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -397,6 +402,13 @@ model WgSchedule {
   syncedAt      DateTime?
   syncError     String? // last push failure; UI offers retry while set
 
+  // Google Meet space (ADR-0004): the meeting code parsed from meetLink and the
+  // auto-transcription setting last pushed to the space (null = never pushed).
+  meetingCode        String?
+  meetAutoTranscribe Boolean?
+  meetConfiguredAt   DateTime?
+  meetConfigError    String? // last Meet push failure; retried with the Calendar sync
+
   exceptions WgScheduleException[]
 
   createdAt DateTime @default(now())
@@ -417,27 +429,93 @@ model WgScheduleException {
 
 // A meeting's record: attendance + Markdown minutes. Published minutes are
 // committed to the public minutes repo; the DB copy renders the history pages.
+// Since ADR-0004 only leads write sessions; the transcript pipeline may create
+// one (recordedById null until a lead approves it).
 model WgSession {
   id           String          @id @default(cuid())
   wgId         String
   wg           WorkingGroup    @relation(fields: [wgId], references: [id], onDelete: Cascade)
   occurredAt   DateTime
   status       WgSessionStatus @default(draft)
+  source       WgSessionSource @default(manual)
   notesMd      String          @default("") @db.Text
-  recordedById String
-  recordedBy   User            @relation(fields: [recordedById], references: [id])
+  recordedById String?
+  recordedBy   User?           @relation(fields: [recordedById], references: [id])
 
   // GitHub publish state (minutes repo path + commit, for the citable record)
   notesPath      String?
   notesCommitSha String?
 
-  attendees WgSessionAttendee[]
+  attendees  WgSessionAttendee[]
+  transcript WgTranscript?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([wgId, occurredAt])
   @@index([wgId, status])
+}
+
+enum WgSessionSource {
+  manual
+  ai_draft // minutes prefilled from the Meet transcript (ADR-0004)
+}
+
+// ADR-0004: one row per meeting that Google Meet transcribed, attached to the
+// session of the matching occurrence. The cron step machine advances `status`
+// (lib/transcripts.ts); the DB copy of the entries is the durable one, Google
+// deletes them 30 days after the conference.
+model WgTranscript {
+  id        String       @id @default(cuid())
+  wgId      String
+  wg        WorkingGroup @relation(fields: [wgId], references: [id], onDelete: Cascade)
+  sessionId String       @unique
+  session   WgSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  meetingCode       String
+  // Meet conference records merged into this transcript: a dropped call that
+  // resumes creates a second record for the same occurrence.
+  conferenceRecords String[]
+  startedAt         DateTime
+  endedAt           DateTime?
+  language          String?
+
+  entries          Json? // TranscriptEntry[] (lib/transcripts.ts)
+  entryCount       Int   @default(0)
+  meetParticipants Json? // MeetAttendee[] — attendance cross-check only, never applied
+
+  summaryMd     String?   @db.Text
+  summaryModel  String?
+  summarizedAt  DateTime?
+  openQuestions Json? // string[] — shown to the lead, never published
+
+  status              WgTranscriptStatus @default(awaiting_transcript)
+  publishTranscript   Boolean            @default(false) // per-meeting opt-in
+  transcriptPath      String?
+  transcriptCommitSha String?
+
+  lastError           String?
+  attempts            Int       @default(0)
+  nextAttemptAt       DateTime?
+  lockedAt            DateTime?
+  approvalRequestedAt DateTime?
+  remindedAt          DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([wgId, status])
+  @@index([status, nextAttemptAt])
+}
+
+enum WgTranscriptStatus {
+  awaiting_transcript // waiting for Google to generate the transcript file
+  transcribed // entries persisted
+  summarized // AI draft stored on the session
+  awaiting_approval // leads notified
+  approved // lead published the session
+  discarded // lead discarded it, or no transcript was ever generated
+  failed // pipeline error after retries (ops alerted)
 }
 
 // Attendance snapshot: name is frozen at recording time; guests have no userId.

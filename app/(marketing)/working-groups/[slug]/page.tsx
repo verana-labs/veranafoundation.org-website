@@ -5,6 +5,7 @@ import {
   canAccessWg,
   getWgBySlug,
   lockReason,
+  sessionPhase,
   upcomingOccurrences,
   userActiveClasses,
   wgLeads,
@@ -12,14 +13,19 @@ import {
 } from "@/app/lib/working-groups";
 import { describeRrule } from "@/app/lib/recurrence";
 import { minutesUrl } from "@/app/lib/minutes";
+import { minutesAiConfigured } from "@/app/lib/minutes-ai";
 import { calendarConfigured } from "@/app/lib/google-calendar";
 import PersonAvatars from "@/app/components/PersonAvatars";
+import LocalTime from "@/app/components/LocalTime";
+import { Markdown } from "@/app/components/Markdown";
 import JoinControls from "./JoinControls";
 import LeadConsole from "./LeadConsole";
 import RecordButton from "./RecordButton";
 
 // Per-request: membership, participation and lead views differ by visitor.
 export const dynamic = "force-dynamic";
+
+const DAY_MS = 86_400_000;
 
 export async function generateMetadata({
   params,
@@ -30,11 +36,30 @@ export async function generateMetadata({
   return { title: wg ? `${wg.name} · Working groups` : "Working group" };
 }
 
-function fmtOccurrence(d: Date, tz: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-    hour: "2-digit", minute: "2-digit", timeZone: tz,
-  }).format(d);
+type TranscriptState = {
+  status: string;
+  lastError: string | null;
+  entryCount: number;
+} | null;
+
+/** The pipeline badge a lead sees on a draft session (ADR-0004). */
+function draftBadge(t: TranscriptState): { label: string; tone: string } | null {
+  if (!t) return null;
+  switch (t.status) {
+    case "awaiting_transcript":
+      return { label: "Transcribing", tone: "" };
+    case "transcribed":
+    case "summarized":
+      return { label: "Drafting minutes", tone: "" };
+    case "awaiting_approval":
+      return { label: "AI draft to review", tone: "badge-amber" };
+    case "failed":
+      return { label: "Pipeline failed", tone: "badge-red" };
+    case "discarded":
+      return { label: "AI draft discarded", tone: "" };
+    default:
+      return null;
+  }
 }
 
 export default async function WorkingGroupPage({
@@ -58,11 +83,26 @@ export default async function WorkingGroupPage({
     (wg.leads.some((l) => l.userId === user.id) ||
       (user.email ? await isAdmin(user.email) : false));
 
+  const now = new Date();
   const leads = wgLeads(wg);
   const participants = wgParticipants(wg);
-  const occurrences = wg.schedule ? upcomingOccurrences(wg.schedule, 6) : [];
+  const occurrences = wg.schedule ? upcomingOccurrences(wg.schedule, 6, now) : [];
   const published = wg.sessions.filter((s) => s.status === "published");
-  const drafts = joined || lead ? wg.sessions.filter((s) => s.status === "draft") : [];
+  // Drafts are for the group only. A session the pipeline opened and then
+  // discarded (no transcript, nobody touched it) is noise: hidden.
+  const drafts =
+    joined || lead
+      ? wg.sessions.filter(
+          (s) =>
+            s.status === "draft" &&
+            !(
+              s.source === "ai_draft" &&
+              s.transcript?.status === "discarded" &&
+              s.notesMd.trim() === "" &&
+              s.attendees.length === 0
+            ),
+        )
+      : [];
 
   return (
     <>
@@ -122,6 +162,16 @@ export default async function WorkingGroupPage({
                 {describeRrule(wg.schedule.rrule, wg.schedule.startsAt, wg.schedule.timezone)}
                 {" · "}{wg.schedule.durationMin} min
               </p>
+              <p className="mt-1 text-sm text-muted">
+                Dates below are shown in your own timezone.
+                {wg.autoMinutes && (
+                  <>
+                    {" "}Meetings are transcribed automatically; an AI assistant drafts
+                    the minutes, which a lead reviews before publication. Transcripts
+                    stay internal to the group.
+                  </>
+                )}
+              </p>
               {(joined || lead) && wg.schedule.meetLink && (
                 <p className="mt-3">
                   <a href={wg.schedule.meetLink} rel="noopener" className="btn btn-primary text-sm">
@@ -130,22 +180,38 @@ export default async function WorkingGroupPage({
                 </p>
               )}
               <ul className="mt-6 space-y-2 max-w-2xl">
-                {occurrences.map((o) => (
-                  <li
-                    key={o.start.toISOString()}
-                    className="wg-tile flex flex-wrap items-center justify-between gap-3"
-                  >
-                    <span className={o.cancelled ? "line-through text-muted" : ""}>
-                      {fmtOccurrence(o.start, wg.schedule!.timezone)}
-                      {o.cancelled && (
-                        <span className="no-underline"> — cancelled{o.note ? ` (${o.note})` : ""}</span>
+                {occurrences.map((o) => {
+                  const phase = sessionPhase(o.start, wg.schedule!.durationMin, now);
+                  const current = !o.cancelled && (phase === "soon" || phase === "live");
+                  const openable =
+                    lead &&
+                    !o.cancelled &&
+                    (current || (phase === "upcoming" && o.start.getTime() < now.getTime() + DAY_MS));
+                  return (
+                    <li
+                      key={o.start.toISOString()}
+                      className="wg-tile flex flex-wrap items-center justify-between gap-3"
+                    >
+                      <span className={o.cancelled ? "line-through text-muted" : ""}>
+                        <LocalTime iso={o.start.toISOString()} format="long" />
+                        {phase === "live" && !o.cancelled && (
+                          <span className="badge badge-green ml-3 no-underline">In progress</span>
+                        )}
+                        {o.cancelled && (
+                          <span className="no-underline"> — cancelled{o.note ? ` (${o.note})` : ""}</span>
+                        )}
+                      </span>
+                      {openable && (
+                        <RecordButton
+                          wgId={wg.id}
+                          startIso={o.start.toISOString()}
+                          label={current ? "Current session" : "Open session"}
+                          primary={current}
+                        />
                       )}
-                    </span>
-                    {(joined || lead) && !o.cancelled && o.start < new Date(Date.now() + 86_400_000) && (
-                      <RecordButton wgId={wg.id} startIso={o.start.toISOString()} />
-                    )}
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
                 {occurrences.length === 0 && (
                   <li className="text-sm text-muted">No upcoming meetings.</li>
                 )}
@@ -165,6 +231,7 @@ export default async function WorkingGroupPage({
               joined={joined}
               lockReason={lockReason(wg.requiredClass)}
               hasSchedule={!!wg.schedule}
+              transcribed={wg.autoMinutes}
             />
           </div>
         </div>
@@ -178,57 +245,72 @@ export default async function WorkingGroupPage({
             <p className="mt-3 text-muted">No recorded sessions yet.</p>
           ) : (
             <div className="mt-6 space-y-4 max-w-3xl">
-              {drafts.map((s) => (
-                <div key={s.id} className="wg-tile flex items-center justify-between gap-3">
-                  <span>
-                    {fmtOccurrence(s.occurredAt, wg.schedule?.timezone ?? "UTC")}
-                    <span className="badge badge-amber ml-3">Draft</span>
-                  </span>
-                  <a href={`/working-groups/${wg.slug}/sessions/${s.id}`} className="btn text-sm">
-                    Open
-                  </a>
-                </div>
-              ))}
+              {drafts.map((s) => {
+                const badge = lead ? draftBadge(s.transcript) : null;
+                return (
+                  <div key={s.id} className="wg-tile flex flex-wrap items-center justify-between gap-3">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <LocalTime iso={s.occurredAt.toISOString()} format="long" />
+                      <span className="badge badge-amber">Draft</span>
+                      {badge && <span className={`badge ${badge.tone}`}>{badge.label}</span>}
+                    </span>
+                    <a href={`/working-groups/${wg.slug}/sessions/${s.id}`} className="btn text-sm">
+                      {lead && s.transcript?.status === "awaiting_approval" ? "Review" : "Open"}
+                    </a>
+                  </div>
+                );
+              })}
               {published.map((s) => {
                 const gh = s.notesPath && s.notesCommitSha
                   ? minutesUrl(s.notesPath, s.notesCommitSha)
                   : null;
+                const transcriptUrl =
+                  s.transcript?.transcriptPath && s.transcript.transcriptCommitSha
+                    ? minutesUrl(s.transcript.transcriptPath, s.transcript.transcriptCommitSha)
+                    : null;
+                const recorder = s.recordedBy
+                  ? (s.recordedBy.displayName ?? s.recordedBy.name ?? "—")
+                  : "—";
                 return (
                   <details key={s.id} className="wg-tile">
                     <summary className="cursor-pointer flex flex-wrap items-center justify-between gap-3">
                       <span className="font-medium">
-                        {fmtOccurrence(s.occurredAt, wg.schedule?.timezone ?? "UTC")}
+                        <LocalTime iso={s.occurredAt.toISOString()} format="long" />
                       </span>
                       <span className="text-sm text-muted">
                         {s.attendees.length} attendee{s.attendees.length === 1 ? "" : "s"}
-                        {" · recorded by "}
-                        {s.recordedBy.displayName ?? s.recordedBy.name ?? "—"}
+                        {s.source === "ai_draft"
+                          ? ` · AI draft approved by ${recorder}`
+                          : ` · recorded by ${recorder}`}
                       </span>
                     </summary>
                     <div className="mt-4 text-sm">
                       <p className="text-muted">
                         Attendees: {s.attendees.map((a) => a.name).join(", ") || "—"}
                       </p>
-                      <pre className="whitespace-pre-wrap font-sans mt-3 leading-relaxed">
-                        {s.notesMd}
-                      </pre>
-                      {gh && (
-                        <p className="mt-3">
+                      <div className="mt-3">
+                        <Markdown source={s.notesMd} />
+                      </div>
+                      <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                        {gh && (
                           <a href={gh} rel="noopener" className="text-purple hover:underline">
                             Published record on GitHub ↗
                           </a>
-                        </p>
-                      )}
-                      {(joined || lead) && (
-                        <p className="mt-2">
+                        )}
+                        {transcriptUrl && (
+                          <a href={transcriptUrl} rel="noopener" className="text-purple hover:underline">
+                            Transcript on GitHub ↗
+                          </a>
+                        )}
+                        {(joined || lead) && (
                           <a
                             href={`/working-groups/${wg.slug}/sessions/${s.id}`}
                             className="text-purple hover:underline"
                           >
-                            Edit &amp; republish
+                            {lead ? "Edit & republish" : "Open session"}
                           </a>
-                        </p>
-                      )}
+                        )}
+                      </p>
                     </div>
                   </details>
                 );
@@ -246,6 +328,8 @@ export default async function WorkingGroupPage({
             <LeadConsole
               wgId={wg.id}
               calendarReady={calendarConfigured()}
+              aiReady={minutesAiConfigured()}
+              settings={{ autoMinutes: wg.autoMinutes, language: wg.language }}
               schedule={
                 wg.schedule
                   ? {
@@ -256,12 +340,15 @@ export default async function WorkingGroupPage({
                       syncedAt: wg.schedule.syncedAt?.toISOString() ?? null,
                       syncError: wg.schedule.syncError,
                       meetLink: wg.schedule.meetLink,
+                      meetingCode: wg.schedule.meetingCode,
+                      meetAutoTranscribe: wg.schedule.meetAutoTranscribe,
+                      meetConfiguredAt: wg.schedule.meetConfiguredAt?.toISOString() ?? null,
+                      meetConfigError: wg.schedule.meetConfigError,
                     }
                   : null
               }
               occurrences={occurrences.map((o) => ({
                 startIso: o.start.toISOString(),
-                label: fmtOccurrence(o.start, wg.schedule?.timezone ?? "UTC"),
                 cancelled: o.cancelled,
               }))}
               leads={leads}
