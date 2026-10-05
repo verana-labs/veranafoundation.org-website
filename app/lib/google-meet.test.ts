@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   meetingCodeFromLink,
   parseConferenceRecord,
+  parseMember,
   parseParticipant,
   parseSpace,
 } from "./google-meet";
@@ -39,12 +40,16 @@ describe("parseSpace", () => {
     ).toEqual({
       name: "spaces/X",
       meetingCode: "abc-defg-hij",
+      uri: "https://meet.google.com/abc-defg-hij",
+      moderation: null,
       autoTranscription: true,
       autoRecording: false,
     });
     expect(parseSpace({ name: "spaces/Y" }, "abc-defg-hij")).toEqual({
       name: "spaces/Y",
       meetingCode: "abc-defg-hij",
+      uri: "https://meet.google.com/abc-defg-hij",
+      moderation: null,
       autoTranscription: null,
       autoRecording: null,
     });
@@ -82,5 +87,30 @@ describe("parseConferenceRecord / parseParticipant", () => {
     );
     expect(parseParticipant({ name: "p", phoneUser: { displayName: "+33…" } }).kind).toBe("phone");
     expect(parseParticipant({ name: "p" }).displayName).toBe("Unknown participant");
+  });
+});
+
+describe("parseSpace (site-created spaces) / parseMember", () => {
+  it("carries the meeting URI and host-management state", () => {
+    const s = parseSpace(
+      {
+        name: "spaces/2qjeOwn4KUcB",
+        meetingCode: "zne-gigu-ucu",
+        meetingUri: "https://meet.google.com/zne-gigu-ucu",
+        config: { moderation: "ON" },
+      },
+      "",
+    );
+    expect(s.uri).toBe("https://meet.google.com/zne-gigu-ucu");
+    expect(s.moderation).toBe(true);
+    expect(parseSpace({ name: "spaces/x" }, "abc-defg-hij").uri).toBe(
+      "https://meet.google.com/abc-defg-hij",
+    );
+  });
+  it("lower-cases member emails and maps roles", () => {
+    expect(
+      parseMember({ name: "spaces/x/members/1", email: "F.Rochette@Mobiera.com", role: "COHOST" }),
+    ).toEqual({ name: "spaces/x/members/1", email: "f.rochette@mobiera.com", role: "COHOST" });
+    expect(parseMember({ name: "spaces/x/members/2" }).role).toBe("ROLE_UNSPECIFIED");
   });
 });

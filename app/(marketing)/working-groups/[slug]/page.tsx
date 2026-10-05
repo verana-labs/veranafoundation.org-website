@@ -341,9 +341,12 @@ export default async function WorkingGroupPage({
                       syncError: wg.schedule.syncError,
                       meetLink: wg.schedule.meetLink,
                       meetingCode: wg.schedule.meetingCode,
+                      meetSpaceName: wg.schedule.meetSpaceName,
                       meetAutoTranscribe: wg.schedule.meetAutoTranscribe,
                       meetConfiguredAt: wg.schedule.meetConfiguredAt?.toISOString() ?? null,
                       meetConfigError: wg.schedule.meetConfigError,
+                      meetMembersSyncedAt: wg.schedule.meetMembersSyncedAt?.toISOString() ?? null,
+                      meetMembersError: wg.schedule.meetMembersError,
                     }
                   : null
               }

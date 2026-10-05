@@ -29,11 +29,14 @@ export type ScheduleView = {
   syncedAt: string | null;
   syncError: string | null;
   meetLink: string | null;
-  // ADR-0004: Meet auto-transcription state
+  // ADR-0004: Meet space + auto-transcription + co-host state
   meetingCode: string | null;
+  meetSpaceName: string | null;
   meetAutoTranscribe: boolean | null;
   meetConfiguredAt: string | null;
   meetConfigError: string | null;
+  meetMembersSyncedAt: string | null;
+  meetMembersError: string | null;
 };
 
 export type OccurrenceView = {
@@ -306,6 +309,30 @@ export default function LeadConsole({
         </form>
         <ul className="text-sm text-muted mt-3 space-y-1">
           <li>
+            Meet room:{" "}
+            {!schedule ? (
+              "no schedule yet."
+            ) : schedule.meetSpaceName ? (
+              <>
+                owned by the site; the leads (and Foundation admins) are its
+                co-hosts, which is what starts the transcription when they join.
+                {schedule.meetMembersError ? (
+                  <span className="text-red-600">
+                    {" "}Co-host sync problem: {schedule.meetMembersError}
+                  </span>
+                ) : schedule.meetMembersSyncedAt ? (
+                  <>
+                    {" "}Co-hosts synced <LocalTime iso={schedule.meetMembersSyncedAt} />.
+                  </>
+                ) : (
+                  " Co-hosts are synced within minutes."
+                )}
+              </>
+            ) : (
+              "created by Google Calendar; the site takes it over within minutes (participants receive the new link through the usual calendar update)."
+            )}
+          </li>
+          <li>
             Meet transcription:{" "}
             {!schedule ? (
               "no schedule yet."
@@ -323,17 +350,23 @@ export default function LeadConsole({
                   Retry
                 </button>
               </span>
-            ) : schedule.meetAutoTranscribe === null ? (
-              "not configured yet — pushed with the next Calendar sync."
+            ) : !settings.autoMinutes ? (
+              "off (automatic minutes are disabled for this group)."
             ) : (
               <>
-                automatic transcription {schedule.meetAutoTranscribe ? "on" : "off"}
-                {schedule.meetConfiguredAt && (
+                opens 20 minutes before each scheduled meeting and closes 30 minutes
+                after its end; calls outside those windows are not transcribed.
+                {schedule.meetAutoTranscribe !== null && (
                   <>
-                    {" "}(set <LocalTime iso={schedule.meetConfiguredAt} />)
+                    {" "}Currently {schedule.meetAutoTranscribe ? "on" : "off"}
+                    {schedule.meetConfiguredAt && (
+                      <>
+                        {" "}(since <LocalTime iso={schedule.meetConfiguredAt} />)
+                      </>
+                    )}
+                    .
                   </>
                 )}
-                .
               </>
             )}
           </li>

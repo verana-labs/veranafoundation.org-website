@@ -12,8 +12,13 @@ import {
 import { draftMinutes, minutesAiConfigured } from "@/app/lib/minutes-ai";
 import { sendMinutesReviewEmail } from "@/app/lib/wg-minutes-emails";
 import { alertOps } from "@/app/lib/relaticle";
-import { formatInTimezone } from "@/app/lib/recurrence";
-import { occurrenceFor, personName, syncMeetConfig } from "@/app/lib/working-groups";
+import { formatInTimezone, occurrenceWindowAt } from "@/app/lib/recurrence";
+import {
+  ensureAppSpace,
+  personName,
+  syncMeetConfig,
+  syncMeetMembers,
+} from "@/app/lib/working-groups";
 import {
   wordCount,
   type MeetAttendee,
@@ -118,13 +123,14 @@ export async function discoverTranscripts(now = new Date()): Promise<DiscoverRes
   const result: DiscoverResult = { scanned: 0, discovered: 0, errors: [] };
   const groups = await db.workingGroup.findMany({
     where: { autoMinutes: true, state: "enabled", schedule: { meetingCode: { not: null } } },
-    include: { schedule: true },
+    include: { schedule: { include: { exceptions: true } } },
   });
   const since = new Date(now.getTime() - DISCOVER_LOOKBACK_HOURS * HOUR);
 
   for (const wg of groups) {
     const schedule = wg.schedule!;
     const code = schedule.meetingCode!;
+    const cancelled = new Set(schedule.exceptions.map((e) => e.originalStart.getTime()));
     result.scanned++;
     let records;
     try {
@@ -134,13 +140,17 @@ export async function discoverTranscripts(now = new Date()): Promise<DiscoverRes
       continue;
     }
     for (const record of records) {
+      // Only calls inside a scheduled occurrence's window count (ADR-0004
+      // amendment); nothing else was transcribed anyway.
+      const occurredAt = occurrenceWindowAt(schedule, record.startedAt, cancelled);
+      if (!occurredAt) continue;
+
       const known = await db.wgTranscript.findFirst({
         where: { conferenceRecords: { has: record.name } },
         select: { id: true },
       });
       if (known) continue;
 
-      const occurredAt = occurrenceFor(schedule, record.startedAt);
       const session = await db.wgSession.upsert({
         where: { wgId_occurredAt: { wgId: wg.id, occurredAt } },
         create: { wgId: wg.id, occurredAt, source: "ai_draft" },
@@ -499,38 +509,60 @@ export async function cleanupTranscripts(now = new Date()): Promise<number> {
   return old.length;
 }
 
+/** How often the co-host list is reconciled when nothing changed / after an error. */
+const MEMBERS_SYNC_HOURS = 6;
+const MEMBERS_RETRY_HOURS = 1;
+
+export type MeetSpacesResult = {
+  groups: number;
+  created: number; // spaces taken over / created this tick
+  configErrors: number;
+  memberErrors: number;
+};
+
 /**
- * Push the Meet setting to spaces that never received it (schedules that
- * predate ADR-0004) and retry failed pushes hourly, so the rollout and error
- * recovery don't wait for a lead to touch the schedule.
+ * Keep every group's Meet space in shape (ADR-0004 amendment): make sure the
+ * site owns it (one-time takeover of Calendar-created spaces), open or close
+ * the transcription window for *now*, and reconcile the co-hosts on a slow
+ * cadence. No API call is made when nothing changed.
  */
-export async function backfillMeetConfig(
-  now = new Date(),
-): Promise<{ attempted: number; failed: number }> {
-  const schedules = await db.wgSchedule.findMany({
-    where: {
-      meetLink: { not: null },
-      wg: { state: "enabled" },
-      OR: [
-        { meetingCode: null },
-        { meetAutoTranscribe: null },
-        { meetConfigError: { not: null }, updatedAt: { lt: new Date(now.getTime() - HOUR) } },
-      ],
-    },
-    select: { wgId: true },
-    take: 20,
+export async function syncMeetSpaces(now = new Date()): Promise<MeetSpacesResult> {
+  const result: MeetSpacesResult = { groups: 0, created: 0, configErrors: 0, memberErrors: 0 };
+  const groups = await db.workingGroup.findMany({
+    where: { state: "enabled", schedule: { isNot: null } },
+    include: { schedule: true },
   });
-  let failed = 0;
-  for (const s of schedules) {
-    const r = await syncMeetConfig(s.wgId);
-    if (!r.ok) failed++;
+  for (const wg of groups) {
+    const schedule = wg.schedule!;
+    result.groups++;
+    let membersDue =
+      !schedule.meetMembersSyncedAt ||
+      schedule.meetMembersSyncedAt.getTime() <
+        now.getTime() - (schedule.meetMembersError ? MEMBERS_RETRY_HOURS : MEMBERS_SYNC_HOURS) * HOUR;
+    if (!schedule.meetSpaceName) {
+      const r = await ensureAppSpace(wg.id, { attach: true });
+      if (r.created) {
+        result.created++;
+        membersDue = true;
+      }
+      if (!r.ok) {
+        result.configErrors++;
+        continue;
+      }
+    }
+    const c = await syncMeetConfig(wg.id, { now });
+    if (!c.ok) result.configErrors++;
+    if (membersDue) {
+      const m = await syncMeetMembers(wg.id);
+      if (!m.ok) result.memberErrors++;
+    }
   }
-  return { attempted: schedules.length, failed };
+  return result;
 }
 
 export type PipelineResult = {
   skipped?: string;
-  meetConfig?: { attempted: number; failed: number };
+  meetSpaces?: MeetSpacesResult;
   discover?: DiscoverResult;
   processed: number;
   waiting: number;
@@ -556,7 +588,7 @@ export async function runTranscriptPipeline(
   }
 
   // Spaces first, so a code set just now is discovered in the same tick.
-  result.meetConfig = await backfillMeetConfig(now);
+  result.meetSpaces = await syncMeetSpaces(now);
   result.discover = await discoverTranscripts(now);
   result.errors.push(...result.discover.errors);
 

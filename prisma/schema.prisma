@@ -402,12 +402,17 @@ model WgSchedule {
   syncedAt      DateTime?
   syncError     String? // last push failure; UI offers retry while set
 
-  // Google Meet space (ADR-0004): the meeting code parsed from meetLink and the
-  // auto-transcription setting last pushed to the space (null = never pushed).
-  meetingCode        String?
-  meetAutoTranscribe Boolean?
-  meetConfiguredAt   DateTime?
-  meetConfigError    String? // last Meet push failure; retried with the Calendar sync
+  // Google Meet space (ADR-0004, amended 2026-10-05): the site creates the
+  // space itself (meetSpaceName) and attaches it to the Calendar event, so it
+  // can make the leads co-hosts; meetAutoTranscribe is the setting last pushed
+  // (on only around scheduled occurrences; null = never pushed).
+  meetSpaceName       String? // "spaces/{space}" — null until the site owns the space
+  meetingCode         String?
+  meetAutoTranscribe  Boolean?
+  meetConfiguredAt    DateTime?
+  meetConfigError     String? // last Meet push failure; retried by the cron
+  meetMembersSyncedAt DateTime? // co-host list last reconciled with the leads
+  meetMembersError    String?
 
   exceptions WgScheduleException[]
 

@@ -77,10 +77,24 @@ The existing session editor (`/working-groups/<slug>/sessions/<id>`) gains a **r
 - Approved transcripts are retained with the session; discarded or failed ones are deleted by the cron 90 days after the meeting.
 - Transcript text and speaker names are sent to Anthropic's API to draft the minutes, under Anthropic's commercial API terms. The join consent text, the Calendar event description and the privacy page state that meetings are transcribed and summarized by an AI assistant, that a lead reviews before publication, and that transcripts stay internal unless a lead publishes them.
 
+### Amendment 2026-10-05 — site-owned Meet spaces, co-hosts, transcription window
+
+Two facts learned in production changed §1:
+
+- Google starts the automatic artifacts only when the **host or a co-host joins** the call on the web. Working-group leads and participants are mostly outside the Foundation's Workspace, so a Calendar-created space whose only host is `meetings@` is **never transcribed** unless a Workspace user happens to attend.
+- The Meet API lets an app make **any Google account a co-host** (`spaces.members`, scope `meetings.space.created`) — but only on **spaces that app created**. Calendar-created spaces answer `403 Permission denied on resource MeetingSpace`.
+
+Decision:
+
+1. **The site creates each group's Meet space** (`spaces.create`: trusted access, host management on with no restrictions, recording and notes off) and attaches it to the Calendar event (`conferenceData` with the space's meeting code). Existing groups are **taken over once** by the cron: a new space is created, swapped into the recurring event (attendees receive the new link through the normal Calendar update), and the old space's transcription is switched off. `WgSchedule.meetSpaceName` records ownership.
+2. **Leads and Foundation admins are co-hosts** of the space, reconciled on every schedule sync and every six hours by the cron (`WgSchedule.meetMembersSyncedAt/Error`). Whoever of them joins first starts the transcription, whatever their email domain. Verified with an external (`mobiera.com`) co-host joining alone.
+3. **Transcription is cropped to the schedule.** The cron switches the space's automatic transcription **on 20 minutes before** each non-cancelled occurrence and **off 30 minutes after its scheduled end** (a running call is never cut: the setting only governs new calls). Discovery ignores conferences that start outside a window. A stray join at any other time is therefore not transcribed at all.
+4. Scope added to the delegation: `https://www.googleapis.com/auth/meetings.space.created` (create spaces, manage their members). The `spaces.patch` call must use the resource name, not the meeting code.
+
 ## Provisioning (one-time, manual)
 
 1. **Workspace edition:** Meet transcription requires **Business Standard or higher** (Business Starter and Essentials Starter have no transcription or recording; verified 2026-10-04). The verana.io subscription was upgraded to Business Standard; `meetings@` must hold that licence.
-2. **Domain-wide delegation:** extend the existing service account's authorized scopes to `calendar.events`, `meetings.space.settings` (configure the space) and `meetings.space.readonly` (read conference records and transcripts). No Drive scope is needed: the pipeline never downloads files. This supersedes the single-scope statement of ADR-0003; the blast radius stays bounded to the `meetings@` account's own meetings.
+2. **Domain-wide delegation:** extend the existing service account's authorized scopes to `calendar.events`, `meetings.space.settings` (configure the space), `meetings.space.readonly` (read conference records and transcripts) and `meetings.space.created` (create the spaces, manage their co-hosts — amendment above). No Drive scope is needed: the pipeline never downloads files. This supersedes the single-scope statement of ADR-0003; the blast radius stays bounded to the `meetings@` account's own meetings.
 3. **Google Cloud:** enable the **Google Meet REST API** in the project that hosts the service account.
 4. **Admin console:** Apps → Google Workspace → Google Meet → Meet video settings, for the organizational unit containing `meetings@`: **Recording** off; **Meeting transcripts** is locked on for Business Standard. (On Business Plus / Enterprise the "transcribed by default" option could be enabled as a safety net; it does not exist on Business Standard.)
 5. **Anthropic:** an API key for the Foundation, stored as `ANTHROPIC_API_KEY` (touch `.env.example`, `docker-publish.yml`, `k8s/statefulset.yaml`).
