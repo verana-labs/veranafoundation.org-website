@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.11.0...veranafoundation-website-v0.12.0) (2026-10-05)
+
+
+### Features
+
+* **working-groups:** site-owned Meet rooms with lead co-hosts, transcription cropped to the schedule (ADR-0004 amendment) ([#138](https://github.com/verana-labs/veranafoundation.org-website/issues/138)) ([9c73909](https://github.com/verana-labs/veranafoundation.org-website/commit/9c73909f685b762fdab8bd6a89f5b2d63ec999bd))
+
 ## [0.11.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.10.0...veranafoundation-website-v0.11.0) (2026-10-05)
 
 
