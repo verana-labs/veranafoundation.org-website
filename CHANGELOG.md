@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.11.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.10.0...veranafoundation-website-v0.11.0) (2026-10-05)
+
+
+### Features
+
+* **working-groups:** backfill the Meet transcription setting from the cron ([#135](https://github.com/verana-labs/veranafoundation.org-website/issues/135)) ([11a7f5f](https://github.com/verana-labs/veranafoundation.org-website/commit/11a7f5f543deb6c234ded4a26fc693040f9400c3))
+
+
+### Bug Fixes
+
+* **working-groups:** patch Meet spaces by resource name, not meeting code ([#137](https://github.com/verana-labs/veranafoundation.org-website/issues/137)) ([083a450](https://github.com/verana-labs/veranafoundation.org-website/commit/083a450a13852a02b451bda4c243dc926ad7522d))
+
 ## [0.10.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.9.0...veranafoundation-website-v0.10.0) (2026-10-05)
 
 
