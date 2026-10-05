@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.12.0...veranafoundation-website-v0.13.0) (2026-10-05)
+
+
+### Features
+
+* **working-groups:** leads can move a single meeting to another date/time ([#140](https://github.com/verana-labs/veranafoundation.org-website/issues/140)) ([0ee5c4f](https://github.com/verana-labs/veranafoundation.org-website/commit/0ee5c4f5ca637a6cb2caead3b9022672958826d9))
+
 ## [0.12.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.11.0...veranafoundation-website-v0.12.0) (2026-10-05)
 
 
