@@ -4,8 +4,9 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
-import { slugify } from "@/app/lib/working-groups";
+import { slugify, syncMeetConfig, syncScheduleToGoogle } from "@/app/lib/working-groups";
 import { deleteScheduleEvent } from "@/app/lib/google-calendar";
+import { MINUTES_LANGUAGES } from "@/app/lib/languages";
 
 /** A slug from the name, suffixed on collision. Slugs are stable after create
  * (they name URLs and the minutes-repo folder), so renames don't touch them. */
@@ -40,6 +41,9 @@ const createSchema = z.object({
   showOnHome: z.boolean(),
   state: z.enum(["enabled", "disabled"]).default("enabled"),
   priority: z.coerce.number().int().default(0),
+  // ADR-0004: Meet transcription + AI-drafted minutes, and their language.
+  autoMinutes: z.boolean(),
+  language: z.enum(MINUTES_LANGUAGES.map((l) => l.code) as [string, ...string[]]).default("en"),
 });
 
 const editSchema = createSchema.omit({ requiredClass: true });
@@ -58,6 +62,8 @@ export async function createWg(
     showOnHome: formData.get("showOnHome") === "on",
     state: formData.get("state") ?? "enabled",
     priority: formData.get("priority") ?? 0,
+    autoMinutes: formData.get("autoMinutes") === "on",
+    language: formData.get("language") ?? "en",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
@@ -94,6 +100,8 @@ export async function updateWg(formData: FormData) {
     showOnHome: formData.get("showOnHome") === "on",
     state: formData.get("state") ?? "enabled",
     priority: formData.get("priority") ?? 0,
+    autoMinutes: formData.get("autoMinutes") === "on",
+    language: formData.get("language") ?? "en",
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
   const current = await db.workingGroup.findUniqueOrThrow({ where: { id } });
@@ -119,6 +127,10 @@ export async function updateWg(formData: FormData) {
       after: parsed.data,
     },
   });
+  // The Calendar description mentions transcription, so a toggle re-syncs the
+  // event (and the Meet space); otherwise only the Meet side is checked.
+  if (current.autoMinutes !== parsed.data.autoMinutes) await syncScheduleToGoogle(id);
+  else await syncMeetConfig(id);
   revalidate();
 }
 

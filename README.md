@@ -20,8 +20,9 @@ layout).
   working-group board (client-fetched so it's always current).
 - **Working groups** (`/working-groups`, [ADR-0003](docs/adr-0003-working-groups.md)) —
   the public board plus a page per group (`/working-groups/<slug>`): description,
-  lead avatars, meeting schedule, published minutes. Old URLs (`/contribute`,
-  `/account/working-groups`) redirect permanently.
+  lead avatars, meeting schedule (dates in the visitor's own timezone),
+  published minutes. Old URLs (`/contribute`, `/account/working-groups`)
+  redirect permanently.
 - **Members** (`/members`) — admin-curated list of member organizations (logo wall).
 - **About · Join · Ecosystem · Contact · Blog** — institutional pages; the Join
   comparison table quotes Associate dues **from the fee schedule in force** (it
@@ -79,10 +80,23 @@ layout).
   link, **native invitations** to Google/Microsoft/Apple calendars on join,
   updates on change, and single-occurrence cancellation ("skip next week").
   The DB is canonical; sync failures are stored and retryable from the UI.
-- **Sessions & minutes** — any participant records attendance (+ guests) and
-  Markdown minutes; **publishing commits the file to the public minutes repo**
-  (`<slug>/minutes/YYYY-MM-DD.md`, commit SHA stored) and the history renders
-  on the group page from the DB.
+- **Sessions & minutes** — a lead opens the **current session** during the
+  meeting (from 15 min before the start until the end), ticks attendance (+
+  guests) and writes Markdown minutes; **publishing commits the file to the
+  public minutes repo** (`<slug>/minutes/YYYY-MM-DD.md`, commit SHA stored) and
+  the history renders on the group page from the DB. Participants read
+  sessions; only leads (and admins) write.
+- **Automatic minutes** ([ADR-0004](docs/adr-0004-automatic-minutes.md)) —
+  each group's Meet space is switched to **automatic transcription** after
+  every Calendar sync; a 5-minute cron (`/api/cron/wg-transcripts`) discovers
+  ended conferences, persists the transcript entries (Google deletes them after
+  30 days), drafts the minutes with **Claude** in the group's language and
+  emails the leads. The session page shows the draft, the AI's open questions,
+  Google Meet's participant list as an attendance cross-check, and the
+  transcript (internal to the group); the lead edits and **approves &
+  publishes**, optionally publishing the transcript next to the minutes
+  (`<slug>/transcripts/YYYY-MM-DD.md`, off by default). No audio or video is
+  ever recorded. Per group: on/off + language (lead console and admin board).
 
 ### Admin (`/admin`, allowlist-gated)
 
@@ -105,6 +119,8 @@ layout).
 | **Wise Business API** | Bank-transfer reconciliation | Read-only activities feed; webhook (`balances#credit`) + daily cron backstop |
 | **Relaticle CRM** | `/contact` inquiries | Company/Person/Note/Opportunity/Task per inquiry; best-effort, never blocks the user |
 | **Google Calendar API** | Working-group meetings | Service account + domain-wide delegation impersonating the `meetings@` role account; auto Meet links, native invites |
+| **Google Meet REST API** | Automatic transcription | Same service account (scopes `meetings.space.settings` + `meetings.space.readonly`): switches each space to auto-transcription, reads conference records, participants and transcript entries. No Drive scope, no recordings |
+| **Anthropic API** | Drafted minutes | `claude-opus-5` (override with `MINUTES_AI_MODEL`) turns a transcript into minutes + open questions; a lead approves before publication |
 | **GitHub API** | Minutes publishing + home stats | Fine-grained PAT scoped to the minutes repo; same token raises the stats rate limit |
 | **Discord/Slack webhook** | Ops alerts | Optional; CRM/reconciliation failures |
 
@@ -159,7 +175,9 @@ Runs on the OVH Kubernetes cluster, namespace `web` (manifests in `k8s/`).
 - **`release-please.yml`** — maintains a release PR from Conventional Commits;
   merging tags `v*` and announces on Discord.
 - **CronJobs** — `wise-reconcile` daily 06:00 UTC (bank-transfer backstop),
-  `dunning` daily 06:30 UTC (reminders, voiding, renewals).
+  `dunning` daily 06:30 UTC (reminders, voiding, renewals), `wg-transcripts`
+  every 5 minutes (transcript pipeline: discover, fetch, draft, notify,
+  reminders, retention).
 - **Storage** — a PVC mounted at `/data` (`STORAGE_DIR`) holds signed agreement
   PDFs and uploaded member logos.
 - **Secrets flow** — GitHub Actions secrets → CI `kubectl create secret …
@@ -217,8 +235,10 @@ Where: **local** = `.env.local`; **secret** = GitHub Actions secret → k8s Secr
 | Variable | Required | Where (prod) | Purpose |
 | --- | --- | --- | --- |
 | `GOOGLE_SA_EMAIL` | for Calendar sync | secret | Service-account email |
-| `GOOGLE_SA_PRIVATE_KEY` | for Calendar sync | secret | SA key PEM (`\n`-escaped); DWD scope `calendar.events` |
-| `GOOGLE_CALENDAR_IMPERSONATE` | for Calendar sync | secret | Role account organizing all WG meetings (e.g. `meetings@veranafoundation.org`) |
+| `GOOGLE_SA_PRIVATE_KEY` | for Calendar sync | secret | SA key PEM (`\n`-escaped); DWD scopes `calendar.events`, `meetings.space.settings`, `meetings.space.readonly` |
+| `GOOGLE_CALENDAR_IMPERSONATE` | for Calendar sync | secret | Role account organizing all WG meetings (`meetings@veranafoundation.org`) |
+| `ANTHROPIC_API_KEY` | for drafted minutes | secret | Claude API key; without it transcripts are collected and leads write minutes by hand |
+| `MINUTES_AI_MODEL` | no | — | Model override (default `claude-opus-5`) |
 | `MINUTES_REPO` | for publishing | secret | Public minutes repo (`verana-labs/working-groups`) |
 | `MINUTES_GITHUB_TOKEN` | for publishing | secret | Fine-grained PAT, Contents RW on that repo only; also the fallback token for home-page stats |
 | `GITHUB_TOKEN` | no | — | Optional explicit token for the home-page org stats |
@@ -246,6 +266,7 @@ Where: **local** = `.env.local`; **secret** = GitHub Actions secret → k8s Secr
 - Architecture decisions: [`docs/adr-0001`](docs/adr-0001-subscription-billing-architecture.md) (billing),
   [`docs/adr-0002`](docs/adr-0002-authentication.md) (auth/roles),
   [`docs/adr-0003`](docs/adr-0003-working-groups.md) (working groups),
+  [`docs/adr-0004`](docs/adr-0004-automatic-minutes.md) (automatic minutes),
   plus the [invoicing spec](docs/verana-invoicing-spec.md) and
   [frontend spec](docs/frontend-account-admin-spec.md).
 

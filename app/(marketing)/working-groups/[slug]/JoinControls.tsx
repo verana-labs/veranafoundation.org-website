@@ -12,6 +12,7 @@ export default function JoinControls({
   joined,
   lockReason,
   hasSchedule,
+  transcribed,
 }: {
   wgId: string;
   signedIn: boolean;
@@ -19,6 +20,8 @@ export default function JoinControls({
   joined: boolean;
   lockReason: string;
   hasSchedule: boolean;
+  /** ADR-0004: meetings are transcribed and the minutes AI-drafted. */
+  transcribed: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +77,13 @@ export default function JoinControls({
           <p className="text-sm text-muted mt-2">
             You'll be invited to the meetings in your calendar, and your name
             will appear on attendance lists and published minutes.
+            {transcribed && (
+              <>
+                {" "}Meetings are transcribed automatically and an AI assistant
+                drafts the minutes, which a group lead reviews before anything is
+                published; transcripts stay internal to the group.
+              </>
+            )}
           </p>
         </div>
       )}

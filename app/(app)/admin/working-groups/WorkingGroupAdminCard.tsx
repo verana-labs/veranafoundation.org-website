@@ -12,6 +12,7 @@ import {
   type ActionState,
 } from "@/app/(marketing)/working-groups/[slug]/actions";
 import PersonAvatars from "@/app/components/PersonAvatars";
+import { MINUTES_LANGUAGES, languageLabel } from "@/app/lib/languages";
 
 export type AdminLead = {
   userId: string;
@@ -37,6 +38,9 @@ export type AdminWg = {
   priority: number;
   /** ISO timestamp of when it last became disabled, or null. */
   disabledAt: string | null;
+  /** ADR-0004: Meet transcription + AI-drafted minutes, and their language. */
+  autoMinutes: boolean;
+  language: string;
   leads: AdminLead[];
   /** Pending lead invites — emails waiting on an active membership. */
   leadInvites: AdminLeadInvite[];
@@ -226,6 +230,18 @@ export default function WorkingGroupAdminCard({ wg }: { wg: AdminWg }) {
             <input type="checkbox" name="showOnHome" defaultChecked={wg.showOnHome} /> Show on
             home page
           </label>
+          <label className="flex items-center gap-2 text-sm py-2">
+            <input type="checkbox" name="autoMinutes" defaultChecked={wg.autoMinutes} />
+            Transcribe meetings and draft the minutes automatically
+          </label>
+          <div className="form-field">
+            <label htmlFor={`lang-${wg.id}`}>Language of the drafted minutes</label>
+            <select id={`lang-${wg.id}`} name="language" defaultValue={wg.language}>
+              {MINUTES_LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
+          </div>
           <div className="flex gap-2 pt-1">
             <button type="submit" className="btn btn-primary text-sm" disabled={pending}>
               {pending ? "Saving…" : "Save"}
@@ -325,6 +341,8 @@ export default function WorkingGroupAdminCard({ wg }: { wg: AdminWg }) {
             </dd>
             <dt className="text-muted">Priority</dt>
             <dd>{wg.priority}</dd>
+            <dt className="text-muted">Automatic minutes</dt>
+            <dd>{wg.autoMinutes ? `On (${languageLabel(wg.language)})` : "Off"}</dd>
           </dl>
 
           <LeadsEditor wg={wg} />

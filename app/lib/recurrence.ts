@@ -103,6 +103,62 @@ export function describeRrule(rrule: string, startsAt: Date, tz: string): string
     : `${cadence} on ${day} at ${time} (${tz})`;
 }
 
+/** Minutes before a scheduled start during which the session counts as "current". */
+export const SESSION_OPENS_BEFORE_MIN = 15;
+/** How far (either side) a Meet conference may start from a scheduled occurrence. */
+export const OCCURRENCE_SNAP_MIN = 60;
+
+type ScheduleLike = {
+  startsAt: Date;
+  durationMin: number;
+  timezone: string;
+  rrule: string;
+};
+
+/**
+ * The scheduled occurrence a Meet conference belongs to (ADR-0004): the
+ * nearest one within OCCURRENCE_SNAP_MIN either side of the conference start,
+ * else the start itself truncated to the minute (an ad-hoc call on the link).
+ */
+export function occurrenceFor(schedule: ScheduleLike, at: Date): Date {
+  const window = OCCURRENCE_SNAP_MIN * 60_000;
+  const [candidate] = nextOccurrences(
+    schedule.startsAt,
+    schedule.timezone,
+    schedule.rrule,
+    new Date(at.getTime() - window),
+    1,
+  );
+  if (candidate && Math.abs(candidate.getTime() - at.getTime()) <= window) return candidate;
+  const minute = new Date(at);
+  minute.setUTCSeconds(0, 0);
+  return minute;
+}
+
+export type SessionPhase = "upcoming" | "soon" | "live" | "past";
+
+/** Where `now` falls relative to an occurrence (drives the session button). */
+export function sessionPhase(start: Date, durationMin: number, now: Date): SessionPhase {
+  const opens = start.getTime() - SESSION_OPENS_BEFORE_MIN * 60_000;
+  const ends = start.getTime() + durationMin * 60_000;
+  if (now.getTime() < opens) return "upcoming";
+  if (now.getTime() < start.getTime()) return "soon";
+  if (now.getTime() <= ends) return "live";
+  return "past";
+}
+
+/**
+ * "Wednesday 7 October 2026, 17:00 (Europe/Paris)" — for emails and other
+ * places without a browser timezone (screens use <LocalTime>).
+ */
+export function formatInTimezone(d: Date, tz: string): string {
+  const label = new Intl.DateTimeFormat("en-GB", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+    hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz,
+  }).format(d);
+  return `${label} (${tz})`;
+}
+
 /** UTC start of the nth `weekday` of a month, at the given wall time. */
 function nthWeekdayOfMonth(
   y: number, mo: number, nth: number, weekday: number,

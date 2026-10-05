@@ -3,6 +3,9 @@ import {
   buildRrule,
   describeRrule,
   nextOccurrences,
+  occurrenceFor,
+  sessionPhase,
+  formatInTimezone,
   utcToWall,
   wallToUtc,
 } from "./recurrence";
@@ -85,6 +88,52 @@ describe("describeRrule", () => {
     );
     expect(describeRrule("FREQ=MONTHLY;BYDAY=3WE", START, PARIS)).toBe(
       "Monthly (third Wednesday) at 17:00 (Europe/Paris)",
+    );
+  });
+});
+
+describe("occurrenceFor / sessionPhase / formatInTimezone (ADR-0004)", () => {
+  // Weekly on Wednesday 17:00 Europe/Paris, anchored 2026-10-07.
+  const schedule = {
+    startsAt: new Date("2026-10-07T15:00:00Z"),
+    durationMin: 60,
+    timezone: "Europe/Paris",
+    rrule: "FREQ=WEEKLY;BYDAY=WE",
+  };
+
+  it("snaps a conference to the occurrence within an hour either side", () => {
+    expect(occurrenceFor(schedule, new Date("2026-10-14T15:03:20Z")).toISOString()).toBe(
+      "2026-10-14T15:00:00.000Z",
+    );
+    expect(occurrenceFor(schedule, new Date("2026-10-14T14:40:00Z")).toISOString()).toBe(
+      "2026-10-14T15:00:00.000Z",
+    );
+    expect(occurrenceFor(schedule, new Date("2026-10-14T15:45:00Z")).toISOString()).toBe(
+      "2026-10-14T15:00:00.000Z",
+    );
+  });
+  it("keeps an ad-hoc call on the link as its own minute-truncated occurrence", () => {
+    expect(occurrenceFor(schedule, new Date("2026-10-16T09:12:45.678Z")).toISOString()).toBe(
+      "2026-10-16T09:12:00.000Z",
+    );
+  });
+  it("follows DST: after the October switch the UTC hour moves", () => {
+    expect(occurrenceFor(schedule, new Date("2026-11-04T16:02:00Z")).toISOString()).toBe(
+      "2026-11-04T16:00:00.000Z",
+    );
+  });
+  it("classifies the session phase around an occurrence", () => {
+    const start = new Date("2026-10-14T15:00:00Z");
+    expect(sessionPhase(start, 60, new Date("2026-10-14T14:00:00Z"))).toBe("upcoming");
+    expect(sessionPhase(start, 60, new Date("2026-10-14T14:50:00Z"))).toBe("soon");
+    expect(sessionPhase(start, 60, new Date("2026-10-14T15:30:00Z"))).toBe("live");
+    expect(sessionPhase(start, 60, new Date("2026-10-14T16:00:00Z"))).toBe("live");
+    expect(sessionPhase(start, 60, new Date("2026-10-14T16:00:01Z"))).toBe("past");
+  });
+  it("formats a label in the schedule timezone for emails", () => {
+    // ICU versions differ on the separators ("Wednesday, 7 October 2026 at 17:00").
+    expect(formatInTimezone(new Date("2026-10-07T15:00:00Z"), "Europe/Paris")).toMatch(
+      /^Wednesday,? 7 October 2026,? (at )?17:00 \(Europe\/Paris\)$/,
     );
   });
 });

@@ -142,6 +142,38 @@ export default function PrivacyPage() {
           Foundation&rsquo;s membership (Art. 6(1)(f)).
         </p>
 
+        <h3>Working-group meetings</h3>
+        <ul>
+          <li>
+            <strong>Participation.</strong> Joining a working group records your
+            membership of the group; you are invited to its meetings in your
+            calendar, and your name appears on attendance lists and in the
+            published minutes.
+          </li>
+          <li>
+            <strong>Transcripts and drafted minutes.</strong> Working-group
+            meetings on Google Meet are transcribed automatically by Google
+            Workspace. We keep the transcript (speaker names and what was said)
+            so that an AI assistant (<strong>Anthropic Claude</strong>) can
+            draft the minutes; a group lead reviews, edits and approves the
+            minutes before anything is published. Transcripts are visible only
+            to the group&rsquo;s leads and participants, and are published next
+            to the minutes only when a lead decides so for that meeting. No
+            audio or video is recorded by us.
+          </li>
+          <li>
+            <strong>Attendance.</strong> Leads tick who attended; Google
+            Meet&rsquo;s own participant list (display names, join and leave
+            times) is shown to them as a cross-check only.
+          </li>
+        </ul>
+        <p>
+          <strong>Legal basis.</strong> Our legitimate interest in keeping a
+          record of the working groups&rsquo; proceedings (Art. 6(1)(f)); the
+          transcription is announced when you join a group and in every meeting
+          invitation.
+        </p>
+
         <h3>Transactional email</h3>
         <p>
           We send operational email tied to your membership: sign-in codes,
@@ -205,6 +237,18 @@ export default function PrivacyPage() {
             sign-in.
           </li>
           <li>
+            <strong>Google Workspace (Calendar, Meet)</strong> — working-group
+            meeting invitations and the automatic transcription of meetings.
+          </li>
+          <li>
+            <strong>Anthropic</strong> (US; commercial API, no training on our
+            data) — drafting working-group minutes from meeting transcripts.
+          </li>
+          <li>
+            <strong>GitHub</strong> — the public minutes repository, when a lead
+            publishes minutes (and, if opted in, a transcript).
+          </li>
+          <li>
             <strong>Our email provider</strong> — delivery of transactional
             email.
           </li>
@@ -242,6 +286,12 @@ export default function PrivacyPage() {
           <li>
             <strong>Contact-form correspondence</strong> — up to 24 months from
             the last interaction.
+          </li>
+          <li>
+            <strong>Meeting transcripts</strong> — kept with the session record
+            while the group exists; transcripts that led to no minutes are
+            deleted after 90 days. Published minutes and transcripts are a
+            public record in the minutes repository.
           </li>
           <li>
             <strong>Analytics</strong> — minimum provider retention; aggregate

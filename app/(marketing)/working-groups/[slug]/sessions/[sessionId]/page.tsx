@@ -4,7 +4,14 @@ import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
 import { isWgLead, personName } from "@/app/lib/working-groups";
 import { minutesConfigured, minutesUrl } from "@/app/lib/minutes";
-import SessionEditor from "./SessionEditor";
+import { minutesAiConfigured } from "@/app/lib/minutes-ai";
+import {
+  wordCount,
+  type MeetAttendee,
+  type TranscriptEntry,
+} from "@/app/lib/transcript-format";
+import LocalTime from "@/app/components/LocalTime";
+import SessionEditor, { type TranscriptView } from "./SessionEditor";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Session record" };
@@ -28,11 +35,12 @@ export default async function SessionPage({
         },
       },
       attendees: true,
+      transcript: true,
     },
   });
   if (!session || session.wg.slug !== slug) notFound();
 
-  // Editable by participants, leads, admins (the recorder is one of those).
+  // ADR-0004: leads (and admins) edit; active participants read; others 404.
   const lead =
     (await isWgLead(user.id, session.wgId)) ||
     (user.email ? await isAdmin(user.email) : false);
@@ -48,9 +56,34 @@ export default async function SessionPage({
     people.set(p.userId, { userId: p.userId, name: personName(p.user) });
   }
 
-  const day = new Intl.DateTimeFormat("en-GB", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-  }).format(session.occurredAt);
+  const t = session.transcript;
+  const entries = ((t?.entries ?? []) as unknown as TranscriptEntry[]) ?? [];
+  const transcript: TranscriptView | null = t
+    ? {
+        status: t.status,
+        entryCount: t.entryCount,
+        words: wordCount(entries),
+        language: t.language,
+        startedAtIso: t.startedAt.toISOString(),
+        summaryModel: t.summaryModel,
+        summarizedAtIso: t.summarizedAt?.toISOString() ?? null,
+        hasSummary: !!t.summaryMd,
+        openQuestions: (t.openQuestions as string[] | null) ?? [],
+        lastError: t.lastError,
+        publishTranscript: t.publishTranscript,
+        transcriptUrl:
+          t.transcriptPath && t.transcriptCommitSha
+            ? minutesUrl(t.transcriptPath, t.transcriptCommitSha)
+            : null,
+        meetAttendees: ((t.meetParticipants ?? []) as unknown as MeetAttendee[]).map((a) => ({
+          name: a.name,
+          kind: a.kind,
+          joinedAt: a.joinedAt,
+          leftAt: a.leftAt,
+        })),
+        entries: entries.map((e) => ({ at: e.at, speaker: e.speaker, text: e.text })),
+      }
+    : null;
 
   return (
     <>
@@ -61,26 +94,34 @@ export default async function SessionPage({
               {session.wg.name}
             </a>
           </p>
-          <h1 className="display text-4xl leading-tight">Session — {day}</h1>
+          <h1 className="display text-4xl leading-tight">
+            Session · <LocalTime iso={session.occurredAt.toISOString()} format="long" />
+          </h1>
           <div className="accent-line mt-6" />
         </div>
       </section>
       <section>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <SessionEditor
+            // Remount on any server-side change so the controlled fields reset.
+            key={`${session.updatedAt.toISOString()}:${t?.updatedAt.toISOString() ?? ""}`}
             sessionId={session.id}
             slug={slug}
             status={session.status}
+            source={session.source}
             notesMd={session.notesMd}
             people={[...people.values()]}
             checked={session.attendees.filter((a) => a.userId).map((a) => a.userId!)}
             guests={session.attendees.filter((a) => !a.userId).map((a) => a.name)}
             publishReady={minutesConfigured()}
+            aiReady={minutesAiConfigured()}
             publishedUrl={
               session.notesPath && session.notesCommitSha
                 ? minutesUrl(session.notesPath, session.notesCommitSha)
                 : null
             }
+            canEdit={lead}
+            transcript={transcript}
           />
         </div>
       </section>

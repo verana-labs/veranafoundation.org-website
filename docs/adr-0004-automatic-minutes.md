@@ -34,7 +34,7 @@ The role account is `meetings@veranafoundation.org` (ADR-0003 and `.env.example`
 
 ### 2. The pipeline: a cron-driven step machine, DB first
 
-A new **`WgTranscript`** row tracks each transcribed meeting through a small state machine. One new cron route, **`/api/cron/wg-transcripts`** (k8s CronJob every 15 minutes, `CRON_SECRET` guard, `concurrencyPolicy: Forbid`), advances each row **one idempotent step per tick**; rows are locked (`lockedAt`) while a step runs.
+A new **`WgTranscript`** row tracks each transcribed meeting through a small state machine. One new cron route, **`/api/cron/wg-transcripts`** (k8s CronJob every 5 minutes, `CRON_SECRET` guard, `concurrencyPolicy: Forbid`), advances each row through every step that can run right now (each step commits on its own, so a crash loses nothing); rows are locked (`lockedAt`) while a step runs.
 
 | Step | Status after | What happens |
 |---|---|---|
@@ -84,7 +84,7 @@ The existing session editor (`/working-groups/<slug>/sessions/<id>`) gains a **r
 3. **Google Cloud:** enable the **Google Meet REST API** in the project that hosts the service account.
 4. **Admin console:** Apps → Google Workspace → Google Meet → Meet video settings, for the organizational unit containing `meetings@`: **Recording** off; **Meeting transcripts** is locked on for Business Standard. (On Business Plus / Enterprise the "transcribed by default" option could be enabled as a safety net; it does not exist on Business Standard.)
 5. **Anthropic:** an API key for the Foundation, stored as `ANTHROPIC_API_KEY` (touch `.env.example`, `docker-publish.yml`, `k8s/statefulset.yaml`).
-6. **k8s:** `k8s/cronjob-wg-transcripts.yaml` (every 15 minutes, `activeDeadlineSeconds: 600`).
+6. **k8s:** `k8s/cronjob-wg-transcripts.yaml` (every 5 minutes, `activeDeadlineSeconds: 600`).
 
 ## Data model summary (additions)
 

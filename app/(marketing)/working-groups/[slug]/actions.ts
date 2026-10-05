@@ -9,6 +9,7 @@ import {
   canAccessWg,
   isWgLead,
   personName,
+  syncMeetConfig,
   syncScheduleToGoogle,
   userActiveClasses,
 } from "@/app/lib/working-groups";
@@ -18,7 +19,15 @@ import {
   restoreOccurrence,
 } from "@/app/lib/google-calendar";
 import { buildRrule, wallToUtc, type Frequency } from "@/app/lib/recurrence";
-import { publishMinutes } from "@/app/lib/minutes";
+import { publishMinutes, publishTranscript } from "@/app/lib/minutes";
+import { minutesAiConfigured } from "@/app/lib/minutes-ai";
+import { MINUTES_LANGUAGES } from "@/app/lib/languages";
+import {
+  processInBackground,
+  requestRegeneration,
+  requestRetry,
+} from "@/app/lib/transcripts";
+import type { MeetAttendee, TranscriptEntry } from "@/app/lib/transcript-format";
 import { notify } from "@/app/lib/access-emails";
 import {
   sendWgInviteEmail,
@@ -443,32 +452,59 @@ export async function restoreMeeting(
   return { ok: true };
 }
 
-// ── Sessions & minutes ───────────────────────────────────────────────────────
+// ── Automatic minutes settings (ADR-0004) ────────────────────────────────────
 
-async function requireSessionEditor(sessionId: string) {
-  const user = await requireUser();
+const settingsSchema = z.object({
+  wgId: z.string().min(1),
+  autoMinutes: z.boolean(),
+  language: z.enum(MINUTES_LANGUAGES.map((l) => l.code) as [string, ...string[]]),
+});
+
+/** Lead/admin: toggle Meet transcription + AI drafts, pick the minutes language. */
+export async function updateWgSettings(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = settingsSchema.safeParse({
+    wgId: formData.get("wgId"),
+    autoMinutes: formData.get("autoMinutes") === "on",
+    language: formData.get("language") ?? "en",
+  });
+  if (!parsed.success) return { error: "Invalid settings." };
+  const { wgId, autoMinutes, language } = parsed.data;
+  const user = await requireManager(wgId);
+  const before = await db.workingGroup.findUniqueOrThrow({ where: { id: wgId } });
+  await db.workingGroup.update({ where: { id: wgId }, data: { autoMinutes, language } });
+  await audit(user, "wg.settings.update", wgId, { autoMinutes, language });
+  // The Calendar description mentions transcription, so a toggle re-syncs the
+  // event (which also pushes the Meet setting); a language change only needs
+  // the Meet side checked.
+  const sync =
+    before.autoMinutes !== autoMinutes
+      ? await syncScheduleToGoogle(wgId)
+      : await syncMeetConfig(wgId);
+  await revalidateWg(wgId);
+  return sync.ok
+    ? { ok: true, message: "Settings saved." }
+    : { error: `Saved, but the Google sync failed: ${sync.error}` };
+}
+
+// ── Sessions & minutes (ADR-0004: leads only; participants read) ─────────────
+
+/** Lead/admin gate for a session, resolving its group and transcript. */
+async function requireSessionManager(sessionId: string) {
   const session = await db.wgSession.findUniqueOrThrow({
     where: { id: sessionId },
-    include: { wg: true },
+    include: { wg: true, transcript: true },
   });
-  const allowed =
-    session.recordedById === user.id ||
-    (await isWgLead(user.id, session.wgId)) ||
-    (await isAdmin(user.email));
-  if (!allowed) throw new Error("Forbidden");
+  const user = await requireManager(session.wgId);
   return { user, session };
 }
 
 /** Open (or reopen) the session record for an occurrence and go edit it. */
 export async function startSession(wgId: string, occurredAtIso: string) {
-  const user = await requireUser();
+  const user = await requireManager(wgId);
   const wg = await db.workingGroup.findUniqueOrThrow({ where: { id: wgId } });
-  const participant = await db.wgParticipant.findUnique({
-    where: { wgId_userId: { wgId, userId: user.id } },
-  });
-  const lead = await isWgLead(user.id, wgId);
-  if (!lead && (!participant || participant.leftAt)) throw new Error("Forbidden");
-
   const occurredAt = new Date(occurredAtIso);
   const session = await db.wgSession.upsert({
     where: { wgId_occurredAt: { wgId, occurredAt } },
@@ -483,20 +519,26 @@ const saveSessionSchema = z.object({
   notesMd: z.string().max(200_000),
   attendeeUserIds: z.array(z.string()),
   guests: z.string().max(2000), // comma/newline-separated free-text names
+  publishTranscript: z.boolean(),
 });
+
+function parseSessionForm(formData: FormData) {
+  return saveSessionSchema.safeParse({
+    sessionId: formData.get("sessionId"),
+    notesMd: formData.get("notesMd") ?? "",
+    attendeeUserIds: formData.getAll("attendeeUserIds").map(String),
+    guests: formData.get("guests") ?? "",
+    publishTranscript: formData.get("publishTranscript") === "on",
+  });
+}
 
 export async function saveSession(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const parsed = saveSessionSchema.safeParse({
-    sessionId: formData.get("sessionId"),
-    notesMd: formData.get("notesMd") ?? "",
-    attendeeUserIds: formData.getAll("attendeeUserIds").map(String),
-    guests: formData.get("guests") ?? "",
-  });
+  const parsed = parseSessionForm(formData);
   if (!parsed.success) return { error: "Invalid input." };
-  const { user, session } = await requireSessionEditor(parsed.data.sessionId);
+  const { user, session } = await requireSessionManager(parsed.data.sessionId);
 
   // Attendance snapshot: registered users by current display name, plus guests.
   const users = await db.user.findMany({
@@ -518,10 +560,22 @@ export async function saveSession(
       where: { id: session.id },
       data: { notesMd: parsed.data.notesMd, recordedById: user.id },
     }),
+    ...(session.transcript
+      ? [
+          db.wgTranscript.update({
+            where: { id: session.transcript.id },
+            data: { publishTranscript: parsed.data.publishTranscript },
+          }),
+        ]
+      : []),
   ]);
   return { ok: true };
 }
 
+/**
+ * Approve & publish: commit the minutes (and, if opted in, the transcript) to
+ * the public repo. For an AI draft this is the lead's approval (ADR-0004 §4b).
+ */
 export async function publishSession(
   _prev: ActionState,
   formData: FormData,
@@ -529,30 +583,84 @@ export async function publishSession(
   // Persist the latest edits first, then commit.
   const saved = await saveSession({}, formData);
   if (saved.error) return saved;
-  const { user, session } = await requireSessionEditor(
+  const { user, session } = await requireSessionManager(
     String(formData.get("sessionId")),
   );
   const fresh = await db.wgSession.findUniqueOrThrow({
     where: { id: session.id },
-    include: { attendees: true, recordedBy: true },
+    include: { attendees: true, transcript: true, wg: true },
   });
+  const transcript =
+    fresh.transcript && fresh.transcript.status !== "discarded" ? fresh.transcript : null;
+  const actor = await db.user.findUnique({ where: { id: user.id } });
+  const approver = actor ? personName(actor) : user.email;
 
   try {
+    let transcriptFile: { path: string; commitSha: string } | null = null;
+    if (transcript && transcript.publishTranscript && transcript.entryCount > 0) {
+      const entries = (transcript.entries ?? []) as unknown as TranscriptEntry[];
+      const participants = (
+        (transcript.meetParticipants ?? []) as unknown as MeetAttendee[]
+      ).map((p) => p.name);
+      transcriptFile = await publishTranscript({
+        wgSlug: fresh.wg.slug,
+        wgName: fresh.wg.name,
+        date: fresh.occurredAt,
+        startedAt: transcript.startedAt,
+        language: transcript.language,
+        participants,
+        entries,
+      });
+    }
+    const aiDraft = fresh.source === "ai_draft" && !!transcript?.summaryModel;
     const { path, commitSha } = await publishMinutes({
-      wgSlug: session.wg.slug,
-      wgName: session.wg.name,
+      wgSlug: fresh.wg.slug,
+      wgName: fresh.wg.name,
       date: fresh.occurredAt,
       attendees: fresh.attendees.map((a) => a.name),
-      recordedBy: personName(fresh.recordedBy),
+      recordedBy: approver,
       markdown: fresh.notesMd,
+      draftedBy: aiDraft ? transcript!.summaryModel : null,
+      approvedBy: aiDraft ? approver : null,
+      transcriptPath: transcriptFile?.path ?? transcript?.transcriptPath ?? null,
     });
-    await db.wgSession.update({
-      where: { id: session.id },
-      data: { status: "published", notesPath: path, notesCommitSha: commitSha },
-    });
+    await db.$transaction([
+      db.wgSession.update({
+        where: { id: session.id },
+        data: {
+          status: "published",
+          notesPath: path,
+          notesCommitSha: commitSha,
+          recordedById: user.id,
+        },
+      }),
+      ...(transcript
+        ? [
+            db.wgTranscript.update({
+              where: { id: transcript.id },
+              data: {
+                status: "approved",
+                ...(transcriptFile
+                  ? {
+                      transcriptPath: transcriptFile.path,
+                      transcriptCommitSha: transcriptFile.commitSha,
+                    }
+                  : {}),
+              },
+            }),
+          ]
+        : []),
+    ]);
     await audit(user, "wg.session.publish", session.wgId, {
       sessionId: session.id, path, commitSha,
     });
+    if (transcript) {
+      await audit(user, "wg.transcript.approve", session.wgId, {
+        sessionId: session.id,
+        transcriptId: transcript.id,
+        transcriptPublished: !!transcriptFile,
+      });
+    }
     await revalidateWg(session.wgId);
     return { ok: true };
   } catch (e) {
@@ -561,12 +669,54 @@ export async function publishSession(
 }
 
 export async function deleteSession(sessionId: string): Promise<ActionState> {
-  const { user, session } = await requireSessionEditor(sessionId);
+  const { user, session } = await requireSessionManager(sessionId);
   if (session.status === "published") {
     return { error: "Published sessions can't be deleted." };
   }
-  await db.wgSession.delete({ where: { id: sessionId } });
+  await db.wgSession.delete({ where: { id: sessionId } }); // cascades to the transcript
   await audit(user, "wg.session.delete", session.wgId, { sessionId });
   await revalidateWg(session.wgId);
   return { ok: true };
+}
+
+/** Re-run the Claude step on the stored transcript (runs in the background). */
+export async function regenerateDraft(sessionId: string): Promise<ActionState> {
+  const { user, session } = await requireSessionManager(sessionId);
+  const t = session.transcript;
+  if (!t || t.entryCount === 0) return { error: "There is no transcript to draft from." };
+  if (!minutesAiConfigured()) return { error: "Minutes AI is not configured on this server." };
+  if (session.status === "published") {
+    return { error: "Published minutes aren't regenerated; edit and republish them instead." };
+  }
+  await requestRegeneration(t.id);
+  processInBackground(t.id);
+  await audit(user, "wg.transcript.regenerate", session.wgId, { sessionId, transcriptId: t.id });
+  await revalidateWg(session.wgId);
+  return { ok: true, message: "Regenerating the draft — reload this page in a minute." };
+}
+
+/** Keep the transcript internal and drop the AI draft from the review queue. */
+export async function discardDraft(sessionId: string): Promise<ActionState> {
+  const { user, session } = await requireSessionManager(sessionId);
+  const t = session.transcript;
+  if (!t) return { error: "This session has no transcript." };
+  await db.wgTranscript.update({
+    where: { id: t.id },
+    data: { status: "discarded", nextAttemptAt: null },
+  });
+  await audit(user, "wg.transcript.discard", session.wgId, { sessionId, transcriptId: t.id });
+  await revalidateWg(session.wgId);
+  return { ok: true, message: "Draft discarded. The transcript stays internal to the group." };
+}
+
+/** Put a failed transcript back on its step (runs in the background). */
+export async function retryTranscript(sessionId: string): Promise<ActionState> {
+  const { user, session } = await requireSessionManager(sessionId);
+  const t = session.transcript;
+  if (!t) return { error: "This session has no transcript." };
+  await requestRetry(t.id);
+  processInBackground(t.id);
+  await audit(user, "wg.transcript.retry", session.wgId, { sessionId, transcriptId: t.id });
+  await revalidateWg(session.wgId);
+  return { ok: true, message: "Retrying — reload this page in a minute." };
 }

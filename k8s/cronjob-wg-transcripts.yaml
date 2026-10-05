@@ -1,0 +1,46 @@
+# Working-group transcript pipeline (ADR-0004): every 5 minutes, discover ended
+# Google Meet conferences, persist their transcripts, draft the minutes with
+# Claude and notify the leads for review. Idempotent step machine — safe to
+# re-run; a tick that finds nothing returns in a second.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: wg-transcripts
+  namespace: web
+  labels:
+    app.kubernetes.io/name: veranafoundation-website
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 600
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: curl
+              image: curlimages/curl:8.10.1
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: veranafoundation-website-secrets
+                      key: CRON_SECRET
+                      optional: true
+              command: ["/bin/sh", "-c"]
+              args:
+                - >-
+                  curl -fsS --max-time 540
+                  -H "Authorization: Bearer ${CRON_SECRET}"
+                  http://veranafoundation-website.web.svc.cluster.local/api/cron/wg-transcripts
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
