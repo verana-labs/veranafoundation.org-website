@@ -130,7 +130,6 @@ export async function discoverTranscripts(now = new Date()): Promise<DiscoverRes
   for (const wg of groups) {
     const schedule = wg.schedule!;
     const code = schedule.meetingCode!;
-    const cancelled = new Set(schedule.exceptions.map((e) => e.originalStart.getTime()));
     result.scanned++;
     let records;
     try {
@@ -142,7 +141,7 @@ export async function discoverTranscripts(now = new Date()): Promise<DiscoverRes
     for (const record of records) {
       // Only calls inside a scheduled occurrence's window count (ADR-0004
       // amendment); nothing else was transcribed anyway.
-      const occurredAt = occurrenceWindowAt(schedule, record.startedAt, cancelled);
+      const occurredAt = occurrenceWindowAt(schedule, record.startedAt, schedule.exceptions);
       if (!occurredAt) continue;
 
       const known = await db.wgTranscript.findFirst({

@@ -135,34 +135,93 @@ export function occurrenceFor(schedule: ScheduleLike, at: Date): Date {
   return minute;
 }
 
+/** A per-occurrence exception: cancelled (movedTo null) or moved to another start. */
+export type ExceptionLike = { originalStart: Date; movedTo: Date | null; note: string | null };
+
+/** One line of the meetings list: the series slot, or where a moved one went. */
+export type Occurrence = {
+  start: Date; // when the meeting actually happens (the new time for a moved one)
+  originalStart: Date; // the series slot it belongs to (the key of its exception)
+  cancelled: boolean;
+  movedTo: Date | null; // on the original slot of a moved meeting: its new time
+  movedFrom: Date | null; // on the new slot of a moved meeting: its series time
+  note: string | null;
+};
+
+/**
+ * The meetings at/after `from`, exceptions applied: a cancelled slot stays
+ * listed struck-through, a moved slot is listed struck-through with its new
+ * time *and* appears again at that new time (so both the lead and the pipeline
+ * see the meeting where it really is).
+ */
+export function expandOccurrences(
+  schedule: ScheduleLike,
+  exceptions: ExceptionLike[],
+  from: Date,
+  count: number,
+): Occurrence[] {
+  const byOriginal = new Map(exceptions.map((e) => [e.originalStart.getTime(), e]));
+  const out: Occurrence[] = [];
+  const series = nextOccurrences(
+    schedule.startsAt, schedule.timezone, schedule.rrule, from, count + exceptions.length,
+  );
+  for (const start of series) {
+    const ex = byOriginal.get(start.getTime());
+    if (!ex) {
+      out.push({ start, originalStart: start, cancelled: false, movedTo: null, movedFrom: null, note: null });
+    } else if (ex.movedTo) {
+      out.push({ start, originalStart: start, cancelled: false, movedTo: ex.movedTo, movedFrom: null, note: ex.note });
+    } else {
+      out.push({ start, originalStart: start, cancelled: true, movedTo: null, movedFrom: null, note: ex.note });
+    }
+  }
+  // Moved meetings land wherever they were moved to, including from slots
+  // before `from`.
+  for (const ex of exceptions) {
+    if (ex.movedTo && ex.movedTo >= from) {
+      out.push({
+        start: ex.movedTo, originalStart: ex.originalStart, cancelled: false,
+        movedTo: null, movedFrom: ex.originalStart, note: ex.note,
+      });
+    }
+  }
+  return out
+    .filter((o) => o.start >= from)
+    .sort((a, b) => a.start.getTime() - b.start.getTime() || (a.movedTo ? -1 : 1))
+    .slice(0, count);
+}
+
 /** Automatic transcription is on from this long before a scheduled start… */
 export const TRANSCRIPTION_OPENS_BEFORE_MIN = 20;
 /** …until this long after the scheduled end (a running call is never cut). */
 export const TRANSCRIPTION_CLOSES_AFTER_MIN = 30;
 
 /**
- * The non-cancelled scheduled occurrence whose transcription window contains
- * `at`, or null when `at` falls outside every window (ADR-0004 amendment:
- * calls outside the schedule are neither transcribed nor picked up).
+ * The start of the meeting whose transcription window contains `at` (the
+ * moved time for a moved meeting), or null when `at` falls outside every
+ * window (ADR-0004 amendment: calls outside the schedule are neither
+ * transcribed nor picked up). Cancelled slots and the vacated slots of moved
+ * meetings have no window.
  */
 export function occurrenceWindowAt(
   schedule: ScheduleLike,
   at: Date,
-  cancelled: Set<number> = new Set(),
+  exceptions: ExceptionLike[] = [],
 ): Date | null {
   const before = TRANSCRIPTION_OPENS_BEFORE_MIN * 60_000;
   const after = (schedule.durationMin + TRANSCRIPTION_CLOSES_AFTER_MIN) * 60_000;
+  const t = at.getTime();
+  const inWindow = (start: Date) => t >= start.getTime() - before && t <= start.getTime() + after;
+  const skip = new Set(exceptions.map((e) => e.originalStart.getTime()));
+  for (const ex of exceptions) {
+    if (ex.movedTo && inWindow(ex.movedTo)) return ex.movedTo;
+  }
   const candidates = nextOccurrences(
-    schedule.startsAt,
-    schedule.timezone,
-    schedule.rrule,
-    new Date(at.getTime() - after),
-    3,
+    schedule.startsAt, schedule.timezone, schedule.rrule, new Date(t - after), 3,
   );
   for (const occ of candidates) {
-    if (cancelled.has(occ.getTime())) continue;
-    const t = at.getTime();
-    if (t >= occ.getTime() - before && t <= occ.getTime() + after) return occ;
+    if (skip.has(occ.getTime())) continue;
+    if (inWindow(occ)) return occ;
   }
   return null;
 }

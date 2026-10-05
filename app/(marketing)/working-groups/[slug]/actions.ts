@@ -16,10 +16,11 @@ import {
 import {
   cancelOccurrence,
   deleteScheduleEvent,
+  moveOccurrence,
   restoreOccurrence,
 } from "@/app/lib/google-calendar";
 import { setAutoTranscriptionByName } from "@/app/lib/google-meet";
-import { buildRrule, wallToUtc, type Frequency } from "@/app/lib/recurrence";
+import { buildRrule, nextOccurrences, wallToUtc, type Frequency } from "@/app/lib/recurrence";
 import { publishMinutes, publishTranscript } from "@/app/lib/minutes";
 import { minutesAiConfigured } from "@/app/lib/minutes-ai";
 import { MINUTES_LANGUAGES } from "@/app/lib/languages";
@@ -400,6 +401,26 @@ export async function deleteSchedule(wgId: string): Promise<ActionState> {
   return { ok: true };
 }
 
+/** A draft session nobody has written in yet follows a moved meeting. */
+async function redatePristineSession(wgId: string, from: Date, to: Date) {
+  const session = await db.wgSession.findUnique({
+    where: { wgId_occurredAt: { wgId, occurredAt: from } },
+    include: { attendees: true, transcript: true },
+  });
+  if (!session || session.status !== "draft" || session.notesMd.trim() || session.attendees.length || session.transcript) return;
+  const taken = await db.wgSession.findUnique({ where: { wgId_occurredAt: { wgId, occurredAt: to } } });
+  if (taken) return;
+  await db.wgSession.update({ where: { id: session.id }, data: { occurredAt: to } });
+}
+
+/** Store a Calendar-side failure on the schedule and surface it (site state is already saved). */
+async function occurrenceSyncFailed(scheduleId: string, wgId: string, what: string, e: unknown) {
+  const error = e instanceof Error ? e.message : String(e);
+  await db.wgSchedule.update({ where: { id: scheduleId }, data: { syncError: error.slice(0, 1000) } });
+  await revalidateWg(wgId);
+  return { error: `${what} on the site, but Calendar sync failed: ${error}` };
+}
+
 /** "Remove next week's session": exception in DB + cancelled Calendar instance. */
 export async function cancelMeeting(
   wgId: string,
@@ -413,26 +434,93 @@ export async function cancelMeeting(
   await db.wgScheduleException.upsert({
     where: { scheduleId_originalStart: { scheduleId: schedule.id, originalStart } },
     create: { scheduleId: schedule.id, originalStart, note: note || null },
-    update: { note: note || null },
+    // Cancelling a moved meeting cancels it altogether.
+    update: { note: note || null, movedTo: null },
   });
   await audit(user, "wg.meeting.cancel", wgId, { originalStart, note });
   if (schedule.googleEventId) {
     try {
       await cancelOccurrence(schedule.googleEventId, originalStart);
     } catch (e) {
-      const error = e instanceof Error ? e.message : String(e);
-      await db.wgSchedule.update({
-        where: { id: schedule.id },
-        data: { syncError: error.slice(0, 1000) },
-      });
-      await revalidateWg(wgId);
-      return { error: `Cancelled on the site, but Calendar sync failed: ${error}` };
+      return occurrenceSyncFailed(schedule.id, wgId, "Cancelled", e);
     }
   }
   await revalidateWg(wgId);
   return { ok: true };
 }
 
+const MOVE_MAX_DAYS = 60;
+
+/**
+ * Move one meeting to another date/time (same duration) — holidays, clashes.
+ * `newLocal` is a datetime-local value in the schedule's timezone. The
+ * Calendar instance moves with it and attendees are notified by Google.
+ */
+export async function moveMeeting(
+  wgId: string,
+  startIso: string,
+  newLocal: string,
+  note?: string,
+): Promise<ActionState> {
+  const user = await requireManager(wgId);
+  const schedule = await db.wgSchedule.findUnique({
+    where: { wgId },
+    include: { exceptions: true },
+  });
+  if (!schedule) return { error: "No schedule." };
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(newLocal);
+  if (!m) return { error: "Pick the new date and time." };
+  const [, y, mo, d, h, mi] = m.map(Number);
+  const originalStart = new Date(startIso);
+  const newStart = wallToUtc({ y, mo, d, h, mi }, schedule.timezone);
+  if (newStart.getTime() === originalStart.getTime()) {
+    return { error: "That is already the meeting's time." };
+  }
+  if (Math.abs(newStart.getTime() - originalStart.getTime()) > MOVE_MAX_DAYS * 86_400_000) {
+    return { error: `A meeting can be moved by at most ${MOVE_MAX_DAYS} days.` };
+  }
+  // No two meetings at the same instant: another series slot (unless that slot
+  // is itself cancelled or moved away), another moved meeting, or an existing
+  // session record.
+  const [slot] = nextOccurrences(
+    schedule.startsAt, schedule.timezone, schedule.rrule, new Date(newStart.getTime() - 60_000), 1,
+  );
+  const slotFree =
+    !slot ||
+    slot.getTime() !== newStart.getTime() ||
+    schedule.exceptions.some((e) => e.originalStart.getTime() === slot.getTime());
+  const otherMoved = schedule.exceptions.some(
+    (e) => e.movedTo?.getTime() === newStart.getTime() && e.originalStart.getTime() !== originalStart.getTime(),
+  );
+  const session = await db.wgSession.findUnique({
+    where: { wgId_occurredAt: { wgId, occurredAt: newStart } },
+  });
+  if (!slotFree || otherMoved || session) {
+    return { error: "Another meeting of this group is already scheduled at that time." };
+  }
+
+  await db.wgScheduleException.upsert({
+    where: { scheduleId_originalStart: { scheduleId: schedule.id, originalStart } },
+    create: { scheduleId: schedule.id, originalStart, movedTo: newStart, note: note || null },
+    update: { movedTo: newStart, note: note || null },
+  });
+  const previous = schedule.exceptions.find((e) => e.originalStart.getTime() === originalStart.getTime());
+  await redatePristineSession(wgId, previous?.movedTo ?? originalStart, newStart);
+  await audit(user, "wg.meeting.move", wgId, { originalStart, newStart, note });
+  if (schedule.googleEventId) {
+    try {
+      await moveOccurrence(
+        schedule.googleEventId, originalStart, newStart, schedule.durationMin, schedule.timezone,
+      );
+    } catch (e) {
+      return occurrenceSyncFailed(schedule.id, wgId, "Moved", e);
+    }
+  }
+  await revalidateWg(wgId);
+  return { ok: true };
+}
+
+/** Undo a cancellation or a move: the meeting is back on its series slot. */
 export async function restoreMeeting(
   wgId: string,
   startIso: string,
@@ -441,16 +529,21 @@ export async function restoreMeeting(
   const schedule = await db.wgSchedule.findUnique({ where: { wgId } });
   if (!schedule) return { error: "No schedule." };
   const originalStart = new Date(startIso);
+  const previous = await db.wgScheduleException.findUnique({
+    where: { scheduleId_originalStart: { scheduleId: schedule.id, originalStart } },
+  });
   await db.wgScheduleException.deleteMany({
     where: { scheduleId: schedule.id, originalStart },
   });
-  await audit(user, "wg.meeting.restore", wgId, { originalStart });
+  if (previous?.movedTo) await redatePristineSession(wgId, previous.movedTo, originalStart);
+  await audit(user, "wg.meeting.restore", wgId, { originalStart, wasMovedTo: previous?.movedTo ?? null });
   if (schedule.googleEventId) {
     try {
-      await restoreOccurrence(schedule.googleEventId, originalStart);
+      await restoreOccurrence(
+        schedule.googleEventId, originalStart, schedule.durationMin, schedule.timezone,
+      );
     } catch (e) {
-      const error = e instanceof Error ? e.message : String(e);
-      return { error: `Restored on the site, but Calendar sync failed: ${error}` };
+      return occurrenceSyncFailed(schedule.id, wgId, "Restored", e);
     }
   }
   await revalidateWg(wgId);

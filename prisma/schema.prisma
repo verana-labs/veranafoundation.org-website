@@ -420,12 +420,15 @@ model WgSchedule {
   updatedAt DateTime @updatedAt
 }
 
-// A cancelled occurrence ("skip next week"), mirrored to the Calendar instance.
+// One occurrence that differs from the series, mirrored to the Calendar
+// instance: cancelled ("skip next week", movedTo null) or moved to another
+// date/time (movedTo set, same duration) — e.g. around holidays.
 model WgScheduleException {
   id            String     @id @default(cuid())
   scheduleId    String
   schedule      WgSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   originalStart DateTime // the occurrence's scheduled start (UTC)
+  movedTo       DateTime? // the new start (UTC) when moved; null = cancelled
   note          String?
   createdAt     DateTime   @default(now())
 
