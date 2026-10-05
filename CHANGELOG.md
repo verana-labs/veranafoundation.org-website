@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.9.0...veranafoundation-website-v0.10.0) (2026-10-05)
+
+
+### Features
+
+* **working-groups:** automatic transcription, AI-drafted minutes & lead approval (ADR-0004) ([#133](https://github.com/verana-labs/veranafoundation.org-website/issues/133)) ([604a0aa](https://github.com/verana-labs/veranafoundation.org-website/commit/604a0aab57669cc1442a31fab9930db0cc0648df))
+
 ## [0.9.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.8.0...veranafoundation-website-v0.9.0) (2026-08-18)
 
 
