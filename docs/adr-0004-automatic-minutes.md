@@ -21,6 +21,8 @@ Requirements agreed for this iteration:
 
 ## Decision
 
+The role account is `meetings@veranafoundation.org` (ADR-0003 and `.env.example` quote a `verana.io` address; the Foundation domain is the one in use).
+
 ### 1. Google Meet transcription is the transcript source
 
 - After every successful Calendar sync (`syncScheduleToGoogle`), the app **patches the Meet space** of the group's meeting (`PATCH https://meet.googleapis.com/v2/spaces/{meetingCode}`, `config.artifactConfig.transcriptionConfig.autoTranscriptionGeneration = ON`) as the `meetings@` role account, which owns the space because it organizes the Calendar event. The meeting code is parsed from the stored `meetLink`. This works for Calendar-created meetings and is idempotent.
@@ -36,7 +38,7 @@ A new **`WgTranscript`** row tracks each transcribed meeting through a small sta
 
 | Step | Status after | What happens |
 |---|---|---|
-| Discover | `awaiting_transcript` | For every group with `autoMinutes = on` and a meeting code: `conferenceRecords.list` filtered by `space.meeting_code` and `end_time` since the last scan. One row per conference record. A **draft `WgSession`** is created (or reused) for the matching scheduled occurrence: the conference start is snapped to the nearest occurrence of the RRULE within ±60 min, else truncated to the minute. |
+| Discover | `awaiting_transcript` | For every group with `autoMinutes = on` and a meeting code: `conferenceRecords.list` filtered by `space.meeting_code` and `end_time` since the last scan. One row per conference record. The row is attached to the **`WgSession` of the matching scheduled occurrence** (the one a lead opened during the meeting, §4a); if none exists, a draft session with an empty attendance list is created. The conference start is snapped to the nearest occurrence of the RRULE within ±60 min, else truncated to the minute. The conference's **participant list** (`conferenceRecords.participants`: Meet display name, first join, last leave; Google never returns emails) is stored on the row as a cross-check for the lead. |
 | Fetch | `transcribed` | `conferenceRecords.transcripts` until `state = FILE_GENERATED`, then **all** `transcripts.entries` (participant, text, `startTime`, `languageCode`) are persisted as JSON. Google deletes entries **30 days after the meeting**; the database copy is the durable one. A conference with no transcript after 24 h is marked `failed` (e.g. nobody joined, or transcription was switched off by the host). |
 | Summarize | `summarized` | One Claude call drafts the minutes (§3). |
 | Notify | `awaiting_approval` | Every lead is emailed (existing `emailLayout`): the draft inline and a **Review** button to the session page (sign-in required, like every CTA today). One reminder after 3 days (`remindedAt`). The lead console shows a pending-review badge. |
@@ -47,20 +49,27 @@ Failures store `lastError` and `attempts`; a step is retried on the next tick wi
 ### 3. AI drafting with Claude
 
 - **Model:** `claude-opus-5` via the official `@anthropic-ai/sdk`, adaptive thinking, streaming (transcripts of a one-hour meeting run to ~15k tokens; a meeting costs cents). The static prompt prefix (instructions + group description) is cached; the transcript comes last.
-- **Inputs:** group name and description, the group's participant display names (so speaker names can be matched to participants), the last published minutes of the group (continuity of action items), the transcript entries rendered as `HH:MM:SS Name: text`, and the group's language (`language`, default `en`).
-- **Output** (structured): minutes Markdown in the site's existing shape — `## Agenda`, `## Discussion`, `## Decisions`, `## Action items` — plus a list of attendee names and a list of open questions the model could not resolve (shown to the lead, not published).
+- **Inputs:** group name and description, the attendees ticked by the lead (display name as configured on the site) plus the Meet display names of the transcript speakers, the last published minutes of the group (continuity of action items), the transcript entries rendered as `HH:MM:SS Name: text`, and the group's language (`language`, default `en`).
+- **Output** (structured): minutes Markdown in the site's existing shape — `## Agenda`, `## Discussion`, `## Decisions`, `## Action items` — plus a list of open questions the model could not resolve (shown to the lead, not published).
 - The prompt lives in the repo (`app/lib/minutes-ai.ts`) and is versioned with the code; the model id used is stored on the row (`summaryModel`).
 - A draft is **never published without a lead's action**; a Claude outage simply leaves the row in `transcribed` for retry.
 
-### 4. Review, approval, publication
+### 4a. Attendance: the lead ticks during the meeting (amends ADR-0003 §4)
+
+- The group page shows a **Current session** button from 15 minutes before a scheduled occurrence until its end (and **Record session** for the next one, as today). It opens the session of that occurrence, creating it on first use.
+- **Only leads (and Foundation admins) can tick attendance and write minutes.** Participants can open a session and read it, but every form is read-only for them. This supersedes ADR-0003 §4, where any participant could record a session: `startSession`, `saveSession` and `publishSession` now require `requireManager`, and the recorder of a session is always a lead.
+- Attendance is the lead's **tick list of the group's participants and leads, plus free-text guests** — exactly the existing picker. Emails and configured display names therefore come from the ticked `User` rows, with no name matching. Meet's own participant list is shown next to the checklist at review time, with anyone **seen in Meet but not ticked** flagged for one-click addition; it is never applied automatically.
+- No join/leave times are recorded; the Meet list keeps them if ever needed.
+
+### 4b. Review, approval, publication
 
 The existing session editor (`/working-groups/<slug>/sessions/<id>`) gains a **review mode** for leads when a `WgTranscript` is attached:
 
-- Editable minutes prefilled with the AI draft; attendee checklist prefilled from matched participants (unmatched speaker names become guests); a collapsible transcript viewer; the model's open questions.
+- Editable minutes prefilled with the AI draft; the attendance checklist as ticked during the meeting, with the Meet cross-check (§4a); a collapsible transcript viewer; the model's open questions.
 - **Publish transcript** checkbox, **off by default**.
 - **Approve & publish** — one server action: save the session (`recordedById` = the approving lead, `source = ai_draft`), publish through the existing `publishMinutes` path with two extra front-matter keys (`drafted_by: claude-opus-5`, `approved_by: <lead>`), and, only if opted in, commit the transcript beside the minutes as `<slug>/transcripts/YYYY-MM-DD.md`. Audit `wg.transcript.approve`.
 - **Regenerate** re-runs the Summarize step (audit `wg.transcript.regenerate`). **Discard** keeps the transcript internal and marks the session as not for publication (audit `wg.transcript.discard`).
-- The **manual path is unchanged**: participants can still open a session and type minutes; if a manual draft exists for the occurrence, the AI draft is attached to it instead of creating a second session.
+- The **manual path remains**: a lead can still type minutes by hand (e.g. when transcription failed); if a manual draft exists for the occurrence, the AI draft is attached to it instead of creating a second session.
 
 ### 5. Visibility & retention
 
@@ -87,6 +96,7 @@ WgTranscript  {
   wgId, sessionId (unique), conferenceRecord (unique), meetingCode,
   startedAt, endedAt, language?,
   entries Json, entryCount,                   # persisted transcript (Google deletes after 30 days)
+  meetParticipants Json?,                     # Meet display names + join/leave, cross-check only
   summaryMd?, summaryModel?, summarizedAt?, openQuestions Json?,
   status: awaiting_transcript | transcribed | summarized | awaiting_approval | approved | discarded | failed,
   publishTranscript Boolean @default(false),
@@ -101,14 +111,14 @@ New audit actions: `wg.meet.configure`, `wg.transcript.approve`, `wg.transcript.
 | Phase | Scope | Size |
 |---|---|---|
 | 0 | Provisioning above; ADR accepted; README + `.env.example` updated | XS |
-| 1 | `autoMinutes` + `language` flags; meeting code on `WgSchedule`; Meet space patch after Calendar sync with stored error + retry; consent/notice texts | S |
+| 1 | `autoMinutes` + `language` flags; meeting code on `WgSchedule`; Meet space patch after Calendar sync with stored error + retry; consent/notice texts; **Current session** button and lead-only session editing (§4a) | S |
 | 2 | `WgTranscript` + `WgSession` changes; cron step machine (discover, fetch, summarize, notify); Claude client + prompt; lead emails + reminder; ops alert on failure | M |
-| 3 | Session editor review mode; approve / regenerate / discard actions; front-matter extension; optional transcript commit; transcript viewer for leads/participants; pending-review badge | M |
+| 3 | Session editor review mode with the Meet attendance cross-check; approve / regenerate / discard actions; front-matter extension; optional transcript commit; transcript viewer for leads/participants; pending-review badge | M |
 | 4 (optional) | Workspace Events push (Pub/Sub) instead of polling; Markdown rendering of published minutes; mocked-`fetch` tests for the Meet and Claude clients | S–M |
 
 ## Security & privacy
 
-- All lead actions are checked server-side per request (`requireManager`); transcript reads require lead or active-participant status **and** a passing `canAccessWg`.
+- All session writes (open, attendance, minutes, approve) are lead/admin-only, checked server-side per request (`requireManager`); session and transcript reads require lead or active-participant status **and** a passing `canAccessWg`.
 - The service-account key gains two Meet scopes but still impersonates a single role account; it cannot read other users' meetings, Drive or mail. Rotate the key when the scopes change.
 - No audio or video is ever recorded or stored by this design; the only artifact is text, and Google's own artifact retention is not relied upon.
 - The Anthropic API key is a server secret (env → k8s Secret); transcripts are sent over the API only, never used in the browser.

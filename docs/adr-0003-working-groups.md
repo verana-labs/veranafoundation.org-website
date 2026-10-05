@@ -4,7 +4,7 @@
 - **Date:** 2026-06-11
 - **Deciders:** Fabrice (Verana / 2060)
 - **Depends on / blocks:** builds on the auth/roles model and the `WorkingGroup` entity of [ADR-0002](./adr-0002-authentication.md); uses the Verana Google Workspace (Calendar/Meet), the existing SMTP transport (`app/lib/email.ts`) and the `AdminAction` audit pattern.
-- **Amended by:** [ADR-0004](./adr-0004-automatic-minutes.md) (automatic transcription & AI-drafted minutes; the delegated scope set is extended beyond `calendar.events`).
+- **Amended by:** [ADR-0004](./adr-0004-automatic-minutes.md) (automatic transcription & AI-drafted minutes; the delegated scope set is extended beyond `calendar.events`; session attendance and minutes become lead-only, superseding "any participant can open a session record" in §4).
 
 ## Context
 
