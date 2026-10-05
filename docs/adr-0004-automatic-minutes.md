@@ -24,7 +24,8 @@ Requirements agreed for this iteration:
 ### 1. Google Meet transcription is the transcript source
 
 - After every successful Calendar sync (`syncScheduleToGoogle`), the app **patches the Meet space** of the group's meeting (`PATCH https://meet.googleapis.com/v2/spaces/{meetingCode}`, `config.artifactConfig.transcriptionConfig.autoTranscriptionGeneration = ON`) as the `meetings@` role account, which owns the space because it organizes the Calendar event. The meeting code is parsed from the stored `meetLink`. This works for Calendar-created meetings and is idempotent.
-- The Workspace admin console default ("meetings are transcribed by default" for the `meetings@` organizational unit) is set as a **safety net only**: it does not apply to recurring events created before enablement and a host can override it, so the API call remains the guarantee.
+- The Foundation Workspace is on **Business Standard** (upgraded from Business Starter on 2026-10-04; Starter has no Meet transcription at all). On Business Standard transcription is always available to hosts and there is no admin-console "transcribed by default" setting (that exists on Business Plus / Enterprise only), so the API call above is the only switch and must run on every schedule save.
+- In the Admin console, the **Recording** row is set to off for the organizational unit containing `meetings@`: no host can record the Foundation's meetings even by hand.
 - **No recording config is ever set** (`recordingConfig` untouched). If a host records manually, the pipeline ignores the recording.
 - Success/failure is stored on `WgSchedule` next to the existing Calendar sync state (`meetConfiguredAt`, `meetConfigError`); the lead console's existing **Retry sync** covers both.
 - A per-group **`autoMinutes`** flag (default `on`, editable by leads and admins) gates the whole feature; turning it off removes the auto-transcription config from the space.
@@ -69,10 +70,10 @@ The existing session editor (`/working-groups/<slug>/sessions/<id>`) gains a **r
 
 ## Provisioning (one-time, manual)
 
-1. **Workspace edition:** confirm the `meetings@` role account's license supports Meet transcription (and, for the console default, Business Plus / Enterprise).
+1. **Workspace edition:** Meet transcription requires **Business Standard or higher** (Business Starter and Essentials Starter have no transcription or recording; verified 2026-10-04). The verana.io subscription was upgraded to Business Standard; `meetings@` must hold that licence.
 2. **Domain-wide delegation:** extend the existing service account's authorized scopes to `calendar.events`, `meetings.space.settings` (configure the space) and `meetings.space.readonly` (read conference records and transcripts). No Drive scope is needed: the pipeline never downloads files. This supersedes the single-scope statement of ADR-0003; the blast radius stays bounded to the `meetings@` account's own meetings.
 3. **Google Cloud:** enable the **Google Meet REST API** in the project that hosts the service account.
-4. **Admin console (optional safety net):** Meet → automatic meeting artifacts → transcription on, for the organizational unit containing `meetings@`.
+4. **Admin console:** Apps → Google Workspace → Google Meet → Meet video settings, for the organizational unit containing `meetings@`: **Recording** off; **Meeting transcripts** is locked on for Business Standard. (On Business Plus / Enterprise the "transcribed by default" option could be enabled as a safety net; it does not exist on Business Standard.)
 5. **Anthropic:** an API key for the Foundation, stored as `ANTHROPIC_API_KEY` (touch `.env.example`, `docker-publish.yml`, `k8s/statefulset.yaml`).
 6. **k8s:** `k8s/cronjob-wg-transcripts.yaml` (every 15 minutes, `activeDeadlineSeconds: 600`).
 
