@@ -110,15 +110,20 @@ export async function getSpace(meetingCode: string): Promise<MeetSpace> {
  * Turn automatic transcription on/off for a space (works for Calendar-created
  * meetings). Only the transcription field is touched: recording and Gemini
  * notes stay as they are (off).
+ *
+ * `spaces.get` accepts a meeting code, but `spaces.patch` only accepts the
+ * server-generated resource name (`spaces/{space}`) and answers 403 "or it
+ * might not exist" otherwise — so the space is resolved first.
  */
 export async function setAutoTranscription(
   meetingCode: string,
   on: boolean,
 ): Promise<MeetSpace> {
+  const current = await getSpace(meetingCode);
   const space = await api<GSpace>(
     SETTINGS_SCOPES,
     "PATCH",
-    `spaces/${meetingCode}`,
+    current.name,
     { updateMask: "config.artifactConfig.transcriptionConfig.autoTranscriptionGeneration" },
     {
       config: {
