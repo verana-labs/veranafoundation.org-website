@@ -17,7 +17,7 @@ import {
   setAutoTranscription,
   setAutoTranscriptionByName,
 } from "@/app/lib/google-meet";
-import { occurrenceWindowAt } from "@/app/lib/recurrence";
+import { expandOccurrences, occurrenceWindowAt, type Occurrence } from "@/app/lib/recurrence";
 
 export type WgClass = "contributor" | "associate";
 
@@ -333,9 +333,8 @@ export async function syncMeetConfig(
   if (!wg || !schedule || !meetConfigured()) return { ok: true };
   const meetingCode = schedule.meetingCode ?? meetingCodeFromLink(schedule.meetLink);
   if (!schedule.meetSpaceName && !meetingCode) return { ok: true }; // no Meet link yet
-  const cancelled = new Set(schedule.exceptions.map((e) => e.originalStart.getTime()));
   const desired =
-    wg.autoMinutes && occurrenceWindowAt(schedule, now, cancelled) !== null;
+    wg.autoMinutes && occurrenceWindowAt(schedule, now, schedule.exceptions) !== null;
   if (
     !opts.force &&
     schedule.meetAutoTranscribe === desired &&
@@ -426,35 +425,21 @@ export async function syncMeetMembers(
   return error ? { ok: false, added, removed, error } : { ok: true, added, removed };
 }
 
-export { occurrenceFor, occurrenceWindowAt, sessionPhase, type SessionPhase } from "@/app/lib/recurrence";
+export { occurrenceFor, occurrenceWindowAt, sessionPhase, type Occurrence, type SessionPhase } from "@/app/lib/recurrence";
 
 /**
- * Upcoming occurrences from the DB schedule, with cancelled ones flagged. The
- * occurrence in progress is included (so the "current session" stays
- * reachable until the meeting ends).
+ * Upcoming meetings from the DB schedule, exceptions applied (cancelled slots
+ * flagged, moved ones listed at their new time). The meeting in progress is
+ * included (so the "current session" stays reachable until it ends).
  */
 export function upcomingOccurrences(
   schedule: NonNullable<WgDetail["schedule"]>,
   count = 6,
   now = new Date(),
-): { start: Date; cancelled: boolean; note: string | null }[] {
-  const cancelled = new Map(
-    schedule.exceptions.map((e) => [e.originalStart.getTime(), e.note]),
-  );
+): Occurrence[] {
   const from = new Date(now.getTime() - schedule.durationMin * 60_000);
-  return nextOccurrences(
-    schedule.startsAt,
-    schedule.timezone,
-    schedule.rrule,
-    from,
-    count,
-  ).map((start) => ({
-    start,
-    cancelled: cancelled.has(start.getTime()),
-    note: cancelled.get(start.getTime()) ?? null,
-  }));
+  return expandOccurrences(schedule, schedule.exceptions, from, count);
 }
-
 
 /**
  * Working groups featured on the public home page (admin-flagged). Resilient:
@@ -508,7 +493,7 @@ export async function listWorkingGroupsWithAccess(
   ]);
   return groups.map((wg) => {
     const next = wg.schedule
-      ? upcomingOccurrences(wg.schedule).find((o) => !o.cancelled)
+      ? upcomingOccurrences(wg.schedule).find((o) => !o.cancelled && !o.movedTo)
       : undefined;
     return {
       id: wg.id,

@@ -10,6 +10,7 @@ import {
   cancelMeeting,
   deleteSchedule,
   inviteParticipant,
+  moveMeeting,
   removeLead,
   removeParticipant,
   resendInvite,
@@ -40,8 +41,12 @@ export type ScheduleView = {
 };
 
 export type OccurrenceView = {
-  startIso: string;
+  startIso: string; // when the meeting happens (the new time for a moved one)
+  originalStartIso: string; // the series slot — the key for cancel / move / restore
   cancelled: boolean;
+  movedToIso: string | null; // on the vacated slot of a moved meeting
+  movedFromIso: string | null; // on the new slot of a moved meeting
+  note: string | null;
 };
 
 export type InviteView = {
@@ -111,6 +116,9 @@ export default function LeadConsole({
   const [pending, startTransition] = useTransition();
   const [opError, setOpError] = useState<string | null>(null);
   const [cancelNote, setCancelNote] = useState("");
+  // Which series slot is being moved, and the picked wall time (schedule tz).
+  const [moving, setMoving] = useState<string | null>(null);
+  const [moveTo, setMoveTo] = useState("");
 
   const timezones: string[] =
     typeof Intl.supportedValuesOf === "function"
@@ -236,39 +244,115 @@ export default function LeadConsole({
           <div className="mt-8">
             <h4 className="font-medium">Upcoming meetings</h4>
             <p className="text-sm text-muted mt-1">
-              Cancel a single date (e.g. nobody can attend) — it&apos;s removed from
-              everyone&apos;s calendar; restoring puts it back. Times are in your
-              own timezone.
+              Cancel a single date (nobody can attend) or move it to another
+              date and time (holidays, clashes): everyone&apos;s calendar follows,
+              and restoring puts the meeting back on its regular slot. Times are
+              shown in your own timezone; a new time is entered in the
+              schedule&apos;s timezone ({schedule.timezone}). Changing the
+              recurring schedule above clears all cancellations and moves.
             </p>
             <input
               type="text"
               className="mt-3 text-sm w-full max-w-sm"
-              placeholder="Optional cancellation note"
+              placeholder="Optional note (e.g. public holiday)"
               value={cancelNote}
               onChange={(e) => setCancelNote(e.target.value)}
             />
             <ul className="mt-2 space-y-2">
-              {occurrences.map((o) => (
-                <li key={o.startIso} className="flex items-center justify-between gap-3 text-sm">
-                  <span className={o.cancelled ? "line-through text-muted" : ""}>
-                    <LocalTime iso={o.startIso} format="long" />
-                  </span>
-                  <button
-                    type="button"
-                    className="btn text-sm"
-                    disabled={pending}
-                    onClick={() =>
-                      run(() =>
-                        o.cancelled
-                          ? restoreMeeting(wgId, o.startIso)
-                          : cancelMeeting(wgId, o.startIso, cancelNote || undefined),
-                      )
-                    }
-                  >
-                    {o.cancelled ? "Restore" : "Cancel"}
-                  </button>
-                </li>
-              ))}
+              {occurrences.map((o) => {
+                const struck = o.cancelled || !!o.movedToIso;
+                const key = `${o.startIso}:${o.originalStartIso}`;
+                return (
+                  <li key={key} className="text-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className={struck ? "line-through text-muted" : ""}>
+                        <LocalTime iso={o.startIso} format="long" />
+                        {o.cancelled && (
+                          <span className="no-underline text-muted"> — cancelled{o.note ? ` (${o.note})` : ""}</span>
+                        )}
+                        {o.movedToIso && (
+                          <span className="no-underline text-muted">
+                            {" "}— moved to <LocalTime iso={o.movedToIso} format="long" />
+                            {o.note ? ` (${o.note})` : ""}
+                          </span>
+                        )}
+                        {o.movedFromIso && (
+                          <span className="badge badge-amber ml-2 no-underline">
+                            moved from <LocalTime iso={o.movedFromIso} format="date" />
+                          </span>
+                        )}
+                      </span>
+                      <span className="flex gap-2">
+                        {struck ? (
+                          <button
+                            type="button"
+                            className="btn text-sm"
+                            disabled={pending}
+                            onClick={() => run(() => restoreMeeting(wgId, o.originalStartIso))}
+                          >
+                            Restore
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="btn text-sm"
+                              disabled={pending}
+                              onClick={() => {
+                                if (moving === key) {
+                                  setMoving(null);
+                                } else {
+                                  setMoving(key);
+                                  setMoveTo(toLocalInput(o.startIso, schedule.timezone));
+                                }
+                              }}
+                            >
+                              {moving === key ? "Keep time" : "Move"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn text-sm"
+                              disabled={pending}
+                              onClick={() =>
+                                run(() => cancelMeeting(wgId, o.originalStartIso, cancelNote || undefined))
+                              }
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                    {moving === key && !struck && (
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <input
+                          type="datetime-local"
+                          className="text-sm"
+                          value={moveTo}
+                          onChange={(e) => setMoveTo(e.target.value)}
+                        />
+                        <span className="text-xs text-muted">{schedule.timezone}</span>
+                        <button
+                          type="button"
+                          className="btn btn-primary text-sm"
+                          disabled={pending || !moveTo}
+                          onClick={() =>
+                            run(async () => {
+                              const res = await moveMeeting(
+                                wgId, o.originalStartIso, moveTo, cancelNote || undefined,
+                              );
+                              if (res.ok) setMoving(null);
+                              return res;
+                            })
+                          }
+                        >
+                          Move meeting
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}

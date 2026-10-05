@@ -182,23 +182,35 @@ export default async function WorkingGroupPage({
               <ul className="mt-6 space-y-2 max-w-2xl">
                 {occurrences.map((o) => {
                   const phase = sessionPhase(o.start, wg.schedule!.durationMin, now);
-                  const current = !o.cancelled && (phase === "soon" || phase === "live");
+                  const struck = o.cancelled || !!o.movedTo;
+                  const current = !struck && (phase === "soon" || phase === "live");
                   const openable =
                     lead &&
-                    !o.cancelled &&
+                    !struck &&
                     (current || (phase === "upcoming" && o.start.getTime() < now.getTime() + DAY_MS));
                   return (
                     <li
-                      key={o.start.toISOString()}
+                      key={`${o.start.toISOString()}:${o.originalStart.toISOString()}`}
                       className="wg-tile flex flex-wrap items-center justify-between gap-3"
                     >
-                      <span className={o.cancelled ? "line-through text-muted" : ""}>
+                      <span className={struck ? "line-through text-muted" : ""}>
                         <LocalTime iso={o.start.toISOString()} format="long" />
-                        {phase === "live" && !o.cancelled && (
+                        {phase === "live" && !struck && (
                           <span className="badge badge-green ml-3 no-underline">In progress</span>
                         )}
                         {o.cancelled && (
                           <span className="no-underline"> — cancelled{o.note ? ` (${o.note})` : ""}</span>
+                        )}
+                        {o.movedTo && (
+                          <span className="no-underline">
+                            {" "}— moved to <LocalTime iso={o.movedTo.toISOString()} format="long" />
+                            {o.note ? ` (${o.note})` : ""}
+                          </span>
+                        )}
+                        {o.movedFrom && (
+                          <span className="badge badge-amber ml-3 no-underline">
+                            moved from <LocalTime iso={o.movedFrom.toISOString()} format="date" />
+                          </span>
                         )}
                       </span>
                       {openable && (
@@ -352,7 +364,11 @@ export default async function WorkingGroupPage({
               }
               occurrences={occurrences.map((o) => ({
                 startIso: o.start.toISOString(),
+                originalStartIso: o.originalStart.toISOString(),
                 cancelled: o.cancelled,
+                movedToIso: o.movedTo?.toISOString() ?? null,
+                movedFromIso: o.movedFrom?.toISOString() ?? null,
+                note: o.note,
               }))}
               leads={leads}
               participants={participants}

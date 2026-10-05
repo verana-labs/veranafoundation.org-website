@@ -5,6 +5,7 @@ import {
   nextOccurrences,
   occurrenceFor,
   occurrenceWindowAt,
+  expandOccurrences,
   sessionPhase,
   formatInTimezone,
   utcToWall,
@@ -159,12 +160,68 @@ describe("occurrenceWindowAt (transcription window, ADR-0004 amendment)", () => 
   it("ignores calls on other days and cancelled occurrences", () => {
     expect(occurrenceWindowAt(schedule, new Date("2026-10-16T15:00:00Z"))).toBeNull();
     expect(
-      occurrenceWindowAt(schedule, new Date("2026-10-14T15:05:00Z"), new Set([new Date(occ).getTime()])),
+      occurrenceWindowAt(schedule, new Date("2026-10-14T15:05:00Z"), [
+        { originalStart: new Date(occ), movedTo: null, note: "holiday" },
+      ]),
     ).toBeNull();
+  });
+  it("follows a moved meeting: window at the new time, none at the vacated slot", () => {
+    const moved = [{ originalStart: new Date(occ), movedTo: new Date("2026-10-15T15:00:00Z"), note: null }];
+    expect(occurrenceWindowAt(schedule, new Date("2026-10-14T15:05:00Z"), moved)).toBeNull();
+    expect(occurrenceWindowAt(schedule, new Date("2026-10-15T15:05:00Z"), moved)?.toISOString()).toBe(
+      "2026-10-15T15:00:00.000Z",
+    );
   });
   it("follows DST", () => {
     expect(occurrenceWindowAt(schedule, new Date("2026-11-04T16:10:00Z"))?.toISOString()).toBe(
       "2026-11-04T16:00:00.000Z",
     );
+  });
+});
+
+describe("expandOccurrences (cancelled + moved meetings)", () => {
+  const schedule = {
+    startsAt: new Date("2026-10-07T15:00:00Z"),
+    durationMin: 60,
+    timezone: "Europe/Paris",
+    rrule: "FREQ=WEEKLY;BYDAY=WE",
+  };
+  const from = new Date("2026-10-10T00:00:00Z");
+  it("lists the series when there are no exceptions", () => {
+    const list = expandOccurrences(schedule, [], from, 3);
+    expect(list.map((o) => o.start.toISOString())).toEqual([
+      "2026-10-14T15:00:00.000Z",
+      "2026-10-21T15:00:00.000Z",
+      "2026-10-28T16:00:00.000Z",
+    ]);
+    expect(list.every((o) => !o.cancelled && !o.movedTo && !o.movedFrom)).toBe(true);
+  });
+  it("keeps a cancelled slot struck-through and lists a moved one twice", () => {
+    const list = expandOccurrences(
+      schedule,
+      [
+        { originalStart: new Date("2026-10-14T15:00:00Z"), movedTo: null, note: "holiday" },
+        { originalStart: new Date("2026-10-21T15:00:00Z"), movedTo: new Date("2026-10-23T09:00:00Z"), note: null },
+      ],
+      from,
+      4,
+    );
+    expect(list.map((o) => [o.start.toISOString(), o.cancelled, o.movedTo?.toISOString() ?? null, o.movedFrom?.toISOString() ?? null])).toEqual([
+      ["2026-10-14T15:00:00.000Z", true, null, null],
+      ["2026-10-21T15:00:00.000Z", false, "2026-10-23T09:00:00.000Z", null],
+      ["2026-10-23T09:00:00.000Z", false, null, "2026-10-21T15:00:00.000Z"],
+      ["2026-10-28T16:00:00.000Z", false, null, null],
+    ]);
+    expect(list[0].note).toBe("holiday");
+  });
+  it("shows a meeting moved into the window from an earlier slot", () => {
+    const list = expandOccurrences(
+      schedule,
+      [{ originalStart: new Date("2026-10-07T15:00:00Z"), movedTo: new Date("2026-10-12T10:00:00Z"), note: null }],
+      from,
+      2,
+    );
+    expect(list[0]).toMatchObject({ movedFrom: new Date("2026-10-07T15:00:00Z") });
+    expect(list[0].start.toISOString()).toBe("2026-10-12T10:00:00.000Z");
   });
 });

@@ -174,7 +174,19 @@ export async function deleteScheduleEvent(eventId: string): Promise<void> {
   });
 }
 
+/**
+ * The instance of a recurring event for a given original start. Instance ids
+ * are deterministic (`<eventId>_<originalStart as 20261026T090000Z>`), which
+ * keeps working right after a move — the `instances?originalStart=` listing
+ * can lag for a moment — so that is tried first, the listing is the fallback.
+ */
 async function findInstance(eventId: string, originalStart: Date): Promise<GEvent> {
+  const stamp = originalStart.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  try {
+    return await api<GEvent>("GET", `/calendars/primary/events/${eventId}_${stamp}`, {});
+  } catch {
+    /* fall back to the listing below */
+  }
   const { items } = await api<{ items: GEvent[] }>(
     "GET",
     `/calendars/primary/events/${eventId}/instances`,
@@ -202,13 +214,39 @@ export async function cancelOccurrence(
   }, { status: "cancelled" });
 }
 
-/** Undo a single-occurrence cancellation. */
+/** Move one occurrence to another date/time (same duration); attendees are notified. */
+export async function moveOccurrence(
+  eventId: string,
+  originalStart: Date,
+  newStart: Date,
+  durationMin: number,
+  timezone: string,
+): Promise<void> {
+  const instance = await findInstance(eventId, originalStart);
+  const end = new Date(newStart.getTime() + durationMin * 60_000);
+  await api("PATCH", `/calendars/primary/events/${instance.id}`, {
+    sendUpdates: "all",
+  }, {
+    status: "confirmed",
+    start: { dateTime: newStart.toISOString(), timeZone: timezone },
+    end: { dateTime: end.toISOString(), timeZone: timezone },
+  });
+}
+
+/** Undo a single-occurrence cancellation or move: back to the series slot. */
 export async function restoreOccurrence(
   eventId: string,
   originalStart: Date,
+  durationMin: number,
+  timezone: string,
 ): Promise<void> {
   const instance = await findInstance(eventId, originalStart);
+  const end = new Date(originalStart.getTime() + durationMin * 60_000);
   await api("PATCH", `/calendars/primary/events/${instance.id}`, {
     sendUpdates: "all",
-  }, { status: "confirmed" });
+  }, {
+    status: "confirmed",
+    start: { dateTime: originalStart.toISOString(), timeZone: timezone },
+    end: { dateTime: end.toISOString(), timeZone: timezone },
+  });
 }
