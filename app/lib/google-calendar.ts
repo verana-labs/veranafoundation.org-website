@@ -83,9 +83,27 @@ function eventResource(input: ScheduleEventInput) {
   };
 }
 
-/** Create the recurring WG event; Google generates the Meet link and invites. */
+/** A Meet space the site created itself (lib/google-meet.ts createSpace). */
+export type MeetConference = { meetingCode: string; uri: string };
+
+function conferenceData(c: MeetConference) {
+  return {
+    conferenceSolution: { key: { type: "hangoutsMeet" } },
+    conferenceId: c.meetingCode,
+    entryPoints: [
+      { entryPointType: "video", uri: c.uri, label: c.uri.replace(/^https?:\/\//, "") },
+    ],
+  };
+}
+
+/**
+ * Create the recurring WG event and send the invitations. With `conference`
+ * the event carries the site-created Meet space (so its leads can be
+ * co-hosts); without it Google generates a Meet link of its own.
+ */
 export async function createScheduleEvent(
   input: ScheduleEventInput,
+  conference?: MeetConference,
 ): Promise<{ eventId: string; meetLink: string | null }> {
   const ev = await api<GEvent>(
     "POST",
@@ -93,27 +111,48 @@ export async function createScheduleEvent(
     { conferenceDataVersion: "1", sendUpdates: "all" },
     {
       ...eventResource(input),
-      conferenceData: {
-        createRequest: {
-          requestId: `wg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          conferenceSolutionKey: { type: "hangoutsMeet" },
-        },
-      },
+      conferenceData: conference
+        ? conferenceData(conference)
+        : {
+            createRequest: {
+              requestId: `wg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              conferenceSolutionKey: { type: "hangoutsMeet" },
+            },
+          },
     },
   );
   return { eventId: ev.id, meetLink: meetLinkOf(ev) };
 }
 
-/** Update time/recurrence/attendees of the series; attendees get an update. */
-export async function updateScheduleEvent(
+/** Replace the event's Meet link with a site-created space; attendees are notified. */
+export async function attachConference(
   eventId: string,
-  input: ScheduleEventInput,
+  conference: MeetConference,
 ): Promise<{ meetLink: string | null }> {
   const ev = await api<GEvent>(
     "PATCH",
     `/calendars/primary/events/${eventId}`,
     { conferenceDataVersion: "1", sendUpdates: "all" },
-    eventResource(input),
+    { conferenceData: conferenceData(conference) },
+  );
+  return { meetLink: meetLinkOf(ev) };
+}
+
+/**
+ * Update time/recurrence/attendees of the series; attendees get an update.
+ * With `conference` the event is (re)pointed at the site-created space, so a
+ * sync always converges on the link the site owns.
+ */
+export async function updateScheduleEvent(
+  eventId: string,
+  input: ScheduleEventInput,
+  conference?: MeetConference,
+): Promise<{ meetLink: string | null }> {
+  const ev = await api<GEvent>(
+    "PATCH",
+    `/calendars/primary/events/${eventId}`,
+    { conferenceDataVersion: "1", sendUpdates: "all" },
+    { ...eventResource(input), ...(conference ? { conferenceData: conferenceData(conference) } : {}) },
   );
   return { meetLink: meetLinkOf(ev) };
 }

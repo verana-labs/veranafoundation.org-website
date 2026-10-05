@@ -18,6 +18,7 @@ import {
   deleteScheduleEvent,
   restoreOccurrence,
 } from "@/app/lib/google-calendar";
+import { setAutoTranscriptionByName } from "@/app/lib/google-meet";
 import { buildRrule, wallToUtc, type Frequency } from "@/app/lib/recurrence";
 import { publishMinutes, publishTranscript } from "@/app/lib/minutes";
 import { minutesAiConfigured } from "@/app/lib/minutes-ai";
@@ -388,6 +389,10 @@ export async function deleteSchedule(wgId: string): Promise<ActionState> {
     } catch (e) {
       return { error: e instanceof Error ? e.message : "Calendar cancellation failed." };
     }
+  }
+  if (schedule.meetSpaceName && schedule.meetAutoTranscribe) {
+    // Best effort: the orphaned space must not keep transcribing.
+    await setAutoTranscriptionByName(schedule.meetSpaceName, false).catch(() => {});
   }
   await db.wgSchedule.delete({ where: { wgId } });
   await audit(user, "wg.schedule.delete", wgId);

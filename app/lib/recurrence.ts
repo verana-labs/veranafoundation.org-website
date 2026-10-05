@@ -135,6 +135,38 @@ export function occurrenceFor(schedule: ScheduleLike, at: Date): Date {
   return minute;
 }
 
+/** Automatic transcription is on from this long before a scheduled start… */
+export const TRANSCRIPTION_OPENS_BEFORE_MIN = 20;
+/** …until this long after the scheduled end (a running call is never cut). */
+export const TRANSCRIPTION_CLOSES_AFTER_MIN = 30;
+
+/**
+ * The non-cancelled scheduled occurrence whose transcription window contains
+ * `at`, or null when `at` falls outside every window (ADR-0004 amendment:
+ * calls outside the schedule are neither transcribed nor picked up).
+ */
+export function occurrenceWindowAt(
+  schedule: ScheduleLike,
+  at: Date,
+  cancelled: Set<number> = new Set(),
+): Date | null {
+  const before = TRANSCRIPTION_OPENS_BEFORE_MIN * 60_000;
+  const after = (schedule.durationMin + TRANSCRIPTION_CLOSES_AFTER_MIN) * 60_000;
+  const candidates = nextOccurrences(
+    schedule.startsAt,
+    schedule.timezone,
+    schedule.rrule,
+    new Date(at.getTime() - after),
+    3,
+  );
+  for (const occ of candidates) {
+    if (cancelled.has(occ.getTime())) continue;
+    const t = at.getTime();
+    if (t >= occ.getTime() - before && t <= occ.getTime() + after) return occ;
+  }
+  return null;
+}
+
 export type SessionPhase = "upcoming" | "soon" | "live" | "past";
 
 /** Where `now` falls relative to an occurrence (drives the session button). */

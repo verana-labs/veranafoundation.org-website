@@ -1,11 +1,23 @@
 import { db } from "@/app/lib/db";
 import { nextOccurrences } from "@/app/lib/recurrence";
 import {
+  attachConference,
   calendarConfigured,
   createScheduleEvent,
   updateScheduleEvent,
+  type MeetConference,
 } from "@/app/lib/google-calendar";
-import { meetingCodeFromLink, setAutoTranscription } from "@/app/lib/google-meet";
+import {
+  addCohost,
+  createSpace,
+  listMembers,
+  meetConfigured,
+  meetingCodeFromLink,
+  removeMember,
+  setAutoTranscription,
+  setAutoTranscriptionByName,
+} from "@/app/lib/google-meet";
+import { occurrenceWindowAt } from "@/app/lib/recurrence";
 
 export type WgClass = "contributor" | "associate";
 
@@ -159,6 +171,9 @@ async function attendeeEmails(wgId: string): Promise<string[]> {
  * the single DB→Google sync path, used by schedule edits and join/leave alike.
  * DB is canonical: failures are recorded on the schedule (`syncError`) and the
  * lead UI offers retry; the site keeps rendering from the DB regardless.
+ *
+ * ADR-0004 amendment: the Meet space is created by the site (so the leads can
+ * be co-hosts) and attached to the event; the Meet-side settings follow.
  */
 export async function syncScheduleToGoogle(
   wgId: string,
@@ -167,15 +182,23 @@ export async function syncScheduleToGoogle(
     where: { id: wgId },
     include: { schedule: true },
   });
-  const schedule = wg?.schedule;
-  if (!wg || !schedule) return { ok: true }; // nothing to sync
+  if (!wg || !wg.schedule) return { ok: true }; // nothing to sync
   if (!calendarConfigured()) {
     await db.wgSchedule.update({
-      where: { id: schedule.id },
+      where: { id: wg.schedule.id },
       data: { syncError: "Google Calendar is not configured." },
     });
     return { ok: false, error: "Google Calendar is not configured." };
   }
+
+  // Own the space first so the event carries it from the start; a failure
+  // here is recorded on the Meet side and the event still syncs.
+  await ensureAppSpace(wgId, { attach: false });
+  const schedule = await db.wgSchedule.findUniqueOrThrow({ where: { id: wg.schedule.id } });
+  const conference: MeetConference | undefined =
+    schedule.meetSpaceName && schedule.meetingCode && schedule.meetLink
+      ? { meetingCode: schedule.meetingCode, uri: schedule.meetLink }
+      : undefined;
 
   // Same base-URL source as every other absolute link (emails, invoices).
   const base = process.env.AUTH_URL ?? "https://veranafoundation.org";
@@ -193,28 +216,27 @@ export async function syncScheduleToGoogle(
   };
 
   try {
-    let link: string | null;
     if (schedule.googleEventId) {
-      const { meetLink } = await updateScheduleEvent(schedule.googleEventId, input);
-      link = meetLink ?? schedule.meetLink;
+      const { meetLink } = await updateScheduleEvent(schedule.googleEventId, input, conference);
+      const link = conference?.uri ?? meetLink ?? schedule.meetLink;
       await db.wgSchedule.update({
         where: { id: schedule.id },
         data: {
           meetLink: link,
-          meetingCode: meetingCodeFromLink(link),
+          meetingCode: conference?.meetingCode ?? meetingCodeFromLink(link),
           syncedAt: new Date(),
           syncError: null,
         },
       });
     } else {
-      const { eventId, meetLink } = await createScheduleEvent(input);
-      link = meetLink;
+      const { eventId, meetLink } = await createScheduleEvent(input, conference);
+      const link = conference?.uri ?? meetLink;
       await db.wgSchedule.update({
         where: { id: schedule.id },
         data: {
           googleEventId: eventId,
-          meetLink,
-          meetingCode: meetingCodeFromLink(meetLink),
+          meetLink: link,
+          meetingCode: conference?.meetingCode ?? meetingCodeFromLink(link),
           syncedAt: new Date(),
           syncError: null,
         },
@@ -229,31 +251,91 @@ export async function syncScheduleToGoogle(
     return { ok: false, error };
   }
 
-  // ADR-0004: the Meet space follows the group's autoMinutes setting. Its own
-  // failure is recorded separately (meetConfigError) and never fails the sync.
+  // Meet side: transcription window + co-hosts. Their own failures are
+  // recorded separately (meetConfigError / meetMembersError) and never fail
+  // the Calendar sync.
   await syncMeetConfig(wgId);
+  await syncMeetMembers(wgId);
   return { ok: true };
 }
 
 /**
- * Push the group's auto-transcription setting to its Meet space (ADR-0004 §1).
- * Idempotent and cheap: skipped when the stored state already matches, unless
- * `force`. Failures land in `meetConfigError`; the lead console retries them
- * together with the Calendar sync.
+ * Give the group a Meet space the site owns (ADR-0004 amendment). Google only
+ * lets an app manage co-hosts on spaces that app created, so Calendar-created
+ * spaces are taken over once: a new space is created and, with `attach`,
+ * swapped into the existing event (attendees receive the new link through the
+ * normal Calendar update) while the old space stops transcribing.
+ */
+export async function ensureAppSpace(
+  wgId: string,
+  opts: { attach: boolean },
+): Promise<{ ok: boolean; created?: boolean; error?: string }> {
+  const schedule = await db.wgSchedule.findUnique({ where: { wgId } });
+  if (!schedule || schedule.meetSpaceName || !meetConfigured()) return { ok: true };
+  try {
+    const space = await createSpace();
+    if (opts.attach && schedule.googleEventId) {
+      await attachConference(schedule.googleEventId, {
+        meetingCode: space.meetingCode,
+        uri: space.uri,
+      });
+    }
+    const oldCode = schedule.meetingCode ?? meetingCodeFromLink(schedule.meetLink);
+    await db.wgSchedule.update({
+      where: { id: schedule.id },
+      data: {
+        meetSpaceName: space.name,
+        meetingCode: space.meetingCode,
+        meetLink: space.uri,
+        meetAutoTranscribe: false,
+        meetConfiguredAt: new Date(),
+        meetConfigError: null,
+        meetMembersSyncedAt: null,
+      },
+    });
+    if (oldCode && oldCode !== space.meetingCode && schedule.meetAutoTranscribe) {
+      // Best effort: the superseded Calendar-created space must not keep
+      // transcribing whoever still opens the old link.
+      try {
+        await setAutoTranscription(oldCode, false);
+      } catch (e) {
+        console.warn(`[wg-meet] could not switch off transcription on old space ${oldCode}:`, e);
+      }
+    }
+    return { ok: true, created: true };
+  } catch (e) {
+    const error = e instanceof Error ? e.message : String(e);
+    await db.wgSchedule.update({
+      where: { id: schedule.id },
+      data: { meetConfigError: `Meet space creation failed: ${error}`.slice(0, 1000) },
+    });
+    return { ok: false, error };
+  }
+}
+
+/**
+ * Push the transcription setting the space should have *now*: on only inside
+ * the window around a non-cancelled scheduled occurrence (ADR-0004 amendment),
+ * and only when the group has automatic minutes. Idempotent and cheap: no API
+ * call when the stored state already matches, unless `force`. Failures land in
+ * `meetConfigError` and are retried by the cron / the lead console.
  */
 export async function syncMeetConfig(
   wgId: string,
-  opts: { force?: boolean } = {},
+  opts: { force?: boolean; now?: Date } = {},
 ): Promise<{ ok: boolean; error?: string }> {
+  const now = opts.now ?? new Date();
   const wg = await db.workingGroup.findUnique({
     where: { id: wgId },
-    include: { schedule: true },
+    include: { schedule: { include: { exceptions: true } } },
   });
   const schedule = wg?.schedule;
-  if (!wg || !schedule) return { ok: true };
+  if (!wg || !schedule || !meetConfigured()) return { ok: true };
   const meetingCode = schedule.meetingCode ?? meetingCodeFromLink(schedule.meetLink);
-  if (!meetingCode) return { ok: true }; // no Meet link yet (sync pending)
-  const desired = wg.autoMinutes;
+  if (!schedule.meetSpaceName && !meetingCode) return { ok: true }; // no Meet link yet
+  const cancelled = new Set(schedule.exceptions.map((e) => e.originalStart.getTime()));
+  const desired =
+    wg.autoMinutes && occurrenceWindowAt(schedule, now, cancelled) !== null;
   if (
     !opts.force &&
     schedule.meetAutoTranscribe === desired &&
@@ -262,11 +344,13 @@ export async function syncMeetConfig(
     return { ok: true };
   }
   try {
-    const space = await setAutoTranscription(meetingCode, desired);
+    const space = schedule.meetSpaceName
+      ? await setAutoTranscriptionByName(schedule.meetSpaceName, desired)
+      : await setAutoTranscription(meetingCode!, desired);
     await db.wgSchedule.update({
       where: { id: schedule.id },
       data: {
-        meetingCode,
+        meetingCode: space.meetingCode || meetingCode,
         meetAutoTranscribe: space.autoTranscription ?? desired,
         meetConfiguredAt: new Date(),
         meetConfigError: null,
@@ -277,13 +361,72 @@ export async function syncMeetConfig(
     const error = e instanceof Error ? e.message : String(e);
     await db.wgSchedule.update({
       where: { id: schedule.id },
-      data: { meetingCode, meetConfigError: error.slice(0, 1000) },
+      data: { meetConfigError: error.slice(0, 1000) },
     });
     return { ok: false, error };
   }
 }
 
-export { occurrenceFor, sessionPhase, type SessionPhase } from "@/app/lib/recurrence";
+/**
+ * Reconcile the space's co-hosts with the group's leads plus the Foundation
+ * admins (ADR-0004 amendment): a co-host's arrival is what starts automatic
+ * transcription, so every lead must be one whatever their email domain.
+ * Per-address failures (an email with no Google account) are collected, not
+ * fatal.
+ */
+export async function syncMeetMembers(
+  wgId: string,
+): Promise<{ ok: boolean; added?: number; removed?: number; error?: string }> {
+  const schedule = await db.wgSchedule.findUnique({ where: { wgId } });
+  if (!schedule?.meetSpaceName || !meetConfigured()) return { ok: true };
+  const [leads, admins] = await Promise.all([
+    db.wgLead.findMany({ where: { wgId }, include: { user: true } }),
+    db.adminAllowlistEntry.findMany(),
+  ]);
+  const desired = new Set<string>();
+  for (const l of leads) if (l.user.email) desired.add(l.user.email.toLowerCase());
+  for (const a of admins) desired.add(a.email.toLowerCase());
+
+  const problems: string[] = [];
+  let added = 0;
+  let removed = 0;
+  try {
+    const current = await listMembers(schedule.meetSpaceName);
+    const have = new Set<string>();
+    for (const m of current) {
+      if (m.role !== "COHOST") continue;
+      if (desired.has(m.email)) {
+        have.add(m.email);
+      } else {
+        try {
+          await removeMember(m.name);
+          removed++;
+        } catch (e) {
+          problems.push(`${m.email}: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      }
+    }
+    for (const email of desired) {
+      if (have.has(email)) continue;
+      try {
+        await addCohost(schedule.meetSpaceName, email);
+        added++;
+      } catch (e) {
+        problems.push(`${email}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+  } catch (e) {
+    problems.push(e instanceof Error ? e.message : String(e));
+  }
+  const error = problems.length ? problems.join(" | ").slice(0, 1000) : null;
+  await db.wgSchedule.update({
+    where: { id: schedule.id },
+    data: { meetMembersSyncedAt: new Date(), meetMembersError: error },
+  });
+  return error ? { ok: false, added, removed, error } : { ok: true, added, removed };
+}
+
+export { occurrenceFor, occurrenceWindowAt, sessionPhase, type SessionPhase } from "@/app/lib/recurrence";
 
 /**
  * Upcoming occurrences from the DB schedule, with cancelled ones flagged. The

@@ -6,6 +6,7 @@ import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
 import { slugify, syncMeetConfig, syncScheduleToGoogle } from "@/app/lib/working-groups";
 import { deleteScheduleEvent } from "@/app/lib/google-calendar";
+import { setAutoTranscriptionByName } from "@/app/lib/google-meet";
 import { MINUTES_LANGUAGES } from "@/app/lib/languages";
 
 /** A slug from the name, suffixed on collision. Slugs are stable after create
@@ -183,6 +184,9 @@ export async function deleteWg(formData: FormData) {
     } catch {
       /* attendees keep a stale event; acceptable on force-delete */
     }
+  }
+  if (schedule?.meetSpaceName && schedule.meetAutoTranscribe) {
+    await setAutoTranscriptionByName(schedule.meetSpaceName, false).catch(() => {});
   }
   await db.workingGroup.delete({ where: { id } });
   await db.adminAction.create({

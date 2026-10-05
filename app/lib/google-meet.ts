@@ -2,7 +2,10 @@ import { googleAccessToken, googleConfigured } from "@/app/lib/google-auth";
 
 /**
  * Google Meet REST API client (ADR-0004), as the meetings role account that
- * owns every WG meeting space. Two uses:
+ * owns every WG meeting space. Three uses:
+ *   - create the group's space and make its leads co-hosts (scope
+ *     meetings.space.created — members can only be managed on spaces the app
+ *     created, which is why the site owns them instead of Calendar);
  *   - switch a space to automatic transcription (scope meetings.space.settings);
  *   - read what a conference produced: records, participants, transcript
  *     entries (scope meetings.space.readonly).
@@ -16,6 +19,8 @@ import { googleAccessToken, googleConfigured } from "@/app/lib/google-auth";
 const API = "https://meet.googleapis.com/v2";
 const SETTINGS_SCOPES = ["https://www.googleapis.com/auth/meetings.space.settings"] as const;
 const READ_SCOPES = ["https://www.googleapis.com/auth/meetings.space.readonly"] as const;
+// Spaces the site creates itself (and only those) can carry co-host members.
+const CREATED_SCOPES = ["https://www.googleapis.com/auth/meetings.space.created"] as const;
 
 export function meetConfigured(): boolean {
   return googleConfigured();
@@ -77,7 +82,9 @@ async function listAll<T>(
 type GSpace = {
   name: string;
   meetingCode?: string;
+  meetingUri?: string;
   config?: {
+    moderation?: string;
     artifactConfig?: {
       recordingConfig?: { autoRecordingGeneration?: string };
       transcriptionConfig?: { autoTranscriptionGeneration?: string };
@@ -88,18 +95,43 @@ type GSpace = {
 export type MeetSpace = {
   name: string; // "spaces/{space}"
   meetingCode: string;
+  uri: string; // "https://meet.google.com/{meetingCode}"
+  moderation: boolean | null; // host management
   autoTranscription: boolean | null;
   autoRecording: boolean | null;
 };
 
 export function parseSpace(s: GSpace, fallbackCode: string): MeetSpace {
   const onOff = (v: string | undefined) => (v ? v === "ON" : null);
+  const meetingCode = s.meetingCode ?? fallbackCode;
   return {
     name: s.name,
-    meetingCode: s.meetingCode ?? fallbackCode,
+    meetingCode,
+    uri: s.meetingUri ?? `https://meet.google.com/${meetingCode}`,
+    moderation: onOff(s.config?.moderation),
     autoTranscription: onOff(s.config?.artifactConfig?.transcriptionConfig?.autoTranscriptionGeneration),
     autoRecording: onOff(s.config?.artifactConfig?.recordingConfig?.autoRecordingGeneration),
   };
+}
+
+/**
+ * Create a group's meeting space, owned by the role account and by this app:
+ * trusted access (members of the Workspace, invited people and dial-ins join
+ * without knocking), host management on with no restrictions (so co-host roles
+ * exist — co-hosts are what start automatic transcription when no Workspace
+ * user attends), transcription initially off (the cron opens it around each
+ * scheduled occurrence), recording and notes untouched (off).
+ */
+export async function createSpace(): Promise<MeetSpace> {
+  const space = await api<GSpace>(CREATED_SCOPES, "POST", "spaces", {}, {
+    config: {
+      accessType: "TRUSTED",
+      entryPointAccess: "ALL",
+      moderation: "ON",
+      artifactConfig: { transcriptionConfig: { autoTranscriptionGeneration: "OFF" } },
+    },
+  });
+  return parseSpace(space, space.meetingCode ?? "");
 }
 
 export async function getSpace(meetingCode: string): Promise<MeetSpace> {
@@ -120,10 +152,18 @@ export async function setAutoTranscription(
   on: boolean,
 ): Promise<MeetSpace> {
   const current = await getSpace(meetingCode);
+  return setAutoTranscriptionByName(current.name, on);
+}
+
+/** Same, when the resource name is already known (site-created spaces). */
+export async function setAutoTranscriptionByName(
+  spaceName: string,
+  on: boolean,
+): Promise<MeetSpace> {
   const space = await api<GSpace>(
     SETTINGS_SCOPES,
     "PATCH",
-    current.name,
+    spaceName,
     { updateMask: "config.artifactConfig.transcriptionConfig.autoTranscriptionGeneration" },
     {
       config: {
@@ -133,7 +173,63 @@ export async function setAutoTranscription(
       },
     },
   );
-  return parseSpace(space, meetingCode);
+  return parseSpace(space, space.meetingCode ?? spaceName);
+}
+
+// ── Members (co-hosts) — site-created spaces only ────────────────────────────
+
+export type MeetMember = {
+  name: string; // "spaces/{space}/members/{member}"
+  email: string;
+  role: "COHOST" | "ROLE_UNSPECIFIED";
+};
+
+type GMember = { name: string; email?: string; role?: string };
+
+export function parseMember(m: GMember): MeetMember {
+  return {
+    name: m.name,
+    email: (m.email ?? "").toLowerCase(),
+    role: m.role === "COHOST" ? "COHOST" : "ROLE_UNSPECIFIED",
+  };
+}
+
+export async function listMembers(spaceName: string): Promise<MeetMember[]> {
+  const out: MeetMember[] = [];
+  let pageToken: string | undefined;
+  for (let page = 0; page < 20; page++) {
+    const data = await api<{ members?: GMember[]; nextPageToken?: string }>(
+      CREATED_SCOPES,
+      "GET",
+      `${spaceName}/members`,
+      { pageSize: "100", ...(pageToken ? { pageToken } : {}) },
+    );
+    out.push(...(data.members ?? []).map(parseMember));
+    pageToken = data.nextPageToken;
+    if (!pageToken) break;
+  }
+  return out;
+}
+
+/** Make a Google account (any domain) a co-host of the space. */
+export async function addCohost(spaceName: string, email: string): Promise<MeetMember> {
+  const m = await api<GMember>(CREATED_SCOPES, "POST", `${spaceName}/members`, {}, {
+    email,
+    role: "COHOST",
+  });
+  return parseMember(m);
+}
+
+export async function removeMember(memberName: string): Promise<void> {
+  const token = await googleAccessToken(CREATED_SCOPES);
+  const res = await fetch(`${API}/${memberName}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`Meet API DELETE ${memberName} failed (${res.status}): ${await res.text()}`);
+  }
 }
 
 // ── Conference records & artifacts (read) ──────────────────────────────────

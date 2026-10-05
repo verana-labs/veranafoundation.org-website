@@ -4,6 +4,7 @@ import {
   describeRrule,
   nextOccurrences,
   occurrenceFor,
+  occurrenceWindowAt,
   sessionPhase,
   formatInTimezone,
   utcToWall,
@@ -134,6 +135,36 @@ describe("occurrenceFor / sessionPhase / formatInTimezone (ADR-0004)", () => {
     // ICU versions differ on the separators ("Wednesday, 7 October 2026 at 17:00").
     expect(formatInTimezone(new Date("2026-10-07T15:00:00Z"), "Europe/Paris")).toMatch(
       /^Wednesday,? 7 October 2026,? (at )?17:00 \(Europe\/Paris\)$/,
+    );
+  });
+});
+
+describe("occurrenceWindowAt (transcription window, ADR-0004 amendment)", () => {
+  // Weekly on Wednesday 17:00 Europe/Paris, 60 min.
+  const schedule = {
+    startsAt: new Date("2026-10-07T15:00:00Z"),
+    durationMin: 60,
+    timezone: "Europe/Paris",
+    rrule: "FREQ=WEEKLY;BYDAY=WE",
+  };
+  const occ = "2026-10-14T15:00:00.000Z";
+
+  it("opens 20 minutes before the start and closes 30 minutes after the end", () => {
+    expect(occurrenceWindowAt(schedule, new Date("2026-10-14T14:40:00Z"))?.toISOString()).toBe(occ);
+    expect(occurrenceWindowAt(schedule, new Date("2026-10-14T14:39:59Z"))).toBeNull();
+    expect(occurrenceWindowAt(schedule, new Date("2026-10-14T15:30:00Z"))?.toISOString()).toBe(occ);
+    expect(occurrenceWindowAt(schedule, new Date("2026-10-14T16:30:00Z"))?.toISOString()).toBe(occ);
+    expect(occurrenceWindowAt(schedule, new Date("2026-10-14T16:30:01Z"))).toBeNull();
+  });
+  it("ignores calls on other days and cancelled occurrences", () => {
+    expect(occurrenceWindowAt(schedule, new Date("2026-10-16T15:00:00Z"))).toBeNull();
+    expect(
+      occurrenceWindowAt(schedule, new Date("2026-10-14T15:05:00Z"), new Set([new Date(occ).getTime()])),
+    ).toBeNull();
+  });
+  it("follows DST", () => {
+    expect(occurrenceWindowAt(schedule, new Date("2026-11-04T16:10:00Z"))?.toISOString()).toBe(
+      "2026-11-04T16:00:00.000Z",
     );
   });
 });

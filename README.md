@@ -87,8 +87,11 @@ layout).
   the history renders on the group page from the DB. Participants read
   sessions; only leads (and admins) write.
 - **Automatic minutes** ([ADR-0004](docs/adr-0004-automatic-minutes.md)) —
-  each group's Meet space is switched to **automatic transcription** after
-  every Calendar sync; a 5-minute cron (`/api/cron/wg-transcripts`) discovers
+  the site creates each group's **Meet room** itself and makes the leads (and
+  admins) its **co-hosts**, so any lead joining starts Google's **automatic
+  transcription**, which the cron opens 20 min before each scheduled meeting
+  and closes 30 min after it (calls outside the schedule are not transcribed);
+  a 5-minute cron (`/api/cron/wg-transcripts`) discovers
   ended conferences, persists the transcript entries (Google deletes them after
   30 days), drafts the minutes with **Claude** in the group's language and
   emails the leads. The session page shows the draft, the AI's open questions,
@@ -119,7 +122,7 @@ layout).
 | **Wise Business API** | Bank-transfer reconciliation | Read-only activities feed; webhook (`balances#credit`) + daily cron backstop |
 | **Relaticle CRM** | `/contact` inquiries | Company/Person/Note/Opportunity/Task per inquiry; best-effort, never blocks the user |
 | **Google Calendar API** | Working-group meetings | Service account + domain-wide delegation impersonating the `meetings@` role account; auto Meet links, native invites |
-| **Google Meet REST API** | Automatic transcription | Same service account (scopes `meetings.space.settings` + `meetings.space.readonly`): switches each space to auto-transcription, reads conference records, participants and transcript entries. No Drive scope, no recordings |
+| **Google Meet REST API** | Meet rooms + automatic transcription | Same service account (scopes `meetings.space.created`, `meetings.space.settings`, `meetings.space.readonly`): creates each group's space and makes the leads co-hosts (a co-host's arrival starts the transcription), opens auto-transcription only around scheduled meetings, reads conference records, participants and transcript entries. No Drive scope, no recordings |
 | **Anthropic API** | Drafted minutes | `claude-opus-5` (override with `MINUTES_AI_MODEL`) turns a transcript into minutes + open questions; a lead approves before publication |
 | **GitHub API** | Minutes publishing + home stats | Fine-grained PAT scoped to the minutes repo; same token raises the stats rate limit |
 | **Discord/Slack webhook** | Ops alerts | Optional; CRM/reconciliation failures |
@@ -235,7 +238,7 @@ Where: **local** = `.env.local`; **secret** = GitHub Actions secret → k8s Secr
 | Variable | Required | Where (prod) | Purpose |
 | --- | --- | --- | --- |
 | `GOOGLE_SA_EMAIL` | for Calendar sync | secret | Service-account email |
-| `GOOGLE_SA_PRIVATE_KEY` | for Calendar sync | secret | SA key PEM (`\n`-escaped); DWD scopes `calendar.events`, `meetings.space.settings`, `meetings.space.readonly` |
+| `GOOGLE_SA_PRIVATE_KEY` | for Calendar sync | secret | SA key PEM (`\n`-escaped); DWD scopes `calendar.events`, `meetings.space.created`, `meetings.space.settings`, `meetings.space.readonly` |
 | `GOOGLE_CALENDAR_IMPERSONATE` | for Calendar sync | secret | Role account organizing all WG meetings (`meetings@veranafoundation.org`) |
 | `ANTHROPIC_API_KEY` | for drafted minutes | secret | Claude API key; without it transcripts are collected and leads write minutes by hand |
 | `MINUTES_AI_MODEL` | no | — | Model override (default `claude-opus-5`) |
