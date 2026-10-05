@@ -13,7 +13,7 @@ import { draftMinutes, minutesAiConfigured } from "@/app/lib/minutes-ai";
 import { sendMinutesReviewEmail } from "@/app/lib/wg-minutes-emails";
 import { alertOps } from "@/app/lib/relaticle";
 import { formatInTimezone } from "@/app/lib/recurrence";
-import { occurrenceFor, personName } from "@/app/lib/working-groups";
+import { occurrenceFor, personName, syncMeetConfig } from "@/app/lib/working-groups";
 import {
   wordCount,
   type MeetAttendee,
@@ -499,8 +499,38 @@ export async function cleanupTranscripts(now = new Date()): Promise<number> {
   return old.length;
 }
 
+/**
+ * Push the Meet setting to spaces that never received it (schedules that
+ * predate ADR-0004) and retry failed pushes hourly, so the rollout and error
+ * recovery don't wait for a lead to touch the schedule.
+ */
+export async function backfillMeetConfig(
+  now = new Date(),
+): Promise<{ attempted: number; failed: number }> {
+  const schedules = await db.wgSchedule.findMany({
+    where: {
+      meetLink: { not: null },
+      wg: { state: "enabled" },
+      OR: [
+        { meetingCode: null },
+        { meetAutoTranscribe: null },
+        { meetConfigError: { not: null }, updatedAt: { lt: new Date(now.getTime() - HOUR) } },
+      ],
+    },
+    select: { wgId: true },
+    take: 20,
+  });
+  let failed = 0;
+  for (const s of schedules) {
+    const r = await syncMeetConfig(s.wgId);
+    if (!r.ok) failed++;
+  }
+  return { attempted: schedules.length, failed };
+}
+
 export type PipelineResult = {
   skipped?: string;
+  meetConfig?: { attempted: number; failed: number };
   discover?: DiscoverResult;
   processed: number;
   waiting: number;
@@ -525,6 +555,8 @@ export async function runTranscriptPipeline(
     return { ...result, skipped: "Google Workspace is not configured.", ms: Date.now() - started };
   }
 
+  // Spaces first, so a code set just now is discovered in the same tick.
+  result.meetConfig = await backfillMeetConfig(now);
   result.discover = await discoverTranscripts(now);
   result.errors.push(...result.discover.errors);
 
