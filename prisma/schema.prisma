@@ -36,8 +36,10 @@ model User {
   wgParticipations WgParticipant[]
   wgSessions       WgSession[] // sessions this user recorded
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  wgJoinRequests WgJoinRequest[]
+  apiTokens      ApiToken[]
 }
 
 model Account {
@@ -308,16 +310,21 @@ model WorkingGroup {
   disabledAt    DateTime? // when state last became disabled (admin grace window)
 
   // ADR-0004: Meet auto-transcription → AI-drafted minutes, reviewed by a lead.
-  autoMinutes Boolean  @default(true)
+  autoMinutes Boolean      @default(true)
   // The group's working language (BCP 47): what it writes in, and the language
   // of the drafted minutes. Regional groups (e.g. Latin America, in Spanish)
   // pair it with a region; both are badges and filters on the board.
-  language    String   @default("en")
-  region      WgRegion @default(global)
+  language    String       @default("en")
+  region      WgRegion     @default(global)
+  // Private groups (admin-set): listed with the schedule, but participants,
+  // sessions and transcripts are members-only and joining needs a lead's
+  // approval (WgJoinRequest). Their minutes publish to the private repo.
+  visibility  WgVisibility @default(public)
 
   leads        WgLead[]
   participants WgParticipant[]
   invites      WgInvite[]
+  joinRequests WgJoinRequest[]
   schedule     WgSchedule?
   sessions     WgSession[]
   transcripts  WgTranscript[]
@@ -329,6 +336,11 @@ model WorkingGroup {
 enum WorkingGroupState {
   enabled
   disabled
+}
+
+enum WgVisibility {
+  public
+  private
 }
 
 enum WgRegion {
@@ -396,6 +408,32 @@ model WgInvite {
 enum WgInviteRole {
   lead
   participant
+}
+
+// A member asking to join a private group; a lead approves (→ WgParticipant)
+// or declines. One live row per (group, user): re-requesting after a decline
+// resets it to pending.
+model WgJoinRequest {
+  id              String              @id @default(cuid())
+  wgId            String
+  wg              WorkingGroup        @relation(fields: [wgId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message         String?
+  status          WgJoinRequestStatus @default(pending)
+  decidedByUserId String?
+  decidedAt       DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@unique([wgId, userId])
+  @@index([wgId, status])
+}
+
+enum WgJoinRequestStatus {
+  pending
+  approved
+  declined
 }
 
 // One recurring meeting series per WG. The DB is canonical; Google Calendar is
@@ -656,4 +694,32 @@ enum RequiredClass {
 enum NotificationChannel {
   in_app
   email
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Personal access tokens (ADR-0005): the MCP server authenticates AI clients
+// with a bearer token the user created in account settings. The secret is shown
+// once; only its SHA-256 is stored. Scope `read` allows the read tools, `write`
+// every tool the user's role allows. Revocation is a timestamp (audit trail).
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ApiToken {
+  id         String        @id @default(cuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  tokenHash  String        @unique // sha256 hex of the secret
+  prefix     String // first characters of the secret, to recognise it in the list
+  scope      ApiTokenScope @default(read)
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@index([userId])
+}
+
+enum ApiTokenScope {
+  read
+  write
 }

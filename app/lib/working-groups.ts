@@ -1,4 +1,4 @@
-import type { WgRegion } from "@prisma/client";
+import type { WgRegion, WgVisibility } from "@prisma/client";
 import { db } from "@/app/lib/db";
 import { nextOccurrences } from "@/app/lib/recurrence";
 import {
@@ -116,6 +116,12 @@ export async function getWgBySlug(slug: string) {
       },
       // Pending email invites (lead console only; converted ones have rows above)
       invites: { where: { acceptedAt: null }, orderBy: { createdAt: "asc" } },
+      // Join requests of a private group: pending ones for the lead console,
+      // all of them to show a visitor the state of their own request.
+      joinRequests: {
+        include: { user: { select: { ...personSelect } } },
+        orderBy: { createdAt: "asc" },
+      },
       schedule: { include: { exceptions: { orderBy: { originalStart: "asc" } } } },
       sessions: {
         orderBy: { occurredAt: "desc" },
@@ -467,8 +473,10 @@ export type WorkingGroupCard = {
   requiredClass: "any" | "associate";
   region: WgRegion;
   language: string;
+  visibility: WgVisibility;
   accessible: boolean;
   joined: boolean;
+  requested: boolean; // the user has a pending join request (private groups)
   leads: WgPerson[];
   participantCount: number;
   nextMeeting: string | null; // ISO; next non-cancelled occurrence
@@ -482,7 +490,7 @@ export type WorkingGroupCard = {
 export async function listWorkingGroupsWithAccess(
   userId: string | null,
 ): Promise<WorkingGroupCard[]> {
-  const [groups, classes] = await Promise.all([
+  const [groups, classes, pending] = await Promise.all([
     db.workingGroup.findMany({
       where: { state: "enabled" },
       include: {
@@ -493,7 +501,11 @@ export async function listWorkingGroupsWithAccess(
       orderBy: [{ priority: "desc" }, { name: "asc" }],
     }),
     userId ? userActiveClasses(userId) : Promise.resolve(new Set<WgClass>()),
+    userId
+      ? db.wgJoinRequest.findMany({ where: { userId, status: "pending" }, select: { wgId: true } })
+      : Promise.resolve([] as { wgId: string }[]),
   ]);
+  const requested = new Set(pending.map((r) => r.wgId));
   return groups.map((wg) => {
     const next = wg.schedule
       ? upcomingOccurrences(wg.schedule).find((o) => !o.cancelled && !o.movedTo)
@@ -506,8 +518,10 @@ export async function listWorkingGroupsWithAccess(
       requiredClass: wg.requiredClass,
       region: wg.region,
       language: wg.language,
+      visibility: wg.visibility,
       accessible: !!userId && canAccessWg(wg.requiredClass, classes),
       joined: !!userId && wg.participants.some((p) => p.userId === userId),
+      requested: requested.has(wg.id),
       leads: wg.leads.map((l) => toPerson(l.user)),
       participantCount: wg.participants.length,
       nextMeeting: next?.start.toISOString() ?? null,

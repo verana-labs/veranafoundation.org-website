@@ -28,6 +28,11 @@ layout).
   board, and the language is the one the AI minutes are drafted in. Google
   Meet transcribes in the room's default language (English) and offers an
   on-screen switch after ~30 s of another supported language; a lead accepts it.
+- **Private groups** — admin-set visibility. A private group is listed with
+  its description, leads and meeting schedule, but participants, the Meet
+  link, sessions, minutes and transcripts are members-only; eligible members
+  **request to join** and a lead approves or declines from the console (both
+  emailed). Their minutes publish to the private repo (`MINUTES_PRIVATE_REPO`).
 - **Members** (`/members`) — admin-curated list of member organizations (logo wall).
 - **About · Join · Ecosystem · Contact · Blog** — institutional pages; the Join
   comparison table quotes Associate dues **from the fee schedule in force** (it
@@ -105,6 +110,21 @@ layout).
   publishes**, optionally publishing the transcript next to the minutes
   (`<slug>/transcripts/YYYY-MM-DD.md`, off by default). No audio or video is
   ever recorded. Per group: on/off + language (lead console and admin board).
+
+### MCP server ([ADR-0005](docs/adr-0005-mcp-server.md))
+
+- **`/api/mcp`** — Streamable HTTP MCP server (official TypeScript SDK via
+  `mcp-handler`, stateless). Authenticated with a **personal access token**
+  created in `/account/settings` (shown once, stored hashed, `read` or `write`
+  scope, optional expiry, revocable). Every tool runs **as the token's user**
+  with their role in each group; mutations are audited `via: "mcp"`. Tools:
+  profile, list/get groups, get session; join/leave/request; lead tools for
+  people, schedule, single meetings, settings and sessions (save, publish,
+  AI-draft regenerate/discard/retry); admin create/update group. 120 req/min
+  per token. Claude Code: `claude mcp add --transport http veranafoundation
+  https://veranafoundation.org/api/mcp --header "Authorization: Bearer vf_…"`.
+- The web server actions and the MCP tools share one service layer
+  (`app/lib/wg-service.ts`), so authorization and audit are identical.
 
 ### Admin (`/admin`, allowlist-gated)
 
@@ -248,6 +268,7 @@ Where: **local** = `.env.local`; **secret** = GitHub Actions secret → k8s Secr
 | `ANTHROPIC_API_KEY` | for drafted minutes | secret | Claude API key; without it transcripts are collected and leads write minutes by hand |
 | `MINUTES_AI_MODEL` | no | — | Model override (default `claude-opus-5`) |
 | `MINUTES_REPO` | for publishing | secret | Public minutes repo (`verana-labs/working-groups`) |
+| `MINUTES_PRIVATE_REPO` | for private groups | secret | Private minutes repo (`verana-labs/private-working-groups`); the PAT below must cover it too |
 | `MINUTES_GITHUB_TOKEN` | for publishing | secret | Fine-grained PAT, Contents RW on that repo only; also the fallback token for home-page stats |
 | `GITHUB_TOKEN` | no | — | Optional explicit token for the home-page org stats |
 
@@ -275,6 +296,7 @@ Where: **local** = `.env.local`; **secret** = GitHub Actions secret → k8s Secr
   [`docs/adr-0002`](docs/adr-0002-authentication.md) (auth/roles),
   [`docs/adr-0003`](docs/adr-0003-working-groups.md) (working groups),
   [`docs/adr-0004`](docs/adr-0004-automatic-minutes.md) (automatic minutes),
+  [`docs/adr-0005`](docs/adr-0005-mcp-server.md) (MCP server),
   plus the [invoicing spec](docs/verana-invoicing-spec.md) and
   [frontend spec](docs/frontend-account-admin-spec.md).
 

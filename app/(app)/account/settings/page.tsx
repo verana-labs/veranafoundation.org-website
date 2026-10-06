@@ -3,13 +3,19 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@/app/lib/authz";
 import { db } from "@/app/lib/db";
 import SettingsForm from "./SettingsForm";
+import TokensPanel from "./TokensPanel";
+import { listApiTokens } from "@/app/lib/api-tokens";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
   const user = await currentUser();
   if (!user?.id) redirect("/login");
-  const record = await db.user.findUnique({ where: { id: user.id } });
+  const [record, tokens] = await Promise.all([
+    db.user.findUnique({ where: { id: user.id } }),
+    listApiTokens(user.id),
+  ]);
+  const mcpUrl = `${process.env.AUTH_URL ?? "https://veranafoundation.org"}/api/mcp`;
 
   return (
     <>
@@ -23,12 +29,34 @@ export default async function SettingsPage() {
         </div>
       </section>
 
-      <section>
+      <section className="border-b border-rule">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <SettingsForm
             displayName={record?.displayName ?? null}
             providerName={record?.name ?? null}
           />
+        </div>
+      </section>
+
+      {/* MCP access tokens (ADR-0005) */}
+      <section>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <h2 className="display text-2xl">AI assistants (MCP)</h2>
+          <div className="mt-4">
+            <TokensPanel
+              mcpUrl={mcpUrl}
+              tokens={tokens.map((t) => ({
+                id: t.id,
+                name: t.name,
+                prefix: t.prefix,
+                scope: t.scope,
+                createdAtIso: t.createdAt.toISOString(),
+                lastUsedAtIso: t.lastUsedAt?.toISOString() ?? null,
+                expiresAtIso: t.expiresAt?.toISOString() ?? null,
+                revokedAtIso: t.revokedAt?.toISOString() ?? null,
+              }))}
+            />
+          </div>
         </div>
       </section>
     </>

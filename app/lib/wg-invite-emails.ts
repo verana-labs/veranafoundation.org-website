@@ -84,3 +84,62 @@ export async function sendWgJoinedEmail(args: {
     }),
   });
 }
+
+/** A member asked to join a private group: tell a lead (one email per lead). */
+export async function sendJoinRequestEmail(args: {
+  to: string;
+  wgName: string;
+  wgSlug: string;
+  requesterName: string;
+  requesterEmail: string;
+  message: string | null;
+}): Promise<void> {
+  await sendEmail({
+    to: args.to,
+    subject: `${args.requesterName} asks to join the ${args.wgName} working group`,
+    html: emailLayout({
+      heading: `Join request for ${escapeHtml(args.wgName)}`,
+      bodyHtml: `
+        <p style="margin:0 0 12px;"><strong>${escapeHtml(args.requesterName)}</strong>
+        (${escapeHtml(args.requesterEmail)}) asks to join the private
+        <strong>${escapeHtml(args.wgName)}</strong> working group.</p>
+        ${
+          args.message
+            ? `<p style="margin:0 0 12px;padding:10px 14px;border-left:3px solid #e8e6e0;color:#5b5b5b;">${escapeHtml(args.message)}</p>`
+            : ""
+        }
+        <p style="margin:0;">Approve or decline the request from the lead console
+        on the group page. Approved members are invited to the meetings and see
+        the group's sessions, minutes and transcripts.</p>`,
+      button: {
+        label: "Review the request",
+        href: `${SITE_URL}/working-groups/${args.wgSlug}#lead-console`,
+      },
+    }),
+  });
+}
+
+/** The lead declined: tell the requester, without a reason by design. */
+export async function sendJoinDeclinedEmail(args: {
+  to: string;
+  wgName: string;
+  wgSlug: string;
+}): Promise<void> {
+  await sendEmail({
+    to: args.to,
+    subject: `Your request to join the ${args.wgName} working group`,
+    html: emailLayout({
+      heading: `Request to join ${escapeHtml(args.wgName)}`,
+      bodyHtml: `
+        <p style="margin:0 0 12px;">A lead of the <strong>${escapeHtml(args.wgName)}</strong>
+        working group has reviewed your request and did not approve it at this
+        time.</p>
+        <p style="margin:0;">You can get in touch with the group's leads from
+        its page if you would like to discuss it.</p>`,
+      button: {
+        label: "Open the working group",
+        href: `${SITE_URL}/working-groups/${args.wgSlug}`,
+      },
+    }),
+  });
+}

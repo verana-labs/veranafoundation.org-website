@@ -56,6 +56,7 @@ export default async function AdminWorkingGroupsPage() {
             autoMinutes: g.autoMinutes,
             language: g.language,
             region: g.region,
+            visibility: g.visibility,
             leads: g.leads.map((l) => ({
               userId: l.user.id,
               name: personName(l.user),
