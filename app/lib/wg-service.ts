@@ -32,6 +32,7 @@ import {
   publishTranscript,
 } from "@/app/lib/minutes";
 import { minutesAiConfigured } from "@/app/lib/minutes-ai";
+import { refreshSessionSummary } from "@/app/lib/session-summary";
 import { MINUTES_LANGUAGES } from "@/app/lib/languages";
 import { WG_REGION_CODES } from "@/app/lib/regions";
 import {
@@ -842,6 +843,11 @@ export async function publishSession(
         transcriptPublished: !!transcriptFile,
       });
     }
+    // The card one-liner follows the published text; best effort, the cron
+    // backfills it when the AI is unavailable right now.
+    await refreshSessionSummary(sessionId).catch((e) =>
+      console.warn(`[wg-service] summary of session ${sessionId} failed:`, e),
+    );
     return { ok: true, message: "Published.", url: minutesUrl(path, commitSha, target) };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Publishing failed." };
@@ -972,6 +978,7 @@ export async function groupView(actor: Actor | null, slug: string) {
             occurredAt: s.occurredAt.toISOString(),
             status: s.status,
             source: s.source,
+            summary: s.summary,
             attendees: s.attendees.length,
             transcript: s.transcript?.status ?? null,
           })),
@@ -998,6 +1005,7 @@ export async function sessionView(actor: Actor | null, sessionId: string) {
     source: session.source,
     recordedBy: session.recordedBy ? personName(session.recordedBy) : null,
     attendees: session.attendees.map((a) => a.name),
+    summary: session.summary,
     minutesMarkdown: session.notesMd,
     publishedUrl:
       session.notesPath && session.notesCommitSha && (session.wg.visibility === "public" || role.lead || role.admin)

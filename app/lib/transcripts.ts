@@ -19,6 +19,7 @@ import {
   syncMeetConfig,
   syncMeetMembers,
 } from "@/app/lib/working-groups";
+import { backfillSessionSummaries } from "@/app/lib/session-summary";
 import {
   wordCount,
   type MeetAttendee,
@@ -562,6 +563,7 @@ export async function syncMeetSpaces(now = new Date()): Promise<MeetSpacesResult
 export type PipelineResult = {
   skipped?: string;
   meetSpaces?: MeetSpacesResult;
+  summaries?: number;
   discover?: DiscoverResult;
   processed: number;
   waiting: number;
@@ -610,6 +612,7 @@ export async function runTranscriptPipeline(
 
   result.reminders = await sendReviewReminders(now);
   result.cleaned = await cleanupTranscripts(now);
+  if (Date.now() < deadline) result.summaries = await backfillSessionSummaries();
   result.ms = Date.now() - started;
   return result;
 }

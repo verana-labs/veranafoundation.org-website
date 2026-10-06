@@ -49,3 +49,14 @@ describe("minutes-ai prompt", () => {
     expect(SYSTEM_PROMPT).not.toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 });
+
+describe("trimWords", () => {
+  it("keeps short text as is and caps long text at whole words", async () => {
+    const { trimWords } = await import("./minutes-ai");
+    expect(trimWords("  Decided   to ship v1. ")).toBe("Decided to ship v1.");
+    const long = Array.from({ length: 50 }, (_, i) => `w${i}`).join(" ");
+    const out = trimWords(long);
+    expect(out.endsWith("…")).toBe(true);
+    expect(out.replace("…", "").split(" ")).toHaveLength(40);
+  });
+});
