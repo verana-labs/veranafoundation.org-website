@@ -48,7 +48,6 @@ export default async function AdminWorkingGroupsPage() {
             name: g.name,
             description: g.description,
             requiredClass: g.requiredClass,
-            link: g.link,
             showOnHome: g.showOnHome,
             state: g.state,
             priority: g.priority,

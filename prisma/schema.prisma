@@ -303,7 +303,6 @@ model WorkingGroup {
   name          String
   description   String?
   requiredClass RequiredClass     @default(any)
-  link          String // external URL to the WG's space
   showOnHome    Boolean           @default(false) // featured on the public home page
   state         WorkingGroupState @default(enabled) // disabled = hidden from public pages
   priority      Int               @default(0) // higher shows first in public listings

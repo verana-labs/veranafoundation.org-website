@@ -30,7 +30,6 @@ const createSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),
   requiredClass: z.enum(["any", "associate"]),
-  link: z.string().trim().url(),
   showOnHome: z.boolean(),
   state: z.enum(["enabled", "disabled"]).default("enabled"),
   priority: z.coerce.number().int().default(0),
@@ -49,7 +48,6 @@ function fields(formData: FormData) {
   return {
     name: formData.get("name"),
     description: formData.get("description") || undefined,
-    link: formData.get("link"),
     showOnHome: formData.get("showOnHome") === "on",
     state: formData.get("state") ?? "enabled",
     priority: formData.get("priority") ?? 0,
