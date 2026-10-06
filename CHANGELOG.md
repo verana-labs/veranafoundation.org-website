@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.15.0...veranafoundation-website-v0.16.0) (2026-10-06)
+
+
+### Features
+
+* **mcp:** OAuth 2.1 authorization server for the claude.ai connectors (ADR-0005 amendment) ([#151](https://github.com/verana-labs/veranafoundation.org-website/issues/151)) ([b285637](https://github.com/verana-labs/veranafoundation.org-website/commit/b2856377955b10382d97a682812e170c0558ec77))
+
 ## [0.15.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.14.0...veranafoundation-website-v0.15.0) (2026-10-06)
 
 
