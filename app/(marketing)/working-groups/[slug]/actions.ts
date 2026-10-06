@@ -21,7 +21,7 @@ import {
 } from "@/app/lib/google-calendar";
 import { setAutoTranscriptionByName } from "@/app/lib/google-meet";
 import { buildRrule, nextOccurrences, wallToUtc, type Frequency } from "@/app/lib/recurrence";
-import { publishMinutes, publishTranscript } from "@/app/lib/minutes";
+import { minutesTargetFor, publishMinutes, publishTranscript } from "@/app/lib/minutes";
 import { minutesAiConfigured } from "@/app/lib/minutes-ai";
 import { MINUTES_LANGUAGES } from "@/app/lib/languages";
 import {
@@ -32,6 +32,8 @@ import {
 import type { MeetAttendee, TranscriptEntry } from "@/app/lib/transcript-format";
 import { notify } from "@/app/lib/access-emails";
 import {
+  sendJoinDeclinedEmail,
+  sendJoinRequestEmail,
   sendWgInviteEmail,
   sendWgJoinedEmail,
 } from "@/app/lib/wg-invite-emails";
@@ -90,12 +92,50 @@ async function trySync(wgId: string) {
 
 // ── Participation ────────────────────────────────────────────────────────────
 
-export async function joinWg(wgId: string): Promise<ActionState> {
+export async function joinWg(wgId: string, message?: string): Promise<ActionState> {
   const user = await requireUser();
-  const wg = await db.workingGroup.findUniqueOrThrow({ where: { id: wgId } });
+  const wg = await db.workingGroup.findUniqueOrThrow({
+    where: { id: wgId },
+    include: { leads: { include: { user: true } } },
+  });
   const classes = await userActiveClasses(user.id);
   if (!canAccessWg(wg.requiredClass, classes)) {
     return { error: "Your memberships don't grant access to this group." };
+  }
+  if (wg.visibility === "private") {
+    // Private group: a lead must approve. Leads and admins join directly.
+    const direct = (await isWgLead(user.id, wgId)) || (await isAdmin(user.email));
+    if (!direct) {
+      const existing = await db.wgJoinRequest.findUnique({
+        where: { wgId_userId: { wgId, userId: user.id } },
+      });
+      if (existing?.status === "pending") {
+        return { ok: true, message: "Your request is pending — a lead will review it." };
+      }
+      const note = (message ?? "").trim().slice(0, 1000) || null;
+      await db.wgJoinRequest.upsert({
+        where: { wgId_userId: { wgId, userId: user.id } },
+        create: { wgId, userId: user.id, message: note },
+        update: { status: "pending", message: note, decidedByUserId: null, decidedAt: null },
+      });
+      await audit(user, "wg.join.request", wgId, { userId: user.id });
+      const requester = await db.user.findUnique({ where: { id: user.id } });
+      for (const lead of wg.leads) {
+        if (!lead.user.email) continue;
+        notify(
+          sendJoinRequestEmail({
+            to: lead.user.email,
+            wgName: wg.name,
+            wgSlug: wg.slug,
+            requesterName: requester ? personName(requester) : user.email,
+            requesterEmail: user.email,
+            message: note,
+          }),
+        );
+      }
+      await revalidateWg(wgId);
+      return { ok: true, message: "Request sent — a lead will review it and you will be emailed." };
+    }
   }
   await db.wgParticipant.upsert({
     where: { wgId_userId: { wgId, userId: user.id } },
@@ -116,6 +156,88 @@ export async function leaveWg(wgId: string): Promise<ActionState> {
   await trySync(wgId);
   await revalidateWg(wgId);
   return { ok: true };
+}
+
+/** The requester withdraws a pending request to join a private group. */
+export async function withdrawJoinRequest(wgId: string): Promise<ActionState> {
+  const user = await requireUser();
+  await db.wgJoinRequest.deleteMany({ where: { wgId, userId: user.id, status: "pending" } });
+  await audit(user, "wg.join.withdraw", wgId, { userId: user.id });
+  await revalidateWg(wgId);
+  return { ok: true };
+}
+
+/** Lead approves a join request: the member joins like any participant. */
+export async function approveJoinRequest(
+  wgId: string,
+  requestId: string,
+): Promise<ActionState> {
+  const user = await requireManager(wgId);
+  const request = await db.wgJoinRequest.findUnique({
+    where: { id: requestId },
+    include: { user: true, wg: true },
+  });
+  if (!request || request.wgId !== wgId) return { error: "Request not found." };
+  if (request.status !== "pending") return { error: "This request was already decided." };
+  // The gate is re-checked at decision time: memberships may have lapsed.
+  if (!canAccessWg(request.wg.requiredClass, await userActiveClasses(request.userId))) {
+    return { error: "This member's memberships no longer grant access to the group." };
+  }
+  await db.$transaction([
+    db.wgParticipant.upsert({
+      where: { wgId_userId: { wgId, userId: request.userId } },
+      create: { wgId, userId: request.userId },
+      update: { leftAt: null, joinedAt: new Date() },
+    }),
+    db.wgJoinRequest.update({
+      where: { id: requestId },
+      data: { status: "approved", decidedByUserId: user.id, decidedAt: new Date() },
+    }),
+  ]);
+  await audit(user, "wg.join.approve", wgId, { requestId, userId: request.userId });
+  if (request.user.email) {
+    notify(
+      sendWgJoinedEmail({
+        to: request.user.email,
+        wgName: request.wg.name,
+        wgSlug: request.wg.slug,
+        role: "participant",
+      }),
+    );
+  }
+  await trySync(wgId); // Calendar attendee → Google sends the invitation
+  await revalidateWg(wgId);
+  return { ok: true, message: "Approved — they're a participant now." };
+}
+
+/** Lead declines a join request; the requester is told, without a reason. */
+export async function declineJoinRequest(
+  wgId: string,
+  requestId: string,
+): Promise<ActionState> {
+  const user = await requireManager(wgId);
+  const request = await db.wgJoinRequest.findUnique({
+    where: { id: requestId },
+    include: { user: true, wg: true },
+  });
+  if (!request || request.wgId !== wgId) return { error: "Request not found." };
+  if (request.status !== "pending") return { error: "This request was already decided." };
+  await db.wgJoinRequest.update({
+    where: { id: requestId },
+    data: { status: "declined", decidedByUserId: user.id, decidedAt: new Date() },
+  });
+  await audit(user, "wg.join.decline", wgId, { requestId, userId: request.userId });
+  if (request.user.email) {
+    notify(
+      sendJoinDeclinedEmail({
+        to: request.user.email,
+        wgName: request.wg.name,
+        wgSlug: request.wg.slug,
+      }),
+    );
+  }
+  await revalidateWg(wgId);
+  return { ok: true, message: "Declined." };
 }
 
 /** Lead removes a participant. */
@@ -692,6 +814,8 @@ export async function publishSession(
     fresh.transcript && fresh.transcript.status !== "discarded" ? fresh.transcript : null;
   const actor = await db.user.findUnique({ where: { id: user.id } });
   const approver = actor ? personName(actor) : user.email;
+  // Private groups publish to the private repository (members-only record).
+  const target = minutesTargetFor(fresh.wg.visibility);
 
   try {
     let transcriptFile: { path: string; commitSha: string } | null = null;
@@ -708,7 +832,7 @@ export async function publishSession(
         language: transcript.language,
         participants,
         entries,
-      });
+      }, target);
     }
     const aiDraft = fresh.source === "ai_draft" && !!transcript?.summaryModel;
     const { path, commitSha } = await publishMinutes({
@@ -721,7 +845,7 @@ export async function publishSession(
       draftedBy: aiDraft ? transcript!.summaryModel : null,
       approvedBy: aiDraft ? approver : null,
       transcriptPath: transcriptFile?.path ?? transcript?.transcriptPath ?? null,
-    });
+    }, target);
     await db.$transaction([
       db.wgSession.update({
         where: { id: session.id },

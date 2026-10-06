@@ -66,6 +66,13 @@ export default function WorkingGroupsAdmin({ groups }: { groups: AdminWg[] }) {
             <input id="wg-link" name="link" type="url" required placeholder="https://… (external space)" />
           </div>
           <div className="form-field">
+            <label htmlFor="wg-visibility">Visibility</label>
+            <select id="wg-visibility" name="visibility" defaultValue="public">
+              <option value="public">Public — eligible members join directly</option>
+              <option value="private">Private — joining needs a lead&apos;s approval; sessions are members-only</option>
+            </select>
+          </div>
+          <div className="form-field">
             <label htmlFor="wg-class">Required membership</label>
             <select id="wg-class" name="requiredClass" defaultValue="any">
               <option value="any">Any active membership</option>

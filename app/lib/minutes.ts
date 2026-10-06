@@ -16,15 +16,23 @@ import { transcriptLines, type TranscriptEntry } from "@/app/lib/transcript-form
 
 const API = "https://api.github.com";
 
-function config() {
-  const repo = process.env.MINUTES_REPO;
-  const token = process.env.MINUTES_GITHUB_TOKEN;
+/** Where a group's files go: the public minutes repo, or the private one for private groups. */
+export type MinutesTarget = "public" | "private";
+
+function config(target: MinutesTarget = "public") {
+  const repo = target === "private" ? process.env.MINUTES_PRIVATE_REPO : process.env.MINUTES_REPO;
+  const token = process.env.MINUTES_GITHUB_TOKEN; // one fine-grained PAT covering both repos
   if (!repo || !token) return null;
   return { repo, token };
 }
 
-export function minutesConfigured(): boolean {
-  return config() !== null;
+export function minutesConfigured(target: MinutesTarget = "public"): boolean {
+  return config(target) !== null;
+}
+
+/** The repository target for a group of the given visibility. */
+export function minutesTargetFor(visibility: "public" | "private"): MinutesTarget {
+  return visibility === "private" ? "private" : "public";
 }
 
 function headers(token: string): HeadersInit {
@@ -118,10 +126,15 @@ export async function commitFile(
   path: string,
   content: string,
   message: string,
+  target: MinutesTarget = "public",
 ): Promise<{ path: string; commitSha: string }> {
-  const cfg = config();
+  const cfg = config(target);
   if (!cfg) {
-    throw new Error("Minutes repo is not configured (MINUTES_REPO / MINUTES_GITHUB_TOKEN).");
+    throw new Error(
+      target === "private"
+        ? "Private minutes repo is not configured (MINUTES_PRIVATE_REPO / MINUTES_GITHUB_TOKEN)."
+        : "Minutes repo is not configured (MINUTES_REPO / MINUTES_GITHUB_TOKEN).",
+    );
   }
   const url = `${API}/repos/${cfg.repo}/contents/${path}`;
 
@@ -149,28 +162,36 @@ export async function commitFile(
 /** Commit the minutes; returns the repo path and commit sha. Throws on failure. */
 export async function publishMinutes(
   input: MinutesInput,
+  target: MinutesTarget = "public",
 ): Promise<{ path: string; commitSha: string }> {
   return commitFile(
     minutesPath(input.wgSlug, input.date),
     renderMinutes(input),
     `minutes(${input.wgSlug}): ${day(input.date)}`,
+    target,
   );
 }
 
 /** Commit the transcript next to the minutes (lead opt-in, per meeting). */
 export async function publishTranscript(
   input: TranscriptFileInput,
+  target: MinutesTarget = "public",
 ): Promise<{ path: string; commitSha: string }> {
   return commitFile(
     transcriptPath(input.wgSlug, input.date),
     renderTranscript(input),
     `transcript(${input.wgSlug}): ${day(input.date)}`,
+    target,
   );
 }
 
 /** Web URL of a published file at its exact commit. */
-export function minutesUrl(path: string, commitSha: string): string | null {
-  const cfg = config();
+export function minutesUrl(
+  path: string,
+  commitSha: string,
+  target: MinutesTarget = "public",
+): string | null {
+  const cfg = config(target);
   if (!cfg) return null;
   return `https://github.com/${cfg.repo}/blob/${commitSha}/${path}`;
 }

@@ -142,6 +142,7 @@ jobs:
           GOOGLE_SA_PRIVATE_KEY: ${{ secrets.GOOGLE_SA_PRIVATE_KEY }}
           GOOGLE_CALENDAR_IMPERSONATE: ${{ secrets.GOOGLE_CALENDAR_IMPERSONATE }}
           MINUTES_REPO: ${{ secrets.MINUTES_REPO }}
+          MINUTES_PRIVATE_REPO: ${{ secrets.MINUTES_PRIVATE_REPO }}
           MINUTES_GITHUB_TOKEN: ${{ secrets.MINUTES_GITHUB_TOKEN }}
           # Automatic minutes (ADR-0004): Claude drafts the minutes from transcripts.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -179,6 +180,7 @@ jobs:
             --from-literal=GOOGLE_SA_PRIVATE_KEY="${GOOGLE_SA_PRIVATE_KEY}" \
             --from-literal=GOOGLE_CALENDAR_IMPERSONATE="${GOOGLE_CALENDAR_IMPERSONATE}" \
             --from-literal=MINUTES_REPO="${MINUTES_REPO}" \
+            --from-literal=MINUTES_PRIVATE_REPO="${MINUTES_PRIVATE_REPO}" \
             --from-literal=MINUTES_GITHUB_TOKEN="${MINUTES_GITHUB_TOKEN}" \
             --from-literal=ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}" \
             --from-literal=INSIGHTS_GITHUB_TOKEN="${INSIGHTS_GITHUB_TOKEN}" \

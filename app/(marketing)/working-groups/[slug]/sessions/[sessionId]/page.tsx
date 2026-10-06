@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
 import { isWgLead, personName } from "@/app/lib/working-groups";
-import { minutesConfigured, minutesUrl } from "@/app/lib/minutes";
+import { minutesConfigured, minutesTargetFor, minutesUrl } from "@/app/lib/minutes";
 import { minutesAiConfigured } from "@/app/lib/minutes-ai";
 import {
   wordCount,
@@ -56,6 +56,7 @@ export default async function SessionPage({
     people.set(p.userId, { userId: p.userId, name: personName(p.user) });
   }
 
+  const target = minutesTargetFor(session.wg.visibility);
   const t = session.transcript;
   const entries = ((t?.entries ?? []) as unknown as TranscriptEntry[]) ?? [];
   const transcript: TranscriptView | null = t
@@ -73,7 +74,7 @@ export default async function SessionPage({
         publishTranscript: t.publishTranscript,
         transcriptUrl:
           t.transcriptPath && t.transcriptCommitSha
-            ? minutesUrl(t.transcriptPath, t.transcriptCommitSha)
+            ? minutesUrl(t.transcriptPath, t.transcriptCommitSha, target)
             : null,
         meetAttendees: ((t.meetParticipants ?? []) as unknown as MeetAttendee[]).map((a) => ({
           name: a.name,
@@ -113,11 +114,11 @@ export default async function SessionPage({
             people={[...people.values()]}
             checked={session.attendees.filter((a) => a.userId).map((a) => a.userId!)}
             guests={session.attendees.filter((a) => !a.userId).map((a) => a.name)}
-            publishReady={minutesConfigured()}
+            publishReady={minutesConfigured(target)}
             aiReady={minutesAiConfigured()}
             publishedUrl={
               session.notesPath && session.notesCommitSha
-                ? minutesUrl(session.notesPath, session.notesCommitSha)
+                ? minutesUrl(session.notesPath, session.notesCommitSha, target)
                 : null
             }
             canEdit={lead}

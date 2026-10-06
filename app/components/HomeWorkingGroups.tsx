@@ -14,6 +14,7 @@ type HomeWg = {
   requiredClass: "any" | "associate";
   region: WgRegion;
   language: string;
+  visibility: "public" | "private";
   leads: Person[];
 };
 
@@ -46,6 +47,7 @@ export default function HomeWorkingGroups() {
           <div className="flex items-center justify-between gap-3">
             <p className="font-medium text-ink">{wg.name}</p>
             <span className="flex flex-wrap items-center justify-end gap-2 flex-shrink-0">
+              {wg.visibility === "private" && <span className="badge badge-amber">Private</span>}
               <WgScopeBadges region={wg.region} language={wg.language} />
               <span
                 className={`badge ${

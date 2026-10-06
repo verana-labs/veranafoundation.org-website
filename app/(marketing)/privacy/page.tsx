@@ -166,6 +166,12 @@ export default function PrivacyPage() {
             Meet&rsquo;s own participant list (display names, join and leave
             times) is shown to them as a cross-check only.
           </li>
+          <li>
+            <strong>Private groups.</strong> Joining one is a request that a
+            lead approves or declines (the lead sees your name, email and
+            message). Their minutes and transcripts are published to a private
+            repository and shown only to the group&rsquo;s members.
+          </li>
         </ul>
         <p>
           <strong>Legal basis.</strong> Our legitimate interest in keeping a
