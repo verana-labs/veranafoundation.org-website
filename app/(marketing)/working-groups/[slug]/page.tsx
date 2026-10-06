@@ -5,6 +5,7 @@ import {
   canAccessWg,
   getWgBySlug,
   lockReason,
+  personName,
   sessionPhase,
   upcomingOccurrences,
   userActiveClasses,
@@ -12,7 +13,7 @@ import {
   wgParticipants,
 } from "@/app/lib/working-groups";
 import { describeRrule } from "@/app/lib/recurrence";
-import { minutesUrl } from "@/app/lib/minutes";
+import { minutesTargetFor, minutesUrl } from "@/app/lib/minutes";
 import { minutesAiConfigured } from "@/app/lib/minutes-ai";
 import { calendarConfigured } from "@/app/lib/google-calendar";
 import PersonAvatars from "@/app/components/PersonAvatars";
@@ -84,6 +85,17 @@ export default async function WorkingGroupPage({
     (wg.leads.some((l) => l.userId === user.id) ||
       (user.email ? await isAdmin(user.email) : false));
 
+  // Private groups (admin-set): listed with their schedule, but participants,
+  // sessions, minutes and transcripts are for members (participants + leads).
+  const isPrivate = wg.visibility === "private";
+  const member = joined || lead;
+  const hideContent = isPrivate && !member;
+  const myRequest = user?.id ? wg.joinRequests.find((r) => r.userId === user.id) : undefined;
+  const requestStatus =
+    myRequest?.status === "pending" ? "pending" : myRequest?.status === "declined" ? "declined" : "none";
+  const minutesTarget = minutesTargetFor(wg.visibility);
+  const showGithubLinks = !isPrivate || lead;
+
   const now = new Date();
   const leads = wgLeads(wg);
   const participants = wgParticipants(wg);
@@ -117,6 +129,7 @@ export default async function WorkingGroupPage({
               {wg.requiredClass === "associate" ? "Associate only" : "Associate or Contributor"}
             </span>
             <WgScopeBadges region={wg.region} language={wg.language} />
+            {isPrivate && <span className="badge badge-amber">Private · by approval</span>}
           </div>
           <div className="accent-line mt-6" />
           {wg.description && (
@@ -135,7 +148,7 @@ export default async function WorkingGroupPage({
                 </div>
               </div>
             )}
-            {participants.length > 0 && (
+            {participants.length > 0 && !hideContent && (
               <div className="flex items-center gap-3">
                 <PersonAvatars people={participants} size={32} />
                 <div className="text-sm">
@@ -166,6 +179,7 @@ export default async function WorkingGroupPage({
               </p>
               <p className="mt-1 text-sm text-muted">
                 Dates below are shown in your own timezone.
+                {hideContent && " The meeting link is shared with members once a lead approves your request."}
                 {wg.autoMinutes && (
                   <>
                     {" "}Meetings are transcribed automatically; an AI assistant drafts
@@ -246,6 +260,8 @@ export default async function WorkingGroupPage({
               lockReason={lockReason(wg.requiredClass)}
               hasSchedule={!!wg.schedule}
               transcribed={wg.autoMinutes}
+              visibility={wg.visibility}
+              requestStatus={requestStatus}
             />
           </div>
         </div>
@@ -255,7 +271,12 @@ export default async function WorkingGroupPage({
       <section className={lead ? "border-b border-rule" : ""}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <h2 className="display text-2xl">Past sessions &amp; minutes</h2>
-          {published.length === 0 && drafts.length === 0 ? (
+          {hideContent ? (
+            <p className="mt-3 text-muted">
+              Sessions, minutes and transcripts of this private group are visible
+              to its members.
+            </p>
+          ) : published.length === 0 && drafts.length === 0 ? (
             <p className="mt-3 text-muted">No recorded sessions yet.</p>
           ) : (
             <div className="mt-6 space-y-4 max-w-3xl">
@@ -275,12 +296,12 @@ export default async function WorkingGroupPage({
                 );
               })}
               {published.map((s) => {
-                const gh = s.notesPath && s.notesCommitSha
-                  ? minutesUrl(s.notesPath, s.notesCommitSha)
+                const gh = showGithubLinks && s.notesPath && s.notesCommitSha
+                  ? minutesUrl(s.notesPath, s.notesCommitSha, minutesTarget)
                   : null;
                 const transcriptUrl =
-                  s.transcript?.transcriptPath && s.transcript.transcriptCommitSha
-                    ? minutesUrl(s.transcript.transcriptPath, s.transcript.transcriptCommitSha)
+                  showGithubLinks && s.transcript?.transcriptPath && s.transcript.transcriptCommitSha
+                    ? minutesUrl(s.transcript.transcriptPath, s.transcript.transcriptCommitSha, minutesTarget)
                     : null;
                 const recorder = s.recordedBy
                   ? (s.recordedBy.displayName ?? s.recordedBy.name ?? "—")
@@ -336,7 +357,7 @@ export default async function WorkingGroupPage({
 
       {/* Lead console */}
       {lead && (
-        <section>
+        <section id="lead-console">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             <h2 className="display text-2xl">Lead console</h2>
             <LeadConsole
@@ -344,6 +365,16 @@ export default async function WorkingGroupPage({
               calendarReady={calendarConfigured()}
               aiReady={minutesAiConfigured()}
               settings={{ autoMinutes: wg.autoMinutes, language: wg.language }}
+              visibility={wg.visibility}
+              joinRequests={wg.joinRequests
+                .filter((r) => r.status === "pending")
+                .map((r) => ({
+                  id: r.id,
+                  name: personName(r.user),
+                  email: r.user.email ?? "",
+                  message: r.message,
+                  createdAtIso: r.createdAt.toISOString(),
+                }))}
               schedule={
                 wg.schedule
                   ? {

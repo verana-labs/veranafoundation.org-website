@@ -48,6 +48,8 @@ const createSchema = z.object({
   language: z.enum(MINUTES_LANGUAGES.map((l) => l.code) as [string, ...string[]]).default("en"),
   // Regional groups: scope badge + board filter.
   region: z.enum(WG_REGION_CODES).default("global"),
+  // Private groups: members-only content, joining by a lead's approval.
+  visibility: z.enum(["public", "private"]).default("public"),
 });
 
 const editSchema = createSchema.omit({ requiredClass: true });
@@ -69,6 +71,7 @@ export async function createWg(
     autoMinutes: formData.get("autoMinutes") === "on",
     language: formData.get("language") ?? "en",
     region: formData.get("region") ?? "global",
+    visibility: formData.get("visibility") ?? "public",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
@@ -108,6 +111,7 @@ export async function updateWg(formData: FormData) {
     autoMinutes: formData.get("autoMinutes") === "on",
     language: formData.get("language") ?? "en",
     region: formData.get("region") ?? "global",
+    visibility: formData.get("visibility") ?? "public",
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
   const current = await db.workingGroup.findUniqueOrThrow({ where: { id } });

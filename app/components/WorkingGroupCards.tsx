@@ -33,6 +33,8 @@ export default function WorkingGroupCards({
               <p className="display text-lg text-ink">{wg.name}</p>
               <span className="flex flex-wrap items-center justify-end gap-2 flex-shrink-0">
                 {wg.joined && <span className="badge badge-green">Joined</span>}
+                {wg.requested && <span className="badge badge-amber">Requested</span>}
+                {wg.visibility === "private" && <span className="badge badge-amber">Private</span>}
                 <WgScopeBadges region={wg.region} language={wg.language} />
                 <span
                   className={`badge ${

@@ -226,6 +226,12 @@ spec:
                   name: veranafoundation-website-secrets
                   key: MINUTES_REPO
                   optional: true
+            - name: MINUTES_PRIVATE_REPO
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: MINUTES_PRIVATE_REPO
+                  optional: true
             - name: MINUTES_GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:

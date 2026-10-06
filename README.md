@@ -28,6 +28,11 @@ layout).
   board, and the language is the one the AI minutes are drafted in. Google
   Meet transcribes in the room's default language (English) and offers an
   on-screen switch after ~30 s of another supported language; a lead accepts it.
+- **Private groups** — admin-set visibility. A private group is listed with
+  its description, leads and meeting schedule, but participants, the Meet
+  link, sessions, minutes and transcripts are members-only; eligible members
+  **request to join** and a lead approves or declines from the console (both
+  emailed). Their minutes publish to the private repo (`MINUTES_PRIVATE_REPO`).
 - **Members** (`/members`) — admin-curated list of member organizations (logo wall).
 - **About · Join · Ecosystem · Contact · Blog** — institutional pages; the Join
   comparison table quotes Associate dues **from the fee schedule in force** (it
@@ -248,6 +253,7 @@ Where: **local** = `.env.local`; **secret** = GitHub Actions secret → k8s Secr
 | `ANTHROPIC_API_KEY` | for drafted minutes | secret | Claude API key; without it transcripts are collected and leads write minutes by hand |
 | `MINUTES_AI_MODEL` | no | — | Model override (default `claude-opus-5`) |
 | `MINUTES_REPO` | for publishing | secret | Public minutes repo (`verana-labs/working-groups`) |
+| `MINUTES_PRIVATE_REPO` | for private groups | secret | Private minutes repo (`verana-labs/private-working-groups`); the PAT below must cover it too |
 | `MINUTES_GITHUB_TOKEN` | for publishing | secret | Fine-grained PAT, Contents RW on that repo only; also the fallback token for home-page stats |
 | `GITHUB_TOKEN` | no | — | Optional explicit token for the home-page org stats |
 

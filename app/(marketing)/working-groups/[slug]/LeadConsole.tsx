@@ -7,7 +7,9 @@ import LocalTime from "@/app/components/LocalTime";
 import { MINUTES_LANGUAGES } from "@/app/lib/languages";
 import {
   addLead,
+  approveJoinRequest,
   cancelMeeting,
+  declineJoinRequest,
   deleteSchedule,
   inviteParticipant,
   moveMeeting,
@@ -60,6 +62,14 @@ export type SettingsView = {
   language: string;
 };
 
+export type JoinRequestView = {
+  id: string;
+  name: string;
+  email: string;
+  message: string | null;
+  createdAtIso: string;
+};
+
 /** datetime-local value of an ISO instant, in the schedule's timezone. */
 function toLocalInput(iso: string, tz: string): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -81,6 +91,8 @@ export default function LeadConsole({
   calendarReady,
   aiReady,
   settings,
+  visibility,
+  joinRequests,
   schedule,
   occurrences,
   leads,
@@ -91,6 +103,8 @@ export default function LeadConsole({
   calendarReady: boolean;
   aiReady: boolean;
   settings: SettingsView;
+  visibility: "public" | "private";
+  joinRequests: JoinRequestView[];
   schedule: ScheduleView | null;
   occurrences: OccurrenceView[];
   leads: Person[];
@@ -512,6 +526,59 @@ export default function LeadConsole({
           <p className="text-sm mt-2" style={{ color: "var(--color-green)" }}>
             {addState.message}
           </p>
+        )}
+
+        {visibility === "private" && (
+          <>
+            <h3 className="display text-lg mt-10">Join requests</h3>
+            <p className="text-sm text-muted mt-1">
+              This group is private: members ask to join and a lead decides.
+              Approved members are invited to the meetings and see the sessions;
+              declined ones are told, without a reason.
+            </p>
+            {joinRequests.length === 0 ? (
+              <p className="text-sm text-muted mt-2">No pending requests.</p>
+            ) : (
+              <ul className="mt-3 space-y-3">
+                {joinRequests.map((r) => (
+                  <li key={r.id} className="wg-tile text-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span>
+                        <span className="font-medium">{r.name}</span>{" "}
+                        <span className="text-muted">{r.email}</span>
+                        <span className="text-muted text-xs">
+                          {" "}· <LocalTime iso={r.createdAtIso} />
+                        </span>
+                      </span>
+                      <span className="flex gap-2">
+                        <button
+                          type="button"
+                          className="btn btn-primary text-sm"
+                          disabled={pending}
+                          onClick={() => run(() => approveJoinRequest(wgId, r.id))}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          className="btn text-sm"
+                          disabled={pending}
+                          onClick={() => {
+                            if (confirm(`Decline ${r.name}'s request? They will be told, without a reason.`)) {
+                              run(() => declineJoinRequest(wgId, r.id));
+                            }
+                          }}
+                        >
+                          Decline
+                        </button>
+                      </span>
+                    </div>
+                    {r.message && <p className="text-muted mt-2 whitespace-pre-wrap">{r.message}</p>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         )}
 
         <h3 className="display text-lg mt-10">Participants</h3>

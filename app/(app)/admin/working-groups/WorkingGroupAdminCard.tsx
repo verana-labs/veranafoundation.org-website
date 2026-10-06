@@ -44,6 +44,7 @@ export type AdminWg = {
   autoMinutes: boolean;
   language: string;
   region: WgRegion;
+  visibility: "public" | "private";
   leads: AdminLead[];
   /** Pending lead invites — emails waiting on an active membership. */
   leadInvites: AdminLeadInvite[];
@@ -216,6 +217,13 @@ export default function WorkingGroupAdminCard({ wg }: { wg: AdminWg }) {
             <label htmlFor={`link-${wg.id}`}>External link</label>
             <input id={`link-${wg.id}`} name="link" type="url" defaultValue={wg.link} required />
           </div>
+          <div className="form-field">
+            <label htmlFor={`visibility-${wg.id}`}>Visibility</label>
+            <select id={`visibility-${wg.id}`} name="visibility" defaultValue={wg.visibility}>
+              <option value="public">Public — eligible members join directly</option>
+              <option value="private">Private — joining needs a lead&apos;s approval; sessions are members-only</option>
+            </select>
+          </div>
           <div className="grid sm:grid-cols-2 gap-x-5">
             <div className="form-field">
               <label htmlFor={`state-${wg.id}`}>State</label>
@@ -354,6 +362,14 @@ export default function WorkingGroupAdminCard({ wg }: { wg: AdminWg }) {
             </dd>
             <dt className="text-muted">Priority</dt>
             <dd>{wg.priority}</dd>
+            <dt className="text-muted">Visibility</dt>
+            <dd>
+              {wg.visibility === "private" ? (
+                <span className="badge badge-amber">Private</span>
+              ) : (
+                "Public"
+              )}
+            </dd>
             <dt className="text-muted">Region · language</dt>
             <dd>{regionLabel(wg.region)} · {languageLabel(wg.language)}</dd>
             <dt className="text-muted">Automatic minutes</dt>
