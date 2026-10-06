@@ -23,6 +23,11 @@ layout).
   lead avatars, meeting schedule (dates in the visitor's own timezone),
   published minutes. Old URLs (`/contribute`, `/account/working-groups`)
   redirect permanently.
+- **Regional groups** — a group carries a region (Europe, Latin America, …)
+  and a working language; both are badges on the cards and filters on the
+  board, and the language is the one the AI minutes are drafted in. Google
+  Meet transcribes in the room's default language (English) and offers an
+  on-screen switch after ~30 s of another supported language; a lead accepts it.
 - **Members** (`/members`) — admin-curated list of member organizations (logo wall).
 - **About · Join · Ecosystem · Contact · Blog** — institutional pages; the Join
   comparison table quotes Associate dues **from the fee schedule in force** (it

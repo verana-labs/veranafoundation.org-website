@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { createWg, type WgState } from "./actions";
 import WorkingGroupAdminCard, { type AdminWg } from "./WorkingGroupAdminCard";
 import { MINUTES_LANGUAGES } from "@/app/lib/languages";
+import { WG_REGIONS } from "@/app/lib/regions";
 
 // A just-disabled WG stays visible in the list for this long even when
 // "Show disabled" is off, so disabling doesn't make it vanish instantly.
@@ -91,13 +92,23 @@ export default function WorkingGroupsAdmin({ groups }: { groups: AdminWg[] }) {
             <input type="checkbox" name="autoMinutes" defaultChecked />
             Transcribe meetings and draft the minutes automatically
           </label>
-          <div className="form-field">
-            <label htmlFor="wg-language">Language of the drafted minutes</label>
-            <select id="wg-language" name="language" defaultValue="en">
-              {MINUTES_LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code}>{l.label}</option>
-              ))}
-            </select>
+          <div className="grid sm:grid-cols-2 gap-x-5">
+            <div className="form-field">
+              <label htmlFor="wg-region">Region</label>
+              <select id="wg-region" name="region" defaultValue="global">
+                {WG_REGIONS.map((r) => (
+                  <option key={r.code} value={r.code}>{r.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-field">
+              <label htmlFor="wg-language">Working language (also the minutes&apos;)</label>
+              <select id="wg-language" name="language" defaultValue="en">
+                {MINUTES_LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>{l.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
           {state.error && <p className="text-sm text-red-600">{state.error}</p>}
           {state.ok && <p className="text-sm text-green-600">Created.</p>}

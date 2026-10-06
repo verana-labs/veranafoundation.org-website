@@ -6,6 +6,9 @@ import {
   userActiveClasses,
 } from "@/app/lib/working-groups";
 import WorkingGroupCards from "@/app/components/WorkingGroupCards";
+import { WG_REGIONS, regionLabel } from "@/app/lib/regions";
+import { languageNative } from "@/app/lib/languages";
+import type { WgRegion } from "@prisma/client";
 
 export const metadata: Metadata = {
   title: "Working groups",
@@ -16,14 +19,68 @@ export const metadata: Metadata = {
 // Per-user content (join state, membership notice) makes this page dynamic.
 export const dynamic = "force-dynamic";
 
-export default async function WorkingGroupsPage() {
+/** One row of filter chips; `all` is the link that clears the filter. */
+function FilterChips({
+  label,
+  options,
+  active,
+  hrefFor,
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  active: string | null;
+  hrefFor: (value: string | null) => string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      <span className="text-muted">{label}:</span>
+      <Link href={hrefFor(null)} className={`badge ${active ? "" : "badge-purple"}`}>
+        All
+      </Link>
+      {options.map((o) => (
+        <Link
+          key={o.value}
+          href={hrefFor(o.value)}
+          className={`badge ${active === o.value ? "badge-purple" : ""}`}
+        >
+          {o.label}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+export default async function WorkingGroupsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ region?: string; language?: string }>;
+}) {
   const user = await currentUser();
-  const [workingGroups, classes] = await Promise.all([
+  const [allGroups, classes, params] = await Promise.all([
     listWorkingGroupsWithAccess(user?.id ?? null),
     user?.id
       ? userActiveClasses(user.id)
       : Promise.resolve(new Set<"contributor" | "associate">()),
+    searchParams,
   ]);
+
+  // Regional groups: filter chips appear only once there is something to filter.
+  const regions = WG_REGIONS.filter((r) => allGroups.some((g) => g.region === r.code));
+  const languages = [...new Set(allGroups.map((g) => g.language))];
+  const region = regions.some((r) => r.code === params.region) ? (params.region as WgRegion) : null;
+  const language = languages.includes(params.language ?? "") ? params.language! : null;
+  const workingGroups = allGroups.filter(
+    (g) => (!region || g.region === region) && (!language || g.language === language),
+  );
+  const hrefFor = (next: { region?: string | null; language?: string | null }) => {
+    const q = new URLSearchParams();
+    const r = next.region === undefined ? region : next.region;
+    const l = next.language === undefined ? language : next.language;
+    if (r) q.set("region", r);
+    if (l) q.set("language", l);
+    const qs = q.toString();
+    return `/working-groups${qs ? `?${qs}` : ""}`;
+  };
   // Signed-out visitors and signed-in users without an active membership get
   // the "membership required" explainer; members don't need it.
   const showMembershipNotice = !user || classes.size === 0;
@@ -76,6 +133,26 @@ export default async function WorkingGroupsPage() {
       {/* Working-group board */}
       <section className="border-b border-rule reveal">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          {(regions.length > 1 || languages.length > 1) && (
+            <div className="mb-6 space-y-2">
+              {regions.length > 1 && (
+                <FilterChips
+                  label="Region"
+                  options={regions.map((r) => ({ value: r.code, label: regionLabel(r.code) }))}
+                  active={region}
+                  hrefFor={(v) => hrefFor({ region: v })}
+                />
+              )}
+              {languages.length > 1 && (
+                <FilterChips
+                  label="Language"
+                  options={languages.map((l) => ({ value: l, label: languageNative(l) }))}
+                  active={language}
+                  hrefFor={(v) => hrefFor({ language: v })}
+                />
+              )}
+            </div>
+          )}
           <WorkingGroupCards groups={workingGroups} />
           <p className="text-xs text-muted mt-4">
             Each group's page shows its leads, meeting schedule and published

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import PersonAvatars, { type Person } from "@/app/components/PersonAvatars";
+import WgScopeBadges from "@/app/components/WgScopeBadges";
+import type { WgRegion } from "@prisma/client";
 
 type HomeWg = {
   id: string;
@@ -10,6 +12,8 @@ type HomeWg = {
   name: string;
   description: string | null;
   requiredClass: "any" | "associate";
+  region: WgRegion;
+  language: string;
   leads: Person[];
 };
 
@@ -41,14 +45,17 @@ export default function HomeWorkingGroups() {
         >
           <div className="flex items-center justify-between gap-3">
             <p className="font-medium text-ink">{wg.name}</p>
-            <span
-              className={`badge flex-shrink-0 ${
-                wg.requiredClass === "associate" ? "badge-purple" : ""
-              }`}
-            >
-              {wg.requiredClass === "associate"
-                ? "Associate only"
-                : "Associate or Contributor"}
+            <span className="flex flex-wrap items-center justify-end gap-2 flex-shrink-0">
+              <WgScopeBadges region={wg.region} language={wg.language} />
+              <span
+                className={`badge ${
+                  wg.requiredClass === "associate" ? "badge-purple" : ""
+                }`}
+              >
+                {wg.requiredClass === "associate"
+                  ? "Associate only"
+                  : "Associate or Contributor"}
+              </span>
             </span>
           </div>
           {wg.description && (
