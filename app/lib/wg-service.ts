@@ -31,7 +31,8 @@ import {
   publishMinutes,
   publishTranscript,
 } from "@/app/lib/minutes";
-import { minutesAiConfigured, summarizeMinutes } from "@/app/lib/minutes-ai";
+import { minutesAiConfigured } from "@/app/lib/minutes-ai";
+import { refreshSessionSummary } from "@/app/lib/session-summary";
 import { MINUTES_LANGUAGES } from "@/app/lib/languages";
 import { WG_REGION_CODES } from "@/app/lib/regions";
 import {
@@ -856,23 +857,6 @@ export async function publishSession(
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Publishing failed." };
   }
-}
-
-/**
- * (Re)generate the ≤ 40-word summary shown on a published session's card
- * (ADR-0004 follow-up). No-op without the AI key or without minutes.
- */
-export async function refreshSessionSummary(sessionId: string): Promise<boolean> {
-  if (!minutesAiConfigured()) return false;
-  const session = await db.wgSession.findUnique({ where: { id: sessionId }, include: { wg: true } });
-  if (!session || session.status !== "published" || !session.notesMd.trim()) return false;
-  const { summary } = await summarizeMinutes({
-    wgName: session.wg.name,
-    language: session.wg.language,
-    minutesMd: session.notesMd,
-  });
-  await db.wgSession.update({ where: { id: sessionId }, data: { summary } });
-  return true;
 }
 
 export async function deleteSession(actor: Actor, sessionId: string): Promise<Result> {

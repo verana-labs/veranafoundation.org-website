@@ -19,7 +19,7 @@ import {
   syncMeetConfig,
   syncMeetMembers,
 } from "@/app/lib/working-groups";
-import { refreshSessionSummary } from "@/app/lib/wg-service";
+import { backfillSessionSummaries } from "@/app/lib/session-summary";
 import {
   wordCount,
   type MeetAttendee,
@@ -558,26 +558,6 @@ export async function syncMeetSpaces(now = new Date()): Promise<MeetSpacesResult
     }
   }
   return result;
-}
-
-/** Published sessions without a card summary yet (older ones, or a failed call at publish). */
-export async function backfillSessionSummaries(limit = 5): Promise<number> {
-  if (!minutesAiConfigured()) return 0;
-  const sessions = await db.wgSession.findMany({
-    where: { status: "published", summary: null, NOT: { notesMd: "" } },
-    orderBy: { occurredAt: "desc" },
-    take: limit,
-    select: { id: true },
-  });
-  let done = 0;
-  for (const s of sessions) {
-    try {
-      if (await refreshSessionSummary(s.id)) done++;
-    } catch (e) {
-      console.warn(`[wg-transcripts] summary backfill of ${s.id} failed:`, e);
-    }
-  }
-  return done;
 }
 
 export type PipelineResult = {
