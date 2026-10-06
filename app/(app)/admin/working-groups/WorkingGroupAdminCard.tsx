@@ -13,6 +13,8 @@ import {
 } from "@/app/(marketing)/working-groups/[slug]/actions";
 import PersonAvatars from "@/app/components/PersonAvatars";
 import { MINUTES_LANGUAGES, languageLabel } from "@/app/lib/languages";
+import { WG_REGIONS, regionLabel } from "@/app/lib/regions";
+import type { WgRegion } from "@prisma/client";
 
 export type AdminLead = {
   userId: string;
@@ -41,6 +43,7 @@ export type AdminWg = {
   /** ADR-0004: Meet transcription + AI-drafted minutes, and their language. */
   autoMinutes: boolean;
   language: string;
+  region: WgRegion;
   leads: AdminLead[];
   /** Pending lead invites — emails waiting on an active membership. */
   leadInvites: AdminLeadInvite[];
@@ -234,13 +237,23 @@ export default function WorkingGroupAdminCard({ wg }: { wg: AdminWg }) {
             <input type="checkbox" name="autoMinutes" defaultChecked={wg.autoMinutes} />
             Transcribe meetings and draft the minutes automatically
           </label>
-          <div className="form-field">
-            <label htmlFor={`lang-${wg.id}`}>Language of the drafted minutes</label>
-            <select id={`lang-${wg.id}`} name="language" defaultValue={wg.language}>
-              {MINUTES_LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code}>{l.label}</option>
-              ))}
-            </select>
+          <div className="grid sm:grid-cols-2 gap-x-5">
+            <div className="form-field">
+              <label htmlFor={`region-${wg.id}`}>Region</label>
+              <select id={`region-${wg.id}`} name="region" defaultValue={wg.region}>
+                {WG_REGIONS.map((r) => (
+                  <option key={r.code} value={r.code}>{r.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-field">
+              <label htmlFor={`lang-${wg.id}`}>Working language (also the minutes&apos;)</label>
+              <select id={`lang-${wg.id}`} name="language" defaultValue={wg.language}>
+                {MINUTES_LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>{l.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex gap-2 pt-1">
             <button type="submit" className="btn btn-primary text-sm" disabled={pending}>
@@ -341,8 +354,10 @@ export default function WorkingGroupAdminCard({ wg }: { wg: AdminWg }) {
             </dd>
             <dt className="text-muted">Priority</dt>
             <dd>{wg.priority}</dd>
+            <dt className="text-muted">Region · language</dt>
+            <dd>{regionLabel(wg.region)} · {languageLabel(wg.language)}</dd>
             <dt className="text-muted">Automatic minutes</dt>
-            <dd>{wg.autoMinutes ? `On (${languageLabel(wg.language)})` : "Off"}</dd>
+            <dd>{wg.autoMinutes ? "On" : "Off"}</dd>
           </dl>
 
           <LeadsEditor wg={wg} />

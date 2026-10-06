@@ -16,6 +16,8 @@ export async function GET() {
       name: g.name,
       description: g.description,
       requiredClass: g.requiredClass,
+      region: g.region,
+      language: g.language,
       leads: g.leads.map((l) => ({
         userId: l.user.id,
         name: personName(l.user),

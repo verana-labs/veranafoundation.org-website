@@ -8,6 +8,7 @@ import { slugify, syncMeetConfig, syncScheduleToGoogle } from "@/app/lib/working
 import { deleteScheduleEvent } from "@/app/lib/google-calendar";
 import { setAutoTranscriptionByName } from "@/app/lib/google-meet";
 import { MINUTES_LANGUAGES } from "@/app/lib/languages";
+import { WG_REGION_CODES } from "@/app/lib/regions";
 
 /** A slug from the name, suffixed on collision. Slugs are stable after create
  * (they name URLs and the minutes-repo folder), so renames don't touch them. */
@@ -45,6 +46,8 @@ const createSchema = z.object({
   // ADR-0004: Meet transcription + AI-drafted minutes, and their language.
   autoMinutes: z.boolean(),
   language: z.enum(MINUTES_LANGUAGES.map((l) => l.code) as [string, ...string[]]).default("en"),
+  // Regional groups: scope badge + board filter.
+  region: z.enum(WG_REGION_CODES).default("global"),
 });
 
 const editSchema = createSchema.omit({ requiredClass: true });
@@ -65,6 +68,7 @@ export async function createWg(
     priority: formData.get("priority") ?? 0,
     autoMinutes: formData.get("autoMinutes") === "on",
     language: formData.get("language") ?? "en",
+    region: formData.get("region") ?? "global",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
@@ -103,6 +107,7 @@ export async function updateWg(formData: FormData) {
     priority: formData.get("priority") ?? 0,
     autoMinutes: formData.get("autoMinutes") === "on",
     language: formData.get("language") ?? "en",
+    region: formData.get("region") ?? "global",
   });
   if (!parsed.success) throw new Error(parsed.error.issues[0]?.message);
   const current = await db.workingGroup.findUniqueOrThrow({ where: { id } });

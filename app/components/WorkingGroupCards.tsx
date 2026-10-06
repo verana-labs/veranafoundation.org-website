@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { WorkingGroupCard } from "@/app/lib/working-groups";
 import PersonAvatars from "@/app/components/PersonAvatars";
 import LocalTime from "@/app/components/LocalTime";
+import WgScopeBadges from "@/app/components/WgScopeBadges";
 
 // The working-group tile design for the /working-groups board. Every tile
 // links to the group's page; what you can do there (join, meeting link)
@@ -30,8 +31,9 @@ export default function WorkingGroupCards({
           >
             <div className="flex items-center justify-between gap-4">
               <p className="display text-lg text-ink">{wg.name}</p>
-              <span className="flex items-center gap-2 flex-shrink-0">
+              <span className="flex flex-wrap items-center justify-end gap-2 flex-shrink-0">
                 {wg.joined && <span className="badge badge-green">Joined</span>}
+                <WgScopeBadges region={wg.region} language={wg.language} />
                 <span
                   className={`badge ${
                     wg.requiredClass === "associate" ? "badge-purple" : ""

@@ -16,6 +16,7 @@ import { minutesUrl } from "@/app/lib/minutes";
 import { minutesAiConfigured } from "@/app/lib/minutes-ai";
 import { calendarConfigured } from "@/app/lib/google-calendar";
 import PersonAvatars from "@/app/components/PersonAvatars";
+import WgScopeBadges from "@/app/components/WgScopeBadges";
 import LocalTime from "@/app/components/LocalTime";
 import { Markdown } from "@/app/components/Markdown";
 import JoinControls from "./JoinControls";
@@ -115,6 +116,7 @@ export default async function WorkingGroupPage({
             <span className={`badge ${wg.requiredClass === "associate" ? "badge-purple" : ""}`}>
               {wg.requiredClass === "associate" ? "Associate only" : "Associate or Contributor"}
             </span>
+            <WgScopeBadges region={wg.region} language={wg.language} />
           </div>
           <div className="accent-line mt-6" />
           {wg.description && (

@@ -372,13 +372,21 @@ export default function LeadConsole({
             Transcribe meetings and draft the minutes automatically
           </label>
           <div className="form-field">
-            <label htmlFor="wg-lang">Language of the drafted minutes</label>
+            <label htmlFor="wg-lang">Working language (also the language of the drafted minutes)</label>
             <select id="wg-lang" name="language" defaultValue={settings.language}>
               {MINUTES_LANGUAGES.map((l) => (
                 <option key={l.code} value={l.code}>{l.label}</option>
               ))}
             </select>
           </div>
+          {settings.language !== "en" && (
+            <p className="text-xs text-muted">
+              Google Meet starts transcribing in English, the room&apos;s default.
+              After about 30 seconds of {MINUTES_LANGUAGES.find((l) => l.code === settings.language)?.label ?? settings.language}{" "}
+              it offers to switch: a lead accepts the on-screen prompt and the
+              transcript restarts in the right language.
+            </p>
+          )}
           {settingsState.error && (
             <p className="text-sm text-red-600">{settingsState.error}</p>
           )}

@@ -55,6 +55,7 @@ export default async function AdminWorkingGroupsPage() {
             disabledAt: g.disabledAt?.toISOString() ?? null,
             autoMinutes: g.autoMinutes,
             language: g.language,
+            region: g.region,
             leads: g.leads.map((l) => ({
               userId: l.user.id,
               name: personName(l.user),

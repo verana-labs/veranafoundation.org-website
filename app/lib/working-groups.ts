@@ -1,3 +1,4 @@
+import type { WgRegion } from "@prisma/client";
 import { db } from "@/app/lib/db";
 import { nextOccurrences } from "@/app/lib/recurrence";
 import {
@@ -464,6 +465,8 @@ export type WorkingGroupCard = {
   name: string;
   description: string | null;
   requiredClass: "any" | "associate";
+  region: WgRegion;
+  language: string;
   accessible: boolean;
   joined: boolean;
   leads: WgPerson[];
@@ -501,6 +504,8 @@ export async function listWorkingGroupsWithAccess(
       name: wg.name,
       description: wg.description,
       requiredClass: wg.requiredClass,
+      region: wg.region,
+      language: wg.language,
       accessible: !!userId && canAccessWg(wg.requiredClass, classes),
       joined: !!userId && wg.participants.some((p) => p.userId === userId),
       leads: wg.leads.map((l) => toPerson(l.user)),
