@@ -130,8 +130,8 @@ layout).
 
 - **Members** — browse/search, member detail, membership actions.
 - **Invoices** — list, mark bank transfers paid, reissue void invoices.
-- **Working groups** — CRUD, required class, home-page flag, priority,
-  enable/disable, lead management.
+- **Working groups** — CRUD, required class, visibility, region, language,
+  home-page flag, priority, enable/disable, lead management.
 - **Admins** — manage the admin allowlist (the only admin grant).
 - **Settings** — activate a Membership Agreement version (= fee schedule).
 - **Audit** — every sensitive mutation (admin or lead) lands in `AdminAction`.

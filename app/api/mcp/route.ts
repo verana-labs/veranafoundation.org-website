@@ -348,7 +348,6 @@ const handler = createMcpHandler(
     const groupFields = {
       name: z.string().min(1),
       description: z.string().optional(),
-      link: z.string().url().describe("External space of the group (GitHub folder, chat, …)"),
       visibility: z.enum(["public", "private"]).optional(),
       region: z.enum(WG_REGION_CODES).optional(),
       language: z.enum(wg.LANGUAGE_CODES as [string, ...string[]]).optional(),
@@ -364,7 +363,6 @@ const handler = createMcpHandler(
           wg.createGroup(actor, {
             name: args.name,
             description: args.description,
-            link: args.link,
             requiredClass: args.required_class,
             visibility: args.visibility,
             region: args.region,
@@ -384,7 +382,6 @@ const handler = createMcpHandler(
           slug: slugArg,
           name: z.string().min(1).optional(),
           description: z.string().optional(),
-          link: z.string().url().optional(),
           visibility: z.enum(["public", "private"]).optional(),
           region: z.enum(WG_REGION_CODES).optional(),
           language: z.enum(wg.LANGUAGE_CODES as [string, ...string[]]).optional(),
@@ -399,7 +396,6 @@ const handler = createMcpHandler(
           wg.updateGroup(actor, await wgIdOrFail(args.slug), {
             name: args.name,
             description: args.description,
-            link: args.link,
             visibility: args.visibility,
             region: args.region,
             language: args.language,

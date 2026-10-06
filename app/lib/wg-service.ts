@@ -611,7 +611,6 @@ export async function uniqueSlug(name: string): Promise<string> {
 export type GroupInput = {
   name: string;
   description?: string | null;
-  link: string;
   requiredClass?: "any" | "associate";
   visibility?: "public" | "private";
   region?: (typeof WG_REGION_CODES)[number];
@@ -625,14 +624,12 @@ export type GroupInput = {
 export async function createGroup(actor: Actor, input: GroupInput): Promise<Result & { slug?: string }> {
   await assertAdmin(actor);
   if (!input.name.trim()) return { error: "A name is required." };
-  if (!/^https?:\/\//.test(input.link)) return { error: "The external link must be a URL." };
   if (input.language && !LANGUAGE_CODES.includes(input.language)) return { error: "Unknown language." };
   const wg = await db.workingGroup.create({
     data: {
       name: input.name.trim(),
       slug: await uniqueSlug(input.name),
       description: input.description?.trim() || null,
-      link: input.link,
       requiredClass: input.requiredClass ?? "any",
       visibility: input.visibility ?? "public",
       region: input.region ?? "global",
@@ -655,7 +652,6 @@ export async function updateGroup(
 ): Promise<Result> {
   await assertAdmin(actor);
   const current = await db.workingGroup.findUniqueOrThrow({ where: { id: wgId } });
-  if (input.link !== undefined && !/^https?:\/\//.test(input.link)) return { error: "The external link must be a URL." };
   if (input.language !== undefined && !LANGUAGE_CODES.includes(input.language)) return { error: "Unknown language." };
   const state = input.state ?? current.state;
   // Stamp disabledAt on the enabled→disabled transition; keep it while it stays
@@ -665,7 +661,6 @@ export async function updateGroup(
   const data: Prisma.WorkingGroupUpdateInput = {
     ...(input.name !== undefined ? { name: input.name.trim() } : {}),
     ...(input.description !== undefined ? { description: input.description?.trim() || null } : {}),
-    ...(input.link !== undefined ? { link: input.link } : {}),
     ...(input.visibility !== undefined ? { visibility: input.visibility } : {}),
     ...(input.region !== undefined ? { region: input.region } : {}),
     ...(input.language !== undefined ? { language: input.language } : {}),
@@ -942,7 +937,6 @@ export async function groupView(actor: Actor | null, slug: string) {
     region: wg.region,
     language: wg.language,
     autoMinutes: wg.autoMinutes,
-    externalLink: wg.link,
     url: `${process.env.AUTH_URL ?? "https://veranafoundation.org"}/working-groups/${wg.slug}`,
     yourRole: role,
     yourJoinRequest: myRequest?.status ?? null,

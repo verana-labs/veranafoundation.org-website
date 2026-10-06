@@ -34,7 +34,6 @@ export type AdminWg = {
   name: string;
   description: string | null;
   requiredClass: "any" | "associate";
-  link: string;
   showOnHome: boolean;
   state: "enabled" | "disabled";
   priority: number;
@@ -214,10 +213,6 @@ export default function WorkingGroupAdminCard({ wg }: { wg: AdminWg }) {
             <input id={`desc-${wg.id}`} name="description" defaultValue={wg.description ?? ""} />
           </div>
           <div className="form-field">
-            <label htmlFor={`link-${wg.id}`}>External link</label>
-            <input id={`link-${wg.id}`} name="link" type="url" defaultValue={wg.link} required />
-          </div>
-          <div className="form-field">
             <label htmlFor={`visibility-${wg.id}`}>Visibility</label>
             <select id={`visibility-${wg.id}`} name="visibility" defaultValue={wg.visibility}>
               <option value="public">Public — eligible members join directly</option>
@@ -344,12 +339,6 @@ export default function WorkingGroupAdminCard({ wg }: { wg: AdminWg }) {
             <dd className="truncate">
               <a href={`/working-groups/${wg.slug}`} className="text-purple hover:underline">
                 /working-groups/{wg.slug}
-              </a>
-            </dd>
-            <dt className="text-muted">External link</dt>
-            <dd className="truncate">
-              <a href={wg.link} target="_blank" rel="noopener noreferrer" className="text-purple hover:underline">
-                {wg.link} ↗
               </a>
             </dd>
             <dt className="text-muted">Show on home page</dt>

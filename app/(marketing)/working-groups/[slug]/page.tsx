@@ -157,11 +157,6 @@ export default async function WorkingGroupPage({
                 </div>
               </div>
             )}
-            {wg.link && (
-              <a href={wg.link} rel="noopener" className="btn text-sm">
-                Group space ↗
-              </a>
-            )}
           </div>
         </div>
       </section>
