@@ -39,6 +39,7 @@ model User {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   wgJoinRequests WgJoinRequest[]
+  apiTokens      ApiToken[]
 }
 
 model Account {
@@ -693,4 +694,32 @@ enum RequiredClass {
 enum NotificationChannel {
   in_app
   email
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Personal access tokens (ADR-0005): the MCP server authenticates AI clients
+// with a bearer token the user created in account settings. The secret is shown
+// once; only its SHA-256 is stored. Scope `read` allows the read tools, `write`
+// every tool the user's role allows. Revocation is a timestamp (audit trail).
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ApiToken {
+  id         String        @id @default(cuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  tokenHash  String        @unique // sha256 hex of the secret
+  prefix     String // first characters of the secret, to recognise it in the list
+  scope      ApiTokenScope @default(read)
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@index([userId])
+}
+
+enum ApiTokenScope {
+  read
+  write
 }

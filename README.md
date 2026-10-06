@@ -111,6 +111,21 @@ layout).
   (`<slug>/transcripts/YYYY-MM-DD.md`, off by default). No audio or video is
   ever recorded. Per group: on/off + language (lead console and admin board).
 
+### MCP server ([ADR-0005](docs/adr-0005-mcp-server.md))
+
+- **`/api/mcp`** — Streamable HTTP MCP server (official TypeScript SDK via
+  `mcp-handler`, stateless). Authenticated with a **personal access token**
+  created in `/account/settings` (shown once, stored hashed, `read` or `write`
+  scope, optional expiry, revocable). Every tool runs **as the token's user**
+  with their role in each group; mutations are audited `via: "mcp"`. Tools:
+  profile, list/get groups, get session; join/leave/request; lead tools for
+  people, schedule, single meetings, settings and sessions (save, publish,
+  AI-draft regenerate/discard/retry); admin create/update group. 120 req/min
+  per token. Claude Code: `claude mcp add --transport http veranafoundation
+  https://veranafoundation.org/api/mcp --header "Authorization: Bearer vf_…"`.
+- The web server actions and the MCP tools share one service layer
+  (`app/lib/wg-service.ts`), so authorization and audit are identical.
+
 ### Admin (`/admin`, allowlist-gated)
 
 - **Members** — browse/search, member detail, membership actions.
@@ -281,6 +296,7 @@ Where: **local** = `.env.local`; **secret** = GitHub Actions secret → k8s Secr
   [`docs/adr-0002`](docs/adr-0002-authentication.md) (auth/roles),
   [`docs/adr-0003`](docs/adr-0003-working-groups.md) (working groups),
   [`docs/adr-0004`](docs/adr-0004-automatic-minutes.md) (automatic minutes),
+  [`docs/adr-0005`](docs/adr-0005-mcp-server.md) (MCP server),
   plus the [invoicing spec](docs/verana-invoicing-spec.md) and
   [frontend spec](docs/frontend-account-admin-spec.md).
 
