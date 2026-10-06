@@ -34,7 +34,7 @@ export type ApiTokenView = {
 
 export async function listApiTokens(userId: string): Promise<ApiTokenView[]> {
   return db.apiToken.findMany({
-    where: { userId },
+    where: { userId, kind: "personal" },
     orderBy: { createdAt: "desc" },
     select: {
       id: true, name: true, prefix: true, scope: true,
@@ -77,6 +77,8 @@ export type VerifiedToken = {
   tokenId: string;
   scope: ApiTokenScope;
   expiresAt: Date | null;
+  kind: "personal" | "access";
+  resource: string | null; // RFC 8707 audience of an OAuth token
   user: { id: string; email: string };
 };
 
@@ -88,6 +90,7 @@ export async function verifyApiToken(secret: string): Promise<VerifiedToken | nu
     include: { user: { select: { id: true, email: true } } },
   });
   if (!token || token.revokedAt || !token.user.email) return null;
+  if (token.kind === "refresh") return null; // only presented to the token endpoint
   if (token.expiresAt && token.expiresAt.getTime() < Date.now()) return null;
   if (!token.lastUsedAt || Date.now() - token.lastUsedAt.getTime() > LAST_USED_WRITE_INTERVAL_MS) {
     await db.apiToken.update({ where: { id: token.id }, data: { lastUsedAt: new Date() } }).catch(() => {});
@@ -96,6 +99,8 @@ export async function verifyApiToken(secret: string): Promise<VerifiedToken | nu
     tokenId: token.id,
     scope: token.scope,
     expiresAt: token.expiresAt,
+    kind: token.kind,
+    resource: token.resource,
     user: { id: token.user.id, email: token.user.email },
   };
 }

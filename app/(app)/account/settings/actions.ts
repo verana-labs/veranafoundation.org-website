@@ -87,3 +87,30 @@ export async function revokeToken(id: string): Promise<TokenState> {
   revalidatePath("/account/settings");
   return { ok: true };
 }
+
+// ── Connected apps (OAuth grants) ────────────────────────────────────────────
+
+import { revokeGrant } from "@/app/lib/oauth";
+
+export async function disconnectApp(grantId: string): Promise<TokenState> {
+  const user = await currentUser();
+  if (!user?.id) return { error: "Not signed in." };
+  // Only the owner's tokens carry this grant id; the update is scoped to them.
+  const count = await db.apiToken.updateMany({
+    where: { grantId, userId: user.id, revokedAt: null },
+    data: { revokedAt: new Date() },
+  });
+  if (count.count === 0) return { error: "Nothing to disconnect." };
+  await revokeGrant(grantId); // belt and braces for any straggler
+  await db.adminAction.create({
+    data: {
+      actorUserId: user.id,
+      actorEmail: user.email ?? "",
+      action: "oauth.revoke",
+      targetType: "OAuthGrant",
+      targetId: grantId,
+    },
+  });
+  revalidatePath("/account/settings");
+  return { ok: true };
+}

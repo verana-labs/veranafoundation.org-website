@@ -20,6 +20,7 @@ import {
   syncMeetMembers,
 } from "@/app/lib/working-groups";
 import { backfillSessionSummaries } from "@/app/lib/session-summary";
+import { cleanupOAuth } from "@/app/lib/oauth";
 import {
   wordCount,
   type MeetAttendee,
@@ -612,6 +613,7 @@ export async function runTranscriptPipeline(
 
   result.reminders = await sendReviewReminders(now);
   result.cleaned = await cleanupTranscripts(now);
+  await cleanupOAuth(now).catch((e) => console.warn("[wg-transcripts] oauth cleanup failed:", e));
   if (Date.now() < deadline) result.summaries = await backfillSessionSummaries();
   result.ms = Date.now() - started;
   return result;

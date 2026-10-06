@@ -123,6 +123,13 @@ layout).
   AI-draft regenerate/discard/retry); admin create/update group. 120 req/min
   per token. Claude Code: `claude mcp add --transport http veranafoundation
   https://veranafoundation.org/api/mcp --header "Authorization: Bearer vf_…"`.
+- **OAuth 2.1 for connectors** (claude.ai web/desktop): the site is also the
+  authorization server — RFC 9728/8414 discovery documents, open dynamic client
+  registration (`/api/oauth/register`), consent at `/oauth/authorize` (PKCE S256
+  only), token endpoint with 1-hour access tokens and rotating 90-day refresh
+  tokens, revocation; connected apps are listed and disconnectable in
+  `/account/settings`. In claude.ai: add a custom connector with the MCP URL,
+  sign in, approve.
 - The web server actions and the MCP tools share one service layer
   (`app/lib/wg-service.ts`), so authorization and audit are identical.
 

@@ -716,10 +716,63 @@ model ApiToken {
   revokedAt  DateTime?
   createdAt  DateTime      @default(now())
 
+  // OAuth 2.1 (ADR-0005 amendment): tokens issued to a connector instead of
+  // created by hand. `grantId` groups the access + refresh tokens of one
+  // authorization so revoking a connected app revokes them all.
+  kind     ApiTokenKind @default(personal)
+  clientId String?
+  client   OAuthClient? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  grantId  String?
+  resource String? // RFC 8707 audience the token was minted for (the MCP URL)
+
   @@index([userId])
+  @@index([grantId])
 }
 
 enum ApiTokenScope {
   read
   write
+}
+
+enum ApiTokenKind {
+  personal // created in /account/settings, shown once
+  access // OAuth access token (short-lived)
+  refresh // OAuth refresh token (rotated on use; never a bearer)
+}
+
+// An OAuth 2.1 client, registered dynamically (RFC 7591) by an MCP connector
+// such as claude.ai, or pre-registered by an admin. Public clients have no
+// secret and rely on PKCE.
+model OAuthClient {
+  id                      String   @id @default(cuid()) // the client_id
+  name                    String
+  redirectUris            String[]
+  secretHash              String? // sha256 of the client_secret (confidential clients only)
+  tokenEndpointAuthMethod String   @default("none") // "none" | "client_secret_post" | "client_secret_basic"
+  clientUri               String?
+  logoUri                 String?
+  createdAt               DateTime @default(now())
+
+  codes  OAuthAuthorizationCode[]
+  tokens ApiToken[]
+}
+
+// A single-use authorization code (10 minutes), bound to the client, the exact
+// redirect URI, the PKCE challenge, the scope and the requested resource.
+model OAuthAuthorizationCode {
+  id                  String      @id @default(cuid())
+  codeHash            String      @unique
+  clientId            String
+  client              OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId              String
+  redirectUri         String
+  codeChallenge       String
+  codeChallengeMethod String      @default("S256")
+  scope               String // space-separated: "read" | "read write"
+  resource            String?
+  expiresAt           DateTime
+  usedAt              DateTime?
+  createdAt           DateTime    @default(now())
+
+  @@index([expiresAt])
 }
