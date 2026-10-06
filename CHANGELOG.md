@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.14.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.13.0...veranafoundation-website-v0.14.0) (2026-10-06)
+
+
+### Features
+
+* **working-groups:** land private groups ([#143](https://github.com/verana-labs/veranafoundation.org-website/issues/143)) and the MCP server ([#144](https://github.com/verana-labs/veranafoundation.org-website/issues/144)) on main ([#146](https://github.com/verana-labs/veranafoundation.org-website/issues/146)) ([18ad2b1](https://github.com/verana-labs/veranafoundation.org-website/commit/18ad2b196ad2df24539d625bcb9593df5688055d))
+* **working-groups:** regional groups — region and working language as badges and board filters ([#142](https://github.com/verana-labs/veranafoundation.org-website/issues/142)) ([0e15a13](https://github.com/verana-labs/veranafoundation.org-website/commit/0e15a13930396682a54effde863e1bf21bbfa97a))
+
 ## [0.13.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.12.0...veranafoundation-website-v0.13.0) (2026-10-05)
 
 
