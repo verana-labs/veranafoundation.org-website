@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.15.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.14.0...veranafoundation-website-v0.15.0) (2026-10-06)
+
+
+### Features
+
+* **working-groups:** AI one-line summary on each published session card ([#148](https://github.com/verana-labs/veranafoundation.org-website/issues/148)) ([6cbec61](https://github.com/verana-labs/veranafoundation.org-website/commit/6cbec610fdc5984519c6c5afbf61df55dd616573))
+
+
+### Bug Fixes
+
+* **working-groups:** lead console forms show the saved values after a save ([#147](https://github.com/verana-labs/veranafoundation.org-website/issues/147)) ([3f01daa](https://github.com/verana-labs/veranafoundation.org-website/commit/3f01daada1cff0c9967f06a372c8ff154ca8e82e))
+
 ## [0.14.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.13.0...veranafoundation-website-v0.14.0) (2026-10-06)
 
 
