@@ -8,6 +8,7 @@ import { isAdmin } from "@/app/lib/authz";
 import { listWorkingGroupsWithAccess, personName, userActiveClasses } from "@/app/lib/working-groups";
 import { WG_REGION_CODES } from "@/app/lib/regions";
 import * as wg from "@/app/lib/wg-service";
+import { mcpResourceUrl } from "@/app/lib/oauth";
 
 /**
  * The site's MCP server (ADR-0005): Streamable HTTP at /api/mcp, stateless,
@@ -420,6 +421,8 @@ const authed = withMcpAuth(
     if (!bearer) return undefined;
     const v = await verifyApiToken(bearer);
     if (!v) return undefined;
+    // An OAuth token minted for another resource is not valid here (RFC 8707).
+    if (v.kind === "access" && v.resource && v.resource.replace(/\/+$/, "") !== mcpResourceUrl()) return undefined;
     return {
       token: bearer,
       clientId: v.tokenId,
@@ -428,7 +431,7 @@ const authed = withMcpAuth(
       extra: { userId: v.user.id, email: v.user.email },
     };
   },
-  { required: true },
+  { required: true, resourceMetadataPath: "/.well-known/oauth-protected-resource" },
 );
 
 export { authed as GET, authed as POST, authed as DELETE };
