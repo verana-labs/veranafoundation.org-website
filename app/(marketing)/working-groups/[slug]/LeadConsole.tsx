@@ -178,7 +178,11 @@ export default function LeadConsole({
           </p>
         )}
 
-        <form action={saveAction} className="space-y-1 mt-4 max-w-md">
+        <form
+          key={schedule ? `${schedule.startsAt}:${schedule.timezone}:${schedule.durationMin}:${schedule.rrule}` : "new"}
+          action={saveAction}
+          className="space-y-1 mt-4 max-w-md"
+        >
           <input type="hidden" name="wgId" value={wgId} />
           <div className="form-field">
             <label htmlFor="wg-firstAt">First (or reference) meeting</label>
@@ -379,7 +383,13 @@ export default function LeadConsole({
           the session page. Nothing is published without a lead&apos;s approval, and
           transcripts stay internal unless a lead opts in per meeting.
         </p>
-        <form action={settingsAction} className="space-y-1 mt-3 max-w-md">
+        {/* Keyed on the saved values: a server action resets uncontrolled
+            fields to their defaults, which must be the *new* ones. */}
+        <form
+          key={`${settings.autoMinutes}:${settings.language}`}
+          action={settingsAction}
+          className="space-y-1 mt-3 max-w-md"
+        >
           <input type="hidden" name="wgId" value={wgId} />
           <label className="flex items-center gap-2 text-sm py-2">
             <input type="checkbox" name="autoMinutes" defaultChecked={settings.autoMinutes} />
