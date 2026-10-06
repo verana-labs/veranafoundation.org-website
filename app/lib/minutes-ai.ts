@@ -157,3 +157,59 @@ export async function draftMinutes(input: DraftInput): Promise<DraftResult> {
     outputTokens: message.usage.output_tokens,
   };
 }
+
+// ── One-line summaries of published minutes ──────────────────────────────────
+
+export const SUMMARY_MAX_WORDS = 40;
+
+/** Hard cap on words, in case the model runs long; keeps whole words. */
+export function trimWords(text: string, max = SUMMARY_MAX_WORDS): string {
+  const words = text.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+  return words.length <= max ? words.join(" ") : `${words.slice(0, max).join(" ")}…`;
+}
+
+const SUMMARY_SYSTEM_PROMPT = `You write the one-line summary shown on a meeting card, so a member can tell what a working-group meeting was about without opening the minutes.
+
+Rules:
+- At most 40 words, one or two sentences, plain prose, no heading, no bullet, no quotation marks around it.
+- Say what was discussed and decided; name the main topics; mention an action item only if it is the point of the meeting.
+- Use only what the minutes say. Never invent.
+- Write in the language requested.`;
+
+const SummarySchema = z.object({ summary: z.string() });
+
+/** A ≤ 40-word summary of minutes, in the group's language. Throws on failure. */
+export async function summarizeMinutes(input: {
+  wgName: string;
+  language: string;
+  minutesMd: string;
+}): Promise<{ summary: string; model: string }> {
+  if (!minutesAiConfigured()) {
+    throw new Error("Minutes AI is not configured (ANTHROPIC_API_KEY).");
+  }
+  const model = minutesAiModel();
+  const client = new Anthropic();
+  const message = await client.messages.parse({
+    model,
+    max_tokens: 400,
+    system: [{ type: "text", text: SUMMARY_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+    messages: [
+      {
+        role: "user",
+        content: [
+          `Working group: ${input.wgName}`,
+          `Write the summary in ${languageName(input.language)}.`,
+          "",
+          "<minutes>",
+          input.minutesMd.trim().slice(0, 40_000),
+          "</minutes>",
+        ].join("\n"),
+      },
+    ],
+    output_config: { format: zodOutputFormat(SummarySchema) },
+  });
+  if (message.stop_reason === "refusal") throw new Error("The AI assistant declined to summarise these minutes.");
+  const parsed = message.parsed_output;
+  if (!parsed?.summary.trim()) throw new Error("The AI assistant returned no summary.");
+  return { summary: trimWords(parsed.summary), model: message.model || model };
+}

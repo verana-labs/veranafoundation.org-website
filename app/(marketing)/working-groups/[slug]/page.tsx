@@ -308,16 +308,21 @@ export default async function WorkingGroupPage({
                   : "—";
                 return (
                   <details key={s.id} className="wg-tile">
-                    <summary className="cursor-pointer flex flex-wrap items-center justify-between gap-3">
-                      <span className="font-medium">
-                        <LocalTime iso={s.occurredAt.toISOString()} format="long" />
+                    <summary className="cursor-pointer">
+                      <span className="flex flex-wrap items-center justify-between gap-3">
+                        <span className="font-medium">
+                          <LocalTime iso={s.occurredAt.toISOString()} format="long" />
+                        </span>
+                        <span className="text-sm text-muted">
+                          {s.attendees.length} attendee{s.attendees.length === 1 ? "" : "s"}
+                          {s.source === "ai_draft"
+                            ? ` · AI draft approved by ${recorder}`
+                            : ` · recorded by ${recorder}`}
+                        </span>
                       </span>
-                      <span className="text-sm text-muted">
-                        {s.attendees.length} attendee{s.attendees.length === 1 ? "" : "s"}
-                        {s.source === "ai_draft"
-                          ? ` · AI draft approved by ${recorder}`
-                          : ` · recorded by ${recorder}`}
-                      </span>
+                      {s.summary && (
+                        <span className="block text-sm text-muted mt-2 leading-relaxed">{s.summary}</span>
+                      )}
                     </summary>
                     <div className="mt-4 text-sm">
                       <p className="text-muted">

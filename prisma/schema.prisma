@@ -498,6 +498,7 @@ model WgSession {
   status       WgSessionStatus @default(draft)
   source       WgSessionSource @default(manual)
   notesMd      String          @default("") @db.Text
+  summary      String? // AI one-liner (≤ 40 words) of the published minutes, for the cards
   recordedById String?
   recordedBy   User?           @relation(fields: [recordedById], references: [id])
 
