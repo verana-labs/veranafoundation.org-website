@@ -25,7 +25,7 @@ Con ocasión de la admisión de {{member_legal_name}} como Associate Member de V
 
 **1. Quién emite la factura y en qué calidad**
 
-1.1 2060 OÜ es una sociedad de responsabilidad limitada (*osaühing*) constituida y existente bajo las leyes de la República de Estonia, inscrita en el registro mercantil de Estonia con el número 16853041, con domicilio en Ahtri tn 12, 15551 Tallinn, Estonia. Es residente fiscal en Estonia, como consta en el certificado de residencia fiscal expedido por la Autoridad Tributaria y Aduanera de Estonia (Maksu- ja Tolliamet) que se anexa.
+1.1 2060 OÜ es una sociedad de responsabilidad limitada (*osaühing*) constituida y existente bajo las leyes de la República de Estonia, inscrita en el registro mercantil de Estonia con el número 16853041, con domicilio en Ahtri tn 12, 15551 Tallinn, Estonia. Es residente fiscal en Estonia, como consta en el certificado de residencia fiscal expedido por la Autoridad Tributaria y Aduanera de Estonia (Maksu- ja Tolliamet) que se anexa [si aún está en trámite: cuya expedición está en trámite ante la Autoridad Tributaria y Aduanera de Estonia y que remitiremos en cuanto sea expedido].
 
 1.2 2060 OÜ actúa como organizadora y promotora de Verana Foundation (en formación), fundación sin ánimo de lucro cuya constitución está en curso, en los términos de la Sección 1.15 del Membership Agreement suscrito por ustedes el {{agreement_date}} (el "Agreement"). En esa calidad, 2060 OÜ emite las facturas y recibe las cuotas de membresía exclusivamente por cuenta de la Fundación (en formación) y las destina a los fines de esta (Sección 7.8 del Agreement).
 
@@ -65,7 +65,7 @@ Con ocasión de la admisión de {{member_legal_name}} como Associate Member de V
 
 **5. Anexos**
 
-(a) Certificado de residencia fiscal de 2060 OÜ expedido por la Autoridad Tributaria y Aduanera de Estonia.
+(a) Certificado de residencia fiscal de 2060 OÜ expedido por la Autoridad Tributaria y Aduanera de Estonia [si aún está en trámite: en trámite; se remite al recibirlo].
 
 (b) Extracto del registro mercantil de Estonia (e-Business Register) de 2060 OÜ.
 
