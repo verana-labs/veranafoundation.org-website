@@ -1,8 +1,11 @@
-# Seed Job — ensures the bootstrap admin allowlist (ADMIN_BOOTSTRAP_EMAILS).
-# CI runs this automatically on every deploy (after migrations). Idempotent
-# (upsert): it guarantees those emails are admins and never removes admins added
-# later in /admin/admins. ADMIN_BOOTSTRAP_EMAILS comes from the cluster Secret
-# (set the GitHub Actions secret of the same name).
+# Seed Job — ensures the bootstrap admin allowlist (ADMIN_BOOTSTRAP_EMAILS) and
+# bootstraps the Membership Agreement catalog. CI runs this automatically on
+# every deploy (after migrations). Idempotent (upsert): it guarantees those
+# emails are admins and never removes admins added later in /admin/admins, and
+# it keeps whichever agreement version an admin activated in /admin/settings
+# (it only activates the default v1 when no version is active yet).
+# ADMIN_BOOTSTRAP_EMAILS comes from the cluster Secret (set the GitHub Actions
+# secret of the same name).
 #
 # Can also be run manually:
 #   kubectl -n web delete job seed --ignore-not-found
@@ -38,7 +41,10 @@ spec:
                   name: veranafoundation-website-secrets
                   key: ADMIN_BOOTSTRAP_EMAILS
                   optional: true
-            # Optional: which legal/ version file to activate as the Membership
-            # Agreement (defaults to membership-agreement-v1.md).
+            # Optional override: force this legal/ version file to be the active
+            # Membership Agreement on every deploy, even if an admin activated
+            # another one. Leave unset so admin choices in /admin/settings stick
+            # (the seed then only bootstraps membership-agreement-v1.md when no
+            # version is active).
             # - name: AGREEMENT_FILENAME
-            #   value: "membership-agreement-v1.md"
+            #   value: "membership-agreement-v5.md"

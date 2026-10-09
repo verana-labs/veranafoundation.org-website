@@ -240,7 +240,7 @@ Where: **local** = `.env.local`; **secret** = GitHub Actions secret → k8s Secr
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | for GitHub sign-in | secret | GitHub OAuth app |
 | `STORAGE_DIR` | yes | manifest (`/data`, PVC) | Signed agreement PDFs, member logos (local default `./var/storage`) |
 | `ADMIN_BOOTSTRAP_EMAILS` | first run | secret | Comma-separated emails seeded into the admin allowlist |
-| `AGREEMENT_FILENAME` | no | — | Which `legal/` version the seed activates (default `membership-agreement-v1.md`) |
+| `AGREEMENT_FILENAME` | no | — | Seed override: force this `legal/` version active on every deploy. Unset, the seed only bootstraps `membership-agreement-v1.md` when no version is active and keeps the admin's choice otherwise |
 
 ### Email (SMTP)
 
