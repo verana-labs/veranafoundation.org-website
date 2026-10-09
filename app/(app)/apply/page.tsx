@@ -3,7 +3,9 @@ import { getActiveAgreement } from "@/app/lib/agreement";
 import { activeTiers } from "@/app/lib/fees";
 import { currentUser } from "@/app/lib/authz";
 import { db } from "@/app/lib/db";
+import { readApplyDraft } from "@/app/lib/apply-draft-cookie";
 import ApplyForm from "./ApplyForm";
+import { previewAgreement } from "./actions";
 
 export const metadata: Metadata = { title: "Join the Foundation" };
 
@@ -19,6 +21,28 @@ export default async function ApplyPage({
   // A user may hold at most one individual membership — if they already do, the
   // "individual" contributor option is disabled.
   const user = await currentUser();
+
+  // Coming back from sign-in: the Sign action stored the typed details in a
+  // draft cookie (apply-draft.ts). Prefill the form and, when the agreement
+  // renders, reopen the review step so the user only has to accept and sign.
+  const draft = user ? await readApplyDraft() : null;
+  let initialPreview: string | undefined;
+  if (draft && agreement) {
+    const res = await previewAgreement({
+      class: draft.class,
+      type: draft.type,
+      legalName: draft.legalName,
+      entityType: draft.entityType,
+      jurisdiction: draft.jurisdiction,
+      registeredAddress: draft.registeredAddress,
+      countryOfResidence: draft.countryOfResidence,
+      country: draft.country,
+      signerName: draft.signerName ?? (draft.type === "individual" ? draft.legalName : undefined),
+      signerTitle: draft.signerTitle,
+    });
+    initialPreview = res.html;
+  }
+
   const hasIndividual = user
     ? (await db.userMember.findFirst({
         where: { userId: user.id, member: { type: "individual" } },
@@ -53,6 +77,9 @@ export default async function ApplyPage({
               tiers={await activeTiers()}
               initialClass={initialClass}
               hasIndividual={hasIndividual}
+              signedIn={!!user}
+              draft={draft}
+              initialPreview={initialPreview}
             />
           ) : (
             <p className="text-muted">
