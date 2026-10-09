@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.3](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.17.2...veranafoundation-website-v0.17.3) (2026-10-09)
+
+
+### Bug Fixes
+
+* **apply:** keep the picked logo across the sign-in round trip too ([#160](https://github.com/verana-labs/veranafoundation.org-website/issues/160)) ([6304a62](https://github.com/verana-labs/veranafoundation.org-website/commit/6304a626b4cff554b1dc8b731e0f1909fa34f2ee))
+
 ## [0.17.2](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.17.1...veranafoundation-website-v0.17.2) (2026-10-09)
 
 
