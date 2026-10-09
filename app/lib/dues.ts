@@ -77,6 +77,9 @@ export const AGREEMENT_FEE_SCHEDULE: Record<string, string> = {
   "membership-agreement-v2.md": "v2",
   "membership-agreement-v3.md": "v3",
   "membership-agreement-v4.md": "v4",
+  // v5 adds the dues-nature, invoicing-entity, tax/withholding, currency and
+  // tax-documentation clauses (1.29, 7.7–7.12, D.8–D.11); fees unchanged from v4.
+  "membership-agreement-v5.md": "v4",
 };
 
 /** Price of a tier under an explicit schedule (callers resolve it via fees.ts). */
