@@ -59,7 +59,9 @@ layout).
   hash-pinned at first activation so a signed version can never silently change.
   Admins switch the active version in `/admin/settings` — **the single switch**
   that flips both the legal text and the fee schedule (Annex D and pricing are
-  asserted in sync by tests).
+  asserted in sync by tests). Country-specific supporting documents (tax
+  characterisation letters, accountant guides, amendments) live under
+  `legal/<country>/`; only files directly in `legal/` are agreement versions.
 - **Invoicing & VAT** — sequential invoice numbers (`VF-…`), EU VAT logic
   (domestic / reverse-charge / outside scope), PDF invoices, fee-schedule
   version stamped per invoice.
