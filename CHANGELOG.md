@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.16.0...veranafoundation-website-v0.17.0) (2026-10-09)
+
+
+### Features
+
+* **legal:** Membership Agreement v5 (dues nature, invoicing entity, taxes) and Colombia member pack ([#153](https://github.com/verana-labs/veranafoundation.org-website/issues/153)) ([1a60fc6](https://github.com/verana-labs/veranafoundation.org-website/commit/1a60fc620c05a725372395a81681dac6912940f3))
+
 ## [0.16.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.15.0...veranafoundation-website-v0.16.0) (2026-10-06)
 
 
