@@ -36,8 +36,22 @@ describe("apply draft", () => {
       signerName: "David Rojas",
       signerTitle: "CEO",
       socialAnnouncementConsent: true,
+      logoDisplayConsent: false,
     });
     expect(decodeDraft(encodeDraft(draft))).toEqual(draft);
+  });
+
+  it("carries a stashed logo token and consent, and rejects a malformed token", () => {
+    const draft = draftFromFormData(
+      fd({ class: "associate", legalName: "Acme", country: "EE", tier: "tier_1", signerName: "A", logoDisplayConsent: "on" }),
+    );
+    expect(draft.logoDisplayConsent).toBe(true);
+    const withLogo = { ...draft, logoToken: "0123456789abcdef0123456789abcdef", logoExt: "webp" as const };
+    expect(decodeDraft(encodeDraft(withLogo))).toEqual(withLogo);
+    const bad = { ...draft, logoToken: "../../etc/passwd", logoExt: "webp" };
+    expect(decodeDraft(Buffer.from(JSON.stringify(bad)).toString("base64url"))).toBeNull();
+    const badExt = { ...draft, logoToken: "0123456789abcdef0123456789abcdef", logoExt: "html" };
+    expect(decodeDraft(Buffer.from(JSON.stringify(badExt)).toString("base64url"))).toBeNull();
   });
 
   it("maps a contributor individual, drops empties, and records an unticked consent", () => {
@@ -50,6 +64,7 @@ describe("apply draft", () => {
       legalName: "Ana Pérez",
       countryOfResidence: "CO",
       socialAnnouncementConsent: false,
+      logoDisplayConsent: false,
     });
   });
 

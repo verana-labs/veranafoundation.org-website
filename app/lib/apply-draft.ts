@@ -10,8 +10,9 @@ import { z } from "zod";
  * details in a short-lived cookie (apply-draft-cookie.ts) and the apply page
  * reads it back after sign-in to prefill the form and reopen the review step.
  *
- * Text fields only: a picked logo file cannot be carried over (the review step
- * says so). Fields are truncated so the whole cookie stays well under 4 KB.
+ * Text fields only in the cookie; a picked logo is stashed server-side under a
+ * random token (apply-draft-logo.ts) and the cookie carries just the token.
+ * Fields are truncated so the whole cookie stays well under 4 KB.
  */
 
 const LIMITS = {
@@ -45,6 +46,10 @@ export const applyDraftSchema = z.object({
   signerName: text("signerName"),
   signerTitle: text("signerTitle"),
   socialAnnouncementConsent: z.boolean().optional(),
+  /** Stashed logo (apply-draft-logo.ts): storage token + stored format. */
+  logoToken: z.string().regex(/^[a-f0-9]{32}$/).optional(),
+  logoExt: z.enum(["webp", "svg"]).optional(),
+  logoDisplayConsent: z.boolean().optional(),
 });
 
 export type ApplyDraft = z.infer<typeof applyDraftSchema>;
@@ -75,6 +80,7 @@ export function draftFromFormData(fd: FormData): ApplyDraft {
     signerName: str("signerName"),
     signerTitle: str("signerTitle"),
     socialAnnouncementConsent: fd.get("socialAnnouncementConsent") === "on",
+    logoDisplayConsent: fd.get("logoDisplayConsent") === "on",
   });
 }
 
