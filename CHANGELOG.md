@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.2](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.17.1...veranafoundation-website-v0.17.2) (2026-10-09)
+
+
+### Bug Fixes
+
+* **apply:** keep the application across the sign-in round trip ([#158](https://github.com/verana-labs/veranafoundation.org-website/issues/158)) ([91918d9](https://github.com/verana-labs/veranafoundation.org-website/commit/91918d94e56fd951bfc51161fa06447e669dc6f6))
+
 ## [0.17.1](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.17.0...veranafoundation-website-v0.17.1) (2026-10-09)
 
 
