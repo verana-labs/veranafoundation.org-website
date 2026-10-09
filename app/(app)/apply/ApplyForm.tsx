@@ -41,7 +41,9 @@ export default function ApplyForm({
     draft?.type ?? (hasIndividual ? "organization" : "individual"),
   );
   const [accepted, setAccepted] = useState(false);
-  const [hasLogo, setHasLogo] = useState(false);
+  // A logo stashed before the sign-in round trip counts as picked (consent box shows).
+  const keptLogo = !!(draft?.logoToken && draft.logoExt);
+  const [hasLogo, setHasLogo] = useState(keptLogo);
   const [assocCountry, setAssocCountry] = useState(draft?.country ?? "");
   const [vatNumber, setVatNumber] = useState(draft?.vatNumber ?? "");
   // EU companies (except the seller's own Estonia, where VAT applies
@@ -216,7 +218,12 @@ export default function ApplyForm({
                     name="registeredAddress"
                     defaultValue={draft?.registeredAddress}
                   />
-                  <LogoField hasLogo={hasLogo} onPick={setHasLogo} />
+                  <LogoField
+                    hasLogo={hasLogo}
+                    onPick={setHasLogo}
+                    keptLogo={keptLogo}
+                    consentDefault={draft?.logoDisplayConsent ?? true}
+                  />
                 </>
               ) : (
                 <Labeled label="Country of residence" required>
@@ -249,7 +256,12 @@ export default function ApplyForm({
                 name="registeredAddress"
                 defaultValue={draft?.registeredAddress}
               />
-              <LogoField hasLogo={hasLogo} onPick={setHasLogo} />
+              <LogoField
+                hasLogo={hasLogo}
+                onPick={setHasLogo}
+                keptLogo={keptLogo}
+                consentDefault={draft?.logoDisplayConsent ?? true}
+              />
               <div className="form-field">
                 <label htmlFor="vatNumber">
                   VAT number (EU — enables reverse charge)
@@ -317,9 +329,8 @@ export default function ApplyForm({
         {resumed && (
           <div className="rounded-lg border border-rule bg-surface p-4 text-sm">
             <strong className="text-ink">Welcome back.</strong> Your application
-            details were kept while you signed in. Review and sign below. If you
-            had attached a logo, use Back to attach it again (files can&rsquo;t be
-            kept across sign-in).
+            details{keptLogo ? " and logo" : ""} were kept while you signed in.
+            Review and sign below, or use Back to change anything.
           </div>
         )}
         <fieldset ref={reviewRef} className="grid gap-3 scroll-mt-24">
@@ -466,20 +477,30 @@ function SectionHeading({ tag, title }: { tag: string; title: string }) {
   );
 }
 
-/** Optional org-logo upload with live preview + display-consent checkbox. */
+/**
+ * Optional org-logo upload with live preview + display-consent checkbox. With
+ * `keptLogo`, the stash from before the sign-in round trip is previewed from
+ * /apply/draft-logo until a new file is picked (apply-draft-logo.ts).
+ */
 function LogoField({
   hasLogo,
   onPick,
+  keptLogo = false,
+  consentDefault = true,
 }: {
   hasLogo: boolean;
   onPick: (has: boolean) => void;
+  keptLogo?: boolean;
+  consentDefault?: boolean;
 }) {
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(
+    keptLogo ? "/apply/draft-logo" : null,
+  );
 
   // Object URLs hold the file in memory — release the old one on replace/unmount.
   useEffect(() => {
     return () => {
-      if (preview) URL.revokeObjectURL(preview);
+      if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
     };
   }, [preview]);
 
@@ -496,11 +517,15 @@ function LogoField({
           accept=".svg,.png,.webp,.jpg,.jpeg,image/svg+xml,image/png,image/webp,image/jpeg"
           onChange={(e) => {
             const file = e.target.files?.[0] ?? null;
-            onPick(!!file);
-            setPreview(file ? URL.createObjectURL(file) : null);
+            // Clearing the picker falls back to the kept logo, if any.
+            onPick(!!file || keptLogo);
+            setPreview(file ? URL.createObjectURL(file) : keptLogo ? "/apply/draft-logo" : null);
           }}
         />
-        <p className="hint">SVG, PNG, WebP or JPG — max 1 MB.</p>
+        <p className="hint">
+          SVG, PNG, WebP or JPG — max 1 MB.
+          {keptLogo && " Your earlier pick is kept; choose a file only to replace it."}
+        </p>
       </div>
       {preview && (
         <div className="flex items-center gap-3">
@@ -521,7 +546,7 @@ function LogoField({
           <input
             type="checkbox"
             name="logoDisplayConsent"
-            defaultChecked
+            defaultChecked={consentDefault}
             className="mt-1"
           />
           <span>We may display this logo on veranafoundation.org.</span>

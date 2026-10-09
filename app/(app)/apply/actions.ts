@@ -17,8 +17,9 @@ import { loadActiveAgreement, type ActiveAgreement } from "@/app/lib/agreement-v
 import { sendEmail, escapeHtml } from "@/app/lib/email";
 import { emailLayout } from "@/app/lib/email-layout";
 import { convertWgInvitesForEmails } from "@/app/lib/wg-invites";
-import { draftFromFormData } from "@/app/lib/apply-draft";
-import { clearApplyDraft, saveApplyDraft } from "@/app/lib/apply-draft-cookie";
+import { draftFromFormData, type ApplyDraft } from "@/app/lib/apply-draft";
+import { clearApplyDraft, readApplyDraft, saveApplyDraft } from "@/app/lib/apply-draft-cookie";
+import { draftLogoContentType, readDraftLogo, stashDraftLogo } from "@/app/lib/apply-draft-logo";
 
 const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
 
@@ -45,14 +46,30 @@ async function emailExecutedCopy(d: Parameters<typeof sendExecutedAgreementEmail
   }
 }
 
-/** Best-effort: store an optional org logo from the application form. */
+/**
+ * Best-effort: store an optional org logo from the application form, or, when
+ * no file was picked this time, the one stashed before the sign-in round trip
+ * (apply-draft-logo.ts).
+ */
 async function maybeSaveLogo(
   formData: FormData,
   memberId: string,
   actor: { userId?: string | null; email: string },
+  draft: ApplyDraft | null,
 ) {
-  const file = formData.get("logo");
-  if (!(file instanceof File) || file.size === 0) return;
+  let file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    file = null;
+    if (draft?.logoToken && draft.logoExt) {
+      const bytes = await readDraftLogo(draft.logoToken, draft.logoExt);
+      if (bytes) {
+        file = new File([new Uint8Array(bytes)], `logo.${draft.logoExt}`, {
+          type: draftLogoContentType(draft.logoExt),
+        });
+      }
+    }
+  }
+  if (!file) return;
   try {
     await saveMemberLogo({
       memberId,
@@ -182,12 +199,24 @@ export async function applyMember(
     // so the user comes back to the review step after signing in, not to an
     // empty form (apply-draft.ts). Never let a draft problem block sign-in.
     try {
-      await saveApplyDraft(draftFromFormData(formData));
+      const draft = draftFromFormData(formData);
+      const logo = formData.get("logo");
+      if (logo instanceof File && logo.size > 0) {
+        const stashed = await stashDraftLogo(logo);
+        if (stashed) {
+          draft.logoToken = stashed.token;
+          draft.logoExt = stashed.ext;
+        }
+      }
+      await saveApplyDraft(draft);
     } catch (e) {
       console.error("[apply] draft save failed (continuing to login)", e);
     }
     redirect("/login?callbackUrl=/apply");
   }
+
+  // A draft from before the sign-in round trip may carry a stashed logo.
+  const draft = await readApplyDraft();
 
   const active = await loadActiveAgreement();
   if (!active) return { error: "No active Membership Agreement is configured." };
@@ -275,7 +304,7 @@ export async function applyMember(
     });
 
     if (isOrg) {
-      await maybeSaveLogo(formData, memberId, { userId: user.id, email: user.email! });
+      await maybeSaveLogo(formData, memberId, { userId: user.id, email: user.email! }, draft);
     }
 
     const ctx = toAgreementContext({
@@ -369,7 +398,7 @@ export async function applyMember(
       };
     });
 
-    await maybeSaveLogo(formData, created.memberId, { userId: user.id, email: user.email! });
+    await maybeSaveLogo(formData, created.memberId, { userId: user.id, email: user.email! }, draft);
 
     const ctx = toAgreementContext({
       class: "associate",
