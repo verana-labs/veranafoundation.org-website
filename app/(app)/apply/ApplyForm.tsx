@@ -7,6 +7,7 @@ import { EU_COUNTRIES } from "@/app/lib/eu";
 import { countryName } from "@/app/lib/countries";
 import CountrySelect from "@/app/components/CountrySelect";
 import PayMethodChooser from "@/app/components/PayMethodChooser";
+import type { ApplyDraft } from "@/app/lib/apply-draft";
 import { applyMember, previewAgreement, type ApplyState } from "./actions";
 
 
@@ -15,6 +16,9 @@ export default function ApplyForm({
   tiers,
   initialClass = "contributor",
   hasIndividual = false,
+  signedIn = false,
+  draft = null,
+  initialPreview,
 }: {
   agreementVersion: string;
   /** Associate dues tiers of the fee schedule in force (lib/fees.ts). */
@@ -22,17 +26,24 @@ export default function ApplyForm({
   initialClass?: "contributor" | "associate";
   /** The signed-in user already holds an individual membership. */
   hasIndividual?: boolean;
+  /** Whether a user is signed in (signing requires one; the form itself doesn't). */
+  signedIn?: boolean;
+  /** Details typed before the sign-in round trip (apply-draft.ts), to prefill. */
+  draft?: ApplyDraft | null;
+  /** Agreement HTML already rendered from the draft: reopen the review step. */
+  initialPreview?: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [cls, setCls] = useState<"contributor" | "associate">(initialClass);
+  const resumed = draft != null;
+  const [step, setStep] = useState<1 | 2 | 3>(resumed && initialPreview ? 2 : 1);
+  const [cls, setCls] = useState<"contributor" | "associate">(draft?.class ?? initialClass);
   const [type, setType] = useState<"individual" | "organization">(
-    hasIndividual ? "organization" : "individual",
+    draft?.type ?? (hasIndividual ? "organization" : "individual"),
   );
   const [accepted, setAccepted] = useState(false);
   const [hasLogo, setHasLogo] = useState(false);
-  const [assocCountry, setAssocCountry] = useState("");
-  const [vatNumber, setVatNumber] = useState("");
+  const [assocCountry, setAssocCountry] = useState(draft?.country ?? "");
+  const [vatNumber, setVatNumber] = useState(draft?.vatNumber ?? "");
   // EU companies (except the seller's own Estonia, where VAT applies
   // regardless) are charged Estonian VAT unless they provide a VAT number.
   const vatWarning =
@@ -41,7 +52,7 @@ export default function ApplyForm({
     assocCountry !== "EE" &&
     EU_COUNTRIES.has(assocCountry) &&
     vatNumber.trim() === "";
-  const [preview, setPreview] = useState<string>("");
+  const [preview, setPreview] = useState<string>(initialPreview ?? "");
   const [previewError, setPreviewError] = useState<string>("");
   const [previewing, startPreview] = useTransition();
   const [state, formAction, pending] = useActionState<ApplyState, FormData>(
@@ -187,29 +198,57 @@ export default function ApplyForm({
                 label={type === "organization" ? "Organization legal name" : "Full legal name"}
                 name="legalName"
                 required
+                defaultValue={draft?.legalName}
               />
               {type === "organization" ? (
                 <>
-                  <Field label="Entity type" name="entityType" placeholder="corporation / association / …" />
+                  <Field
+                    label="Entity type"
+                    name="entityType"
+                    placeholder="corporation / association / …"
+                    defaultValue={draft?.entityType}
+                  />
                   <Labeled label="Country" required>
-                    <CountrySelect name="jurisdiction" required />
+                    <CountrySelect name="jurisdiction" required defaultValue={draft?.jurisdiction} />
                   </Labeled>
-                  <Field label="Registered address" name="registeredAddress" />
+                  <Field
+                    label="Registered address"
+                    name="registeredAddress"
+                    defaultValue={draft?.registeredAddress}
+                  />
                   <LogoField hasLogo={hasLogo} onPick={setHasLogo} />
                 </>
               ) : (
                 <Labeled label="Country of residence" required>
-                  <CountrySelect name="countryOfResidence" required />
+                  <CountrySelect
+                    name="countryOfResidence"
+                    required
+                    defaultValue={draft?.countryOfResidence}
+                  />
                 </Labeled>
               )}
             </>
           ) : (
             <>
-              <Field label="Organization legal name" name="legalName" required />
+              <Field
+                label="Organization legal name"
+                name="legalName"
+                required
+                defaultValue={draft?.legalName}
+              />
               <Labeled label="Country" required>
-                <CountrySelect name="country" required onChange={setAssocCountry} />
+                <CountrySelect
+                  name="country"
+                  required
+                  defaultValue={draft?.country}
+                  onChange={setAssocCountry}
+                />
               </Labeled>
-              <Field label="Registered address" name="registeredAddress" />
+              <Field
+                label="Registered address"
+                name="registeredAddress"
+                defaultValue={draft?.registeredAddress}
+              />
               <LogoField hasLogo={hasLogo} onPick={setHasLogo} />
               <div className="form-field">
                 <label htmlFor="vatNumber">
@@ -233,7 +272,7 @@ export default function ApplyForm({
                 </div>
               )}
               <Labeled label="Annual dues tier" required>
-                <select name="tier" required defaultValue="">
+                <select name="tier" required defaultValue={draft?.tier ?? ""}>
                   <option value="" disabled>
                     Choose by headcount…
                   </option>
@@ -253,9 +292,16 @@ export default function ApplyForm({
 
           {/* Individuals sign as themselves — asking again would duplicate
               the "Full legal name" field; the server falls back to it. */}
-          {!selfSigned && <Field label="Signed by (name)" name="signerName" required />}
+          {!selfSigned && (
+            <Field
+              label="Signed by (name)"
+              name="signerName"
+              required
+              defaultValue={draft?.signerName}
+            />
+          )}
           {(cls === "associate" || type === "organization") && (
-            <Field label="Title" name="signerTitle" />
+            <Field label="Title" name="signerTitle" defaultValue={draft?.signerTitle} />
           )}
         </fieldset>
 
@@ -268,6 +314,14 @@ export default function ApplyForm({
 
       {/* ── Step 2: review & sign ────────────────────────────────────── */}
       <div className={step === 2 ? "grid gap-6" : "hidden"}>
+        {resumed && (
+          <div className="rounded-lg border border-rule bg-surface p-4 text-sm">
+            <strong className="text-ink">Welcome back.</strong> Your application
+            details were kept while you signed in. Review and sign below. If you
+            had attached a logo, use Back to attach it again (files can&rsquo;t be
+            kept across sign-in).
+          </div>
+        )}
         <fieldset ref={reviewRef} className="grid gap-3 scroll-mt-24">
           <SectionHeading
             tag={`Membership Agreement (${agreementVersion})`}
@@ -286,7 +340,12 @@ export default function ApplyForm({
         <fieldset className="grid gap-3 border-t border-rule pt-6">
           <SectionHeading tag="Sign" title="Make it official" />
           <label className="flex items-start gap-2 text-sm">
-            <input type="checkbox" name="socialAnnouncementConsent" defaultChecked className="mt-1" />
+            <input
+              type="checkbox"
+              name="socialAnnouncementConsent"
+              defaultChecked={draft?.socialAnnouncementConsent ?? true}
+              className="mt-1"
+            />
             <span>You may announce our membership on the Foundation&rsquo;s social networks.</span>
           </label>
           <label className="flex items-start gap-2 text-sm">
@@ -306,6 +365,13 @@ export default function ApplyForm({
 
           {state.error && step === 2 && (
             <p className="text-sm text-red-600">{state.error}</p>
+          )}
+
+          {!signedIn && (
+            <p className="text-sm text-muted">
+              Signing needs an account: you&rsquo;ll be asked to sign in with
+              Google, GitHub or an email code, and your details are kept.
+            </p>
           )}
 
           <div className="flex items-center gap-3 mt-1">
@@ -499,18 +565,26 @@ function Field({
   name,
   required,
   placeholder,
+  defaultValue,
 }: {
   label: string;
   name: string;
   required?: boolean;
   placeholder?: string;
+  defaultValue?: string;
 }) {
   return (
     <div className="form-field">
       <label htmlFor={name}>
         {label} {required && <Req />}
       </label>
-      <input id={name} name={name} required={required} placeholder={placeholder} />
+      <input
+        id={name}
+        name={name}
+        required={required}
+        placeholder={placeholder}
+        defaultValue={defaultValue}
+      />
     </div>
   );
 }

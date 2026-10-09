@@ -17,6 +17,8 @@ import { loadActiveAgreement, type ActiveAgreement } from "@/app/lib/agreement-v
 import { sendEmail, escapeHtml } from "@/app/lib/email";
 import { emailLayout } from "@/app/lib/email-layout";
 import { convertWgInvitesForEmails } from "@/app/lib/wg-invites";
+import { draftFromFormData } from "@/app/lib/apply-draft";
+import { clearApplyDraft, saveApplyDraft } from "@/app/lib/apply-draft-cookie";
 
 const SITE_URL = process.env.AUTH_URL ?? "https://veranafoundation.org";
 
@@ -175,7 +177,17 @@ export async function applyMember(
   formData: FormData,
 ): Promise<ApplyState> {
   const user = await currentUser();
-  if (!user?.email || !user.id) redirect("/login?callbackUrl=/apply");
+  if (!user?.email || !user.id) {
+    // Signing needs a verified email. Keep what was typed (text fields only)
+    // so the user comes back to the review step after signing in, not to an
+    // empty form (apply-draft.ts). Never let a draft problem block sign-in.
+    try {
+      await saveApplyDraft(draftFromFormData(formData));
+    } catch (e) {
+      console.error("[apply] draft save failed (continuing to login)", e);
+    }
+    redirect("/login?callbackUrl=/apply");
+  }
 
   const active = await loadActiveAgreement();
   if (!active) return { error: "No active Membership Agreement is configured." };
@@ -306,6 +318,7 @@ export async function applyMember(
     // The contributor membership is active now — convert any pending
     // working-group invites addressed to this email.
     await convertWgInvitesForEmails([user.email!]);
+    await clearApplyDraft();
     redirect("/account");
   }
 
@@ -423,6 +436,7 @@ export async function applyMember(
       console.error("[apply] payment-request email failed", e);
     }
 
+    await clearApplyDraft();
     return {
       success: {
         memberName: d.legalName,
