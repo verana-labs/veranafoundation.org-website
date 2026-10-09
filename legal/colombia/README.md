@@ -23,7 +23,7 @@ This pack is not tax advice. It was checked against public DIAN doctrine on 9 Oc
 ## Checklist (Foundation side)
 
 1. Agreement: have the member sign v5 (activate it in `/admin/settings`). If the member already signed v4, send Amendment No. 1 for signature first.
-2. Attachments to obtain once a year for 2060 OÜ: (a) certificate of tax residence from the Estonian Tax and Customs Board (e-MTA portal, English version); (b) e-Business Register extract (ariregister.rik.ee, English). Keep both PDFs with the member's file.
+2. Attachments to obtain once a year for 2060 OÜ: (a) certificate of tax residence from the Estonian Tax and Customs Board. The e-MTA self-service certificate did not work in October 2026; request it from EMTA instead and allow **five business days**, so start two weeks before the first invoice of the year. (b) e-Business Register extract (ariregister.rik.ee, English), instant. Keep both PDFs with the member's file. The certificate is not a blocker: there is no treaty with Estonia, so no Colombian rule makes a residency certificate a condition for the no-withholding treatment. Send the letter with the register extract, using the "in progress" wording of 1.1 and attachment (a), and forward the certificate when it arrives.
 3. Fill the letter placeholders, sign (Fabrice Rochette, legal representative), export to PDF.
 4. Send together with the invoice: the letter (Spanish), the guide (Spanish), the residency certificate, the register extract and the signed agreement.
 5. Ask the member's accountant to confirm in writing, before the due date, that no withholding will be applied. If they insist on withholding, point to Section 7.9 (gross-up) and offer a call with their advisor.
@@ -34,7 +34,7 @@ This pack is not tax advice. It was checked against public DIAN doctrine on 9 Oc
 
 `{{member_legal_name}}`, `{{member_nit}}`, `{{member_address}}`, `{{member_contact}}`, `{{member_email}}`, `{{entity_form}}`, `{{jurisdiction}}`, `{{invoice_number}}`, `{{invoice_date}}`, `{{invoice_amount_eur}}`, `{{tier_label}}`, `{{letter_date}}`, `{{agreement_date}}`, `{{signer_name}}`, `{{signer_title}}`, `{{effective_date}}`, `{{seller_vat_number}}`, `{{foundation_contact_email}}`.
 
-The agreement renderer does not process these files; fill them by hand or with a script.
+The agreement renderer does not process these files; fill them by hand or with a script. Bracketed `[if still pending: …]` alternatives in the letters are chosen at sending time and the brackets removed.
 
 ## Known gaps and follow-ups
 

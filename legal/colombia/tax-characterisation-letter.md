@@ -25,7 +25,7 @@ Further to the admission of {{member_legal_name}} as an Associate Member of Vera
 
 **1. Who issues the invoice, and in what capacity**
 
-1.1 2060 OÜ is a private limited company (*osaühing*) incorporated and existing under the laws of the Republic of Estonia, registered in the Estonian commercial register under number 16853041, with its seat at Ahtri tn 12, 15551 Tallinn, Estonia. It is tax resident in Estonia, as evidenced by the certificate of tax residence issued by the Estonian Tax and Customs Board (Maksu- ja Tolliamet) attached to this letter.
+1.1 2060 OÜ is a private limited company (*osaühing*) incorporated and existing under the laws of the Republic of Estonia, registered in the Estonian commercial register under number 16853041, with its seat at Ahtri tn 12, 15551 Tallinn, Estonia. It is tax resident in Estonia, as evidenced by the certificate of tax residence issued by the Estonian Tax and Customs Board (Maksu- ja Tolliamet) attached to this letter [if still pending: which has been requested from the Estonian Tax and Customs Board and will be forwarded as soon as it is issued].
 
 1.2 2060 OÜ acts as organiser and promoter of Verana Foundation (in formation), a non-profit foundation whose incorporation is in progress, in the terms of Section 1.15 of the Membership Agreement you signed on {{agreement_date}} (the "Agreement"). In that capacity 2060 OÜ issues the invoices and receives the membership dues exclusively for the account of the Foundation (in formation) and applies them to its purposes (Section 7.8 of the Agreement).
 
@@ -65,7 +65,7 @@ Further to the admission of {{member_legal_name}} as an Associate Member of Vera
 
 **5. Attachments**
 
-(a) Certificate of tax residence of 2060 OÜ issued by the Estonian Tax and Customs Board.
+(a) Certificate of tax residence of 2060 OÜ issued by the Estonian Tax and Customs Board [if still pending: requested; to follow on receipt].
 
 (b) Estonian e-Business Register extract for 2060 OÜ.
 
