@@ -32,8 +32,6 @@ Esta guía describe hechos y el entendimiento de buena fe de la Fundación. No e
 - Oficio 057318 de 2014: servicios originados y ejecutados fuera del territorio nacional no generan ingreso de fuente nacional, aunque el beneficiario esté en Colombia.
 - Oficio 019364 de 2019: solo se retiene cuando existe renta de fuente nacional.
 
-**Lo que aplicaría si fuera otro concepto.** Si el pago fuera por servicios, honorarios, consultoría o servicios técnicos: 20 % (art. 408 ET). Conceptos residuales: 15 % (art. 415 ET). Beneficiarios en jurisdicciones no cooperantes: tarifa general (art. 408 par.). Nada de esto aplica a una cuota de afiliación, y Estonia no está en la lista del art. 1.2.2.5.1 del Decreto 1625 de 2016.
-
 **Convenios.** Colombia no tiene convenio para evitar la doble imposición con Estonia. El análisis es solo de ley interna. No se requiere certificado de residencia "para convenio". El certificado de residencia fiscal de 2060 OÜ se aporta solo como prueba del domicilio del beneficiario y no condiciona el tratamiento; si en la fecha de pago está en trámite, el extracto del registro mercantil acredita el domicilio y el certificado se remite al recibirlo.
 
 **Conclusión:** no practicar retención en la fuente a título de renta.
