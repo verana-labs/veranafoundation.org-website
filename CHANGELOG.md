@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.1](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.17.0...veranafoundation-website-v0.17.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* **seed:** stop every deploy from resetting the active Membership Agreement to v1 ([#155](https://github.com/verana-labs/veranafoundation.org-website/issues/155)) ([e61fc6a](https://github.com/verana-labs/veranafoundation.org-website/commit/e61fc6a0504bbda10f5c6acc66cca1810182ef1e))
+
 ## [0.17.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.16.0...veranafoundation-website-v0.17.0) (2026-10-09)
 
 
