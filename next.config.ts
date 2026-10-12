@@ -12,12 +12,15 @@ const nextConfig: NextConfig = {
   experimental: { serverActions: { bodySizeLimit: "2mb" } },
 
   // The Membership Agreement template is read from disk at runtime when a
-  // member signs (app/lib/agreement-template.ts). `output: "standalone"` only
-  // ships traced files, so include legal/ for the routes that render it.
+  // member signs (app/lib/agreement-template.ts), and the Certification
+  // Program documents under legal/certification/ are rendered at runtime
+  // (app/lib/certification.ts). `output: "standalone"` only ships traced
+  // files, so include legal/ for the routes that read it.
   outputFileTracingIncludes: {
     "/apply": ["./legal/**"],
     "/account/**": ["./legal/**"],
     "/admin/**": ["./legal/**"],
+    "/certification/**": ["./legal/**"],
   },
 
   // Lint and type-check are run separately in CI; don't fail the

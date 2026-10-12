@@ -64,6 +64,9 @@ export default function Footer() {
                   <Link href="/working-groups">Working Groups</Link>
                 </li>
                 <li>
+                  <Link href="/certification">Certification</Link>
+                </li>
+                <li>
                   <a href="https://discord.gg/edjaFn252q" rel="noopener">
                     Discord ↗
                   </a>

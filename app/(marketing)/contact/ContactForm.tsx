@@ -6,6 +6,8 @@ const TOPICS = [
   { value: "membership-associate", label: "Membership — Associate" },
   { value: "membership-contributor", label: "Membership — Contributor" },
   { value: "working-group", label: "Working group participation" },
+  { value: "certification", label: "Certification program" },
+  { value: "certificator", label: "Certification: become a certificator" },
   { value: "grant", label: "Grant / ecosystem" },
   { value: "partnership", label: "Partnership / integration" },
   { value: "press", label: "Press or analyst" },
@@ -19,8 +21,10 @@ const VALIDATION_MSG = `Please complete the required fields — a valid email an
 const SUBMIT_MSG =
   "Sorry, we couldn't send your message just now. Please try again in a moment.";
 
-export default function ContactForm() {
-  const [topic, setTopic] = useState("");
+export default function ContactForm({ defaultTopic = "" }: { defaultTopic?: string }) {
+  const [topic, setTopic] = useState(
+    TOPICS.some((o) => o.value === defaultTopic) ? defaultTopic : "",
+  );
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<
     "idle" | "submitting" | "success" | "error"
@@ -29,8 +33,9 @@ export default function ContactForm() {
   const [renderedAt, setRenderedAt] = useState("");
   const bannerRef = useRef<HTMLDivElement>(null);
 
-  // Preselect inquiry type from ?topic= (set by the Join page buttons) and
-  // record render time for a server-side time-to-submit check.
+  // Preselect inquiry type from ?topic= (set by the Join page buttons; wins
+  // over the page's defaultTopic) and record render time for a server-side
+  // time-to-submit check.
   useEffect(() => {
     setRenderedAt(String(Date.now()));
     const params = new URLSearchParams(window.location.search);
