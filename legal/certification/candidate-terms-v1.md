@@ -12,7 +12,7 @@ These Candidate Terms (the **"Terms"**) govern your participation in the Verana 
 
 1.1 You enroll for a Level 1 certification on veranafoundation.org, and for a Level 2 or Level 3 certification through an Authorized Certificator, which registers you on the Foundation platform.
 
-1.2 You must be of legal age and provide accurate identity and contact details. The Foundation may ask you to prove your identity before a proctored assessment.
+1.2 You must be of legal age, hold a Contributor membership of the Foundation (free for individuals, obtained on veranafoundation.org and active at each assessment and at issuance), and provide accurate identity and contact details. The Foundation may ask you to prove your identity before a proctored assessment.
 
 1.3 Workshops, coaching and other services of a Certificator are contracted with the Certificator under its own terms. The Foundation is not a party to that contract.
 
