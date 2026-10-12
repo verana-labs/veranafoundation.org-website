@@ -76,7 +76,7 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 4.3 **Eligibility.** Any individual of legal age who holds a Contributor membership of the Foundation may enroll. Contributor membership is free for individuals and is obtained on veranafoundation.org. The membership shall be active at each assessment and at the issuance of a certification; a lapsed membership does not affect a certification already issued. Certificators may add commercial conditions to their workshops but not to the assessment itself beyond the fees of Annex A.
 
-4.4 **Enrollment.** Candidates for Level 1 enroll on veranafoundation.org. Candidates for Level 2 and Level 3 enroll through a Certificator, which registers them on the Foundation platform. Every Candidate accepts the Candidate Terms before the first assessment.
+4.4 **Enrollment.** Candidates for Level 1 enroll on veranafoundation.org. Candidates for Level 2 and Level 3 enroll through a Certificator, which onboards them to the Program and records their enrollment with the Office. Every Candidate accepts the Candidate Terms before the first assessment.
 
 4.5 **Certified Instructors.** A Certified Instructor holds Level 2 in the Track taught, has passed the instructor Module of the Curriculum, has delivered one observed session to the Office's satisfaction, and works for a Certificator. The Office may withdraw the instructor status for cause.
 
