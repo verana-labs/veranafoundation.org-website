@@ -127,13 +127,14 @@ export default async function TrackPage({ params }: { params: Promise<{ slug: st
               {isFundamentals ? (
                 <p className="text-sm text-muted leading-relaxed">
                   Online, on this site, when the first exam window opens. Free during the first year
-                  of the program.
+                  of the program. The only prerequisite is a Contributor membership of the Foundation,
+                  which is free for individuals.
                 </p>
               ) : (
                 <p className="text-sm text-muted leading-relaxed">
                   Through an Authorized Certificator, which registers you on the Foundation platform,
-                  proctors the exam and grades your practical work. Fundamentals (Level 1) is the
-                  prerequisite.
+                  proctors the exam and grades your practical work. Fundamentals (Level 1) and an
+                  active Contributor membership (free for individuals) are the prerequisites.
                 </p>
               )}
               <Link href="/certification/candidate-terms" className="text-sm text-purple hover:underline">

@@ -19,7 +19,7 @@ const STEPS = [
   },
   {
     title: "Pass the Level 1 exam online",
-    text: "Fundamentals is a single online exam administered by the Foundation. No certificator is needed, and it is free during the first year.",
+    text: "Fundamentals is a single online exam administered by the Foundation. No certificator is needed, it is free during the first year, and the only prerequisite is a free Contributor membership.",
   },
   {
     title: "Go deeper with a certificator",
