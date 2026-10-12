@@ -132,7 +132,7 @@ export default async function TrackPage({ params }: { params: Promise<{ slug: st
                 </p>
               ) : (
                 <p className="text-sm text-muted leading-relaxed">
-                  Through an Authorized Certificator, which registers you on the Foundation platform,
+                  Through an Authorized Certificator, which onboards you to the program,
                   proctors the exam and grades your practical work. Fundamentals (Level 1) and an
                   active Contributor membership (free for individuals) are the prerequisites.
                 </p>
