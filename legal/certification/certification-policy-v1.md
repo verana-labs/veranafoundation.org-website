@@ -264,7 +264,7 @@ A.2 Issuance fees are invoiced to Certificators monthly in arrears. Accreditatio
 
 | Program Version | Verana specifications | Applies to new assessments from |
 |---|---|---|
-| 2026.1 | Verifiable Trust v4, Verifiable Public Registry v4 | Publication of this Policy |
+| 2026.1 | Verifiable Trust v4, Verifiable Public Registry v4, Verana Specifications v4 | Publication of this Policy |
 
 ## ANNEX C. ENVIRONMENTS
 
