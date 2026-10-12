@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/app/lib/site";
 import { listPosts } from "@/app/lib/blog";
+import { getProgram } from "@/app/lib/certification";
 
 // Public marketing routes. The working-group detail pages (/working-groups/[slug])
 // are intentionally omitted: they are force-dynamic and membership-gated, so they
@@ -18,6 +19,11 @@ const ROUTES: {
   { path: "/members", changeFrequency: "weekly", priority: 0.7 },
   { path: "/working-groups", changeFrequency: "weekly", priority: 0.7 },
   { path: "/join", changeFrequency: "monthly", priority: 0.9 },
+  { path: "/certification", changeFrequency: "monthly", priority: 0.8 },
+  { path: "/certification/certificators", changeFrequency: "monthly", priority: 0.6 },
+  { path: "/certification/become-a-certificator", changeFrequency: "monthly", priority: 0.6 },
+  { path: "/certification/policy", changeFrequency: "yearly", priority: 0.4 },
+  { path: "/certification/candidate-terms", changeFrequency: "yearly", priority: 0.3 },
   { path: "/blog", changeFrequency: "weekly", priority: 0.6 },
   { path: "/contact", changeFrequency: "yearly", priority: 0.5 },
   { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
@@ -44,5 +50,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }));
 
-  return [...staticRoutes, ...blogRoutes];
+  // Certification tracks and modules, sourced from the curriculum repo. Like
+  // the blog, `getProgram()` returns null if unreachable.
+  const program = await getProgram();
+  const certRoutes: MetadataRoute.Sitemap = program
+    ? [
+        ...program.tracks.map((t) => ({
+          url: `${SITE_URL}/certification/tracks/${t.slug}`,
+          lastModified,
+          changeFrequency: "monthly" as const,
+          priority: 0.6,
+        })),
+        ...program.modules.map((m) => ({
+          url: `${SITE_URL}/certification/modules/${m.code}`,
+          lastModified,
+          changeFrequency: "monthly" as const,
+          priority: 0.5,
+        })),
+      ]
+    : [];
+
+  return [...staticRoutes, ...blogRoutes, ...certRoutes];
 }

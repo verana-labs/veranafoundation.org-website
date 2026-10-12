@@ -64,6 +64,8 @@ const TOPIC_LABELS: Record<string, string> = {
   "membership-associate": "Membership — Associate",
   "membership-contributor": "Membership — Contributor",
   "working-group": "Working group participation",
+  certification: "Certification program",
+  certificator: "Certification: become a certificator",
   grant: "Grant / ecosystem",
   partnership: "Partnership / integration",
   press: "Press or analyst",
@@ -76,6 +78,7 @@ const LEAD_TOPICS = new Set([
   "membership-contributor",
   "partnership",
   "grant",
+  "certificator",
 ]);
 
 // Custom-field types whose value must be sent as an array (verified against the

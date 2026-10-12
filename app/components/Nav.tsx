@@ -11,6 +11,7 @@ type Me = { user: MeUser | null; actions: MeAction[]; isMember: boolean };
 const NAV_LINKS = [
   { href: "/about", label: "About" },
   { href: "/working-groups", label: "Working Groups" },
+  { href: "/certification", label: "Certification" },
   { href: "/ecosystem", label: "Ecosystem" },
   { href: "/blog", label: "Blog" },
 ];

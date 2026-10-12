@@ -37,6 +37,13 @@ layout).
 - **About · Join · Ecosystem · Contact · Blog** — institutional pages; the Join
   comparison table quotes Associate dues **from the fee schedule in force** (it
   can never disagree with what the apply flow charges).
+- **Certification** (`/certification`) — the Verana Certification Program:
+  overview, role tracks and modules rendered from the public curriculum repo
+  (`CERT_REPO`, ISR hourly, like the blog), the certificator directory, the
+  become-a-certificator application (contact form, topic preselected), and the
+  Certification Policy and Candidate Terms rendered from `legal/certification/`
+  with their sha384 digest. Information layer only; enrolment and the registry
+  are later phases.
 - **Legal** — privacy, terms, cookies.
 
 ### Accounts & authentication ([ADR-0002](docs/adr-0002-authentication.md))
