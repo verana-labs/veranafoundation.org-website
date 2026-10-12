@@ -63,16 +63,6 @@ Further to the admission of {{member_legal_name}} as an Associate Member of Vera
 
 4.2 If, notwithstanding the above, your organisation concludes that it must apply any withholding, please inform us before paying. Section 7.9 of the Agreement then applies: the member pays the additional amount needed for 2060 OÜ to receive the full invoiced amount and delivers the withholding certificate within thirty (30) days.
 
-**5. Attachments**
-
-(a) Certificate of tax residence of 2060 OÜ issued by the Estonian Tax and Customs Board [if still pending: requested; to follow on receipt].
-
-(b) Estonian e-Business Register extract for 2060 OÜ.
-
-(c) Copy of the signed Membership Agreement.
-
-(d) Invoice {{invoice_number}}.
-
 Your accounting team or your bank may contact us at {{foundation_contact_email}}.
 
 Yours faithfully,

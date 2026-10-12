@@ -63,16 +63,6 @@ Con ocasión de la admisión de {{member_legal_name}} como Associate Member de V
 
 4.2 Si, a pesar de lo expuesto, su entidad concluyera que debe practicar alguna retención, les pedimos informarnos antes de efectuar el pago. En ese caso aplica la Sección 7.9 del Agreement, conforme a la cual el miembro paga el valor adicional necesario para que 2060 OÜ reciba el valor íntegro facturado y entrega el certificado de retención dentro de los treinta (30) días siguientes.
 
-**5. Anexos**
-
-(a) Certificado de residencia fiscal de 2060 OÜ expedido por la Autoridad Tributaria y Aduanera de Estonia [si aún está en trámite: en trámite; se remite al recibirlo].
-
-(b) Extracto del registro mercantil de Estonia (e-Business Register) de 2060 OÜ.
-
-(c) Copia del Membership Agreement suscrito.
-
-(d) Factura {{invoice_number}}.
-
 Quedamos atentos a cualquier consulta de su área contable o de su banco en {{foundation_contact_email}}.
 
 Atentamente,
