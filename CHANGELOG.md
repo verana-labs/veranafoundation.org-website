@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.18.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.17.3...veranafoundation-website-v0.18.0) (2026-10-14)
+
+
+### Features
+
+* **admin:** link each invoice number to its PDF download ([#167](https://github.com/verana-labs/veranafoundation.org-website/issues/167)) ([d918ea7](https://github.com/verana-labs/veranafoundation.org-website/commit/d918ea7b469ba788de7a65db7db616fb08024a97))
+* **certification:** information pages for the Verana Certification Program ([#165](https://github.com/verana-labs/veranafoundation.org-website/issues/165)) ([1a09015](https://github.com/verana-labs/veranafoundation.org-website/commit/1a090159f14b370edb4a8d235dd9d4778b1e23dd))
+
 ## [0.17.3](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.17.2...veranafoundation-website-v0.17.3) (2026-10-09)
 
 
