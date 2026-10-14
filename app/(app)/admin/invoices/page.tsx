@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFilePdf } from "@fortawesome/free-solid-svg-icons";
 import { db } from "@/app/lib/db";
 import { currentUser, isAdmin } from "@/app/lib/authz";
 import { formatEur } from "@/app/lib/dues";
@@ -41,7 +43,16 @@ export default async function AdminInvoicesPage() {
             <tbody>
               {invoices.map((inv) => (
                 <tr key={inv.id} className="border-t border-rule align-middle">
-                  <td className="p-2 whitespace-nowrap">{inv.number}</td>
+                  <td className="p-2 whitespace-nowrap">
+                    <a
+                      href={`/account/invoice/${inv.id}`}
+                      className="text-purple hover:underline inline-flex items-center gap-1.5"
+                      title="Download the invoice (PDF)"
+                    >
+                      {inv.number}
+                      <FontAwesomeIcon icon={faFilePdf} className="h-3.5 w-3.5" aria-hidden />
+                    </a>
+                  </td>
                   <td className="p-2 text-muted">
                     {inv.membership.member.legalName}
                   </td>
