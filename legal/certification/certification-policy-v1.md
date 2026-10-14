@@ -4,9 +4,9 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 ### **VERANA CERTIFICATION PROGRAM**
 
-**Status.** Draft for review by the Certification Office and counsel. Not in force. This document becomes effective when the Foundation (in Formation) publishes it as version 1 on veranafoundation.org and anchors its digest as the governance framework of the Verana Certification Ecosystem.
+**Status.** Draft for review by the Certification Office and counsel. Not in force. This document becomes effective when 2060 OÜ publishes it as version 1 on veranafoundation.org and anchors its digest as the governance framework of the Verana Certification Ecosystem.
 
-**Controller.** Verana Foundation (in formation), represented by 2060 OÜ (Estonia, registry number 16853041) as its organizer and steward until incorporation, hereinafter the **"Foundation"**.
+**Controller.** Until the Verana Foundation is incorporated and accepts assignment of the Program in writing, 2060 OÜ (Estonia, registry number 16853041) operates the Program in its own name as organizer of the Verana Foundation, and is the controller. Until that acceptance, the **"Foundation"** means 2060 OÜ. From that acceptance, the **"Foundation"** means the Verana Foundation, which becomes the controller.
 
 ---
 
@@ -22,11 +22,11 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 ## SECTION 2. DEFINITIONS
 
-2.1 **"Authorized Certificator"** or **"Certificator"** means an Associate Member of the Foundation accredited under Section 10 to deliver training, assess candidates and issue certifications under the Program.
+2.1 **"Authorized Certificator"** or **"Certificator"** means a holder of a Qualifying Membership as an Associate, accredited under Section 10 to deliver training, assess candidates and issue certifications under the Program.
 
 2.2 **"Candidate"** means an individual enrolled for a certification, or an organization applying for a designation.
 
-2.3 **"Certification Office"** or **"Office"** means the function of the Foundation that administers the Program, exercised by Foundation staff and, until incorporation, by staff of 2060 OÜ acting for the Foundation (in Formation).
+2.3 **"Certification Office"** or **"Office"** means the function of the Foundation that administers the Program, exercised by the Foundation's staff.
 
 2.4 **"Certified Instructor"** means an employee or contractor of a Certificator who meets the requirements of Section 4.5 and is recorded as such by the Office.
 
@@ -52,13 +52,15 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 2.15 Capitalized terms not defined here have the meaning given in the Membership Agreement.
 
+2.16 **"Qualifying Membership"** means a membership of the class named where this term is used, Contributor or Associate, that is in force under the Membership Agreement. Until the incorporated Verana Foundation has ratified that Membership Agreement, provisional participation of that class which 2060 OÜ has accepted and has not revoked is a Qualifying Membership.
+
 ## SECTION 3. GOVERNANCE
 
 3.1 **The Office** approves Certificators, Program Versions, assessment instruments and this Policy; maintains the Registry; decides appeals at first instance; conducts audits; and issues the credentials of Section 7 that the Foundation issues itself.
 
 3.2 **The Working Group** proposes the Curriculum and its versions, reviews training material and assessment instruments, and records its decisions in its published minutes. Question banks, grading rubrics and lab solutions are confidential and are not published in the minutes.
 
-3.3 **The Foundation** approves the fee schedule of Annex A, the Authorized Certificator Agreement and the Candidate Terms. Until incorporation these approvals are given by 2060 OÜ acting for the Foundation (in Formation).
+3.3 **The Foundation** approves the fee schedule of Annex A, the Authorized Certificator Agreement and the Candidate Terms.
 
 3.4 Decisions of the Office are recorded in the Foundation's audit log. A decision that affects a Candidate, a holder or a Certificator is notified in writing.
 
@@ -74,7 +76,7 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 4.2 **Tracks and Modules.** The Tracks, their Modules and the core Modules common to every Track are published in the Curriculum. A Module passed under a Program Version counts for every Track that includes it under the same Program Version.
 
-4.3 **Eligibility.** Any individual of legal age who holds a Contributor membership of the Foundation may enroll. Contributor membership is free for individuals and is obtained on veranafoundation.org. The membership shall be active at each assessment and at the issuance of a certification; a lapsed membership does not affect a certification already issued. Certificators may add commercial conditions to their workshops but not to the assessment itself beyond the fees of Annex A.
+4.3 **Eligibility.** Any individual of legal age who holds a Qualifying Membership as a Contributor may enroll. Contributor membership is free for individuals and is obtained on veranafoundation.org. The Qualifying Membership shall be active at each assessment and at the issuance of a certification; a lapse does not affect a certification already issued. Certificators may add commercial conditions to their workshops but not to the assessment itself beyond the fees of Annex A.
 
 4.4 **Enrollment.** Candidates for Level 1 enroll on veranafoundation.org. Candidates for Level 2 and Level 3 enroll through a Certificator, which onboards them to the Program and records their enrollment with the Office. Every Candidate accepts the Candidate Terms before the first assessment.
 
@@ -146,19 +148,19 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 | Verana Certified Solution Provider | Sell, resell or advise on Verana-based solutions | One Certified Professional in each of the Solutions Consultant and Pre-sales Tracks; one in the Legal and Compliance or the Procurement and Tenders Track | Two customer references, or one documented engagement reviewed by the Certificator |
 | Verana Certified Operator | Run their own ecosystem or verifiable services on Verana | One Certified Professional in each of the Ecosystem Operator and Infrastructure Engineer Tracks | A live Ecosystem or verifiable service operated by the organization and a published governance framework |
 
-9.2 **Membership.** A Certified Organization shall hold at least a Contributor membership of the Foundation, active for the whole validity period of its Designation.
+9.2 **Membership.** A Certified Organization shall hold a Qualifying Membership as a Contributor, active for the whole validity period of its Designation.
 
 9.3 **Process.** The organization applies through a Certificator, which verifies the staff requirements against the Registry, reviews the evidence against the published rubric and issues the Designation credential. The Certificator shall not be the organization itself or an affiliate of it (Section 10.6).
 
 9.4 **Validity and attestation.** A Designation is valid for two years. Each year the organization attests to the Certificator that the required staff are still employed and still certified; the Certificator records the attestation with the Office.
 
-9.5 **Cure.** An organization that no longer meets the staff requirement or whose membership lapses has ninety days to cure. After that period the Designation is suspended, and revoked if the cure is not completed within a further ninety days.
+9.5 **Cure.** An organization that no longer meets the staff requirement or whose Qualifying Membership lapses has ninety days to cure. After that period the Designation is suspended, and revoked if the cure is not completed within a further ninety days.
 
 9.6 Staff are counted once: an individual's certification supports the Designation of one organization at a time, the one that employs them.
 
 ## SECTION 10. AUTHORIZED CERTIFICATORS
 
-10.1 **Eligibility.** A Certificator is an Associate Member in good standing that employs at least two Certified Instructors covering every Track it delivers, operates a verifiable service on a Verana network that holds its Certificator credential, has the capability to deliver training and keep candidate records, and has signed the Authorized Certificator Agreement.
+10.1 **Eligibility.** A Certificator holds a Qualifying Membership as an Associate, employs at least two Certified Instructors covering every Track it delivers, operates a verifiable service on a Verana network that holds its Certificator credential, has the capability to deliver training and keep candidate records, and has signed the Authorized Certificator Agreement.
 
 10.2 **Accreditation.** Applications are submitted on veranafoundation.org. The Office reviews an application within two weeks of a complete file, onboards the applicant, issues the Certificator credential and lists the Certificator in the Registry. Accreditation is granted for one year and renewed after the annual review of Section 10.7. The Office may limit an accreditation to specific Tracks, regions or languages.
 
@@ -192,11 +194,11 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 10.7 **Annual review.** Each year the Office reviews the Certificator's results, audit findings, candidate feedback and instructor coverage, and renews, limits or ends the accreditation.
 
-10.8 **Suspension and withdrawal.** The Office may suspend an accreditation with immediate effect for a breach of Section 5.6, Section 10.4 or Section 10.6, for loss of Associate membership, or for conduct that brings the Program into disrepute, and may withdraw it after hearing the Certificator. On withdrawal, the Certificator's credential and its issuer entries in the Verana Certification Ecosystem are revoked, it stops using the Marks, and it hands its candidate records to the Office.
+10.8 **Suspension and withdrawal.** The Office may suspend an accreditation with immediate effect for a breach of Section 5.6, Section 10.4 or Section 10.6, for loss of its Qualifying Membership, or for conduct that brings the Program into disrepute, and may withdraw it after hearing the Certificator. On withdrawal, the Certificator's credential and its issuer entries in the Verana Certification Ecosystem are revoked, it stops using the Marks, and it hands its candidate records to the Office.
 
 ## SECTION 11. THE MARKS
 
-11.1 The Marks belong to the Foundation, or are held for it by 2060 OÜ until incorporation. Holders of a valid certification and accredited Certificators receive a non-exclusive, non-transferable, revocable license to use the Mark that corresponds to their certification or accreditation, in the form published by the Foundation, for the duration of its validity.
+11.1 Until the Verana Foundation accepts assignment of the Program in writing, the Marks are held by 2060 OÜ in its own name. From that acceptance, the Marks belong to the Verana Foundation. Holders of a valid certification and accredited Certificators receive a non-exclusive, non-transferable, revocable license to use the Mark that corresponds to their certification or accreditation, in the form published by the Foundation, for the duration of its validity.
 
 11.2 A Mark may be used only with the name of its holder and only for the Track, Designation or accreditation actually held. A Mark shall not be used in a way that suggests endorsement by the Foundation of a product, a service or an opinion, nor altered, combined with another mark or registered as a domain name or company name.
 
@@ -206,7 +208,7 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 12.1 A Candidate, a holder or a Certificator may appeal a decision of the Office or a result within thirty days of its notification, in writing, stating the grounds.
 
-12.2 The Office decides the appeal within thirty days after hearing the appellant and, where relevant, the Certificator. A second appeal lies to the Foundation, or to 2060 OÜ acting for the Foundation (in Formation), whose decision is final within the Program.
+12.2 The Office decides the appeal within thirty days after hearing the appellant and, where relevant, the Certificator. A second appeal lies to the Foundation, whose decision is final within the Program.
 
 12.3 Complaints about a Certificator are addressed to the Office, which investigates and may audit the Certificator.
 

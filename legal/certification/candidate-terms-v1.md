@@ -6,13 +6,13 @@ CANDIDATE TERMS v1 DRAFT 20261012
 
 > Draft for review by counsel. Not in force. Accepted by every candidate on the Foundation platform before the first assessment.
 
-These Candidate Terms (the **"Terms"**) govern your participation in the Verana Certification Program (the **"Program"**) operated by the Verana Foundation (in formation), represented by 2060 OÜ (Estonia, registry number 16853041) until incorporation (the **"Foundation"**). The Verana Certification Policy (the **"Policy"**), published on veranafoundation.org, is part of these Terms. Capitalized terms have the meaning given in the Policy.
+These Candidate Terms (the **"Terms"**) govern your participation in the Verana Certification Program (the **"Program"**). Until the Verana Foundation accepts assignment of the Program in writing, 2060 OÜ (Estonia, registry number 16853041) operates the Program in its own name as its organizer, and **"Foundation"** means 2060 OÜ. From that acceptance, **"Foundation"** means the Verana Foundation. 2060 OÜ remains bound by these Terms until that acceptance, and remains liable for obligations that accrued before it. The Verana Certification Policy (the **"Policy"**), published on veranafoundation.org, is part of these Terms. Capitalized terms not defined in these Terms have the meaning given in the Policy.
 
 ## 1. Enrollment
 
 1.1 You enroll for a Level 1 certification on veranafoundation.org, and for a Level 2 or Level 3 certification through an Authorized Certificator, which onboards you to the Program and records your enrollment with the Certification Office.
 
-1.2 You must be of legal age, hold a Contributor membership of the Foundation (free for individuals, obtained on veranafoundation.org and active at each assessment and at issuance), and provide accurate identity and contact details. The Foundation may ask you to prove your identity before a proctored assessment.
+1.2 You must be of legal age, hold a Qualifying Membership as a Contributor, and provide accurate identity and contact details. Contributor membership is free for individuals and is obtained on veranafoundation.org. The Qualifying Membership must be active at each assessment and at issuance. The Foundation may ask you to prove your identity before a proctored assessment.
 
 1.3 Workshops, coaching and other services of a Certificator are contracted with the Certificator under its own terms. The Foundation is not a party to that contract.
 

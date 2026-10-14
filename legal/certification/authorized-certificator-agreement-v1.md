@@ -10,21 +10,21 @@ This **Authorized Certificator Agreement** (this **"Agreement"**) is entered int
 
 **BY AND BETWEEN:**
 
-**(1)** **Verana Foundation (in formation)**, a prospective non-profit foundation, represented solely for the purposes of this Agreement by **2060 OÜ**, a private limited company duly incorporated and validly existing under the laws of Estonia, with registry number 16853041 and registered address at Harju maakond, Tallinn, Kesklinna linnaosa, Ahtri tn 12, 15551, Estonia, acting exclusively in its capacity as designated organizer, incorporator, and promoter of the Verana Foundation prior to its formal establishment (hereinafter referred to prior to incorporation as the **"Foundation (in Formation)"**, and upon ratification of this Agreement following incorporation, as the **"Foundation"**);
+**(1)** **2060 OÜ**, a private limited company duly incorporated and validly existing under the laws of Estonia, with registry number 16853041 and registered address at Harju maakond, Tallinn, Kesklinna linnaosa, Ahtri tn 12, 15551, Estonia (**"2060"**). 2060 enters into this Agreement in its own name, as organizer, incorporator, and promoter of the Verana Foundation prior to its incorporation.
 
 **AND**
 
 **(2)** **{{certificator_legal_name}}**, a {{entity_form}} duly organized and validly existing under the laws of **{{jurisdiction}}**, with its principal place of business located at **{{certificator_address}}** (hereinafter, the **"Certificator"**).
 
-The Foundation (in Formation) and the Certificator are hereinafter referred to individually as a **"Party"** and collectively as the **"Parties."**
+2060 and the Certificator are hereinafter referred to individually as a **"Party"** and collectively as the **"Parties."**
 
 ## RECITALS
 
-**WHEREAS**, the Foundation (in Formation) operates the Verana Certification Program (the **"Program"**) under the Verana Certification Policy (the **"Policy"**), through which individuals and organizations are certified in the use, sale, construction and operation of products and services based on the Verana specifications and software;
+**WHEREAS**, 2060 operates the Verana Certification Program (the **"Program"**) under the Verana Certification Policy (the **"Policy"**), through which individuals and organizations are certified in the use, sale, construction and operation of products and services based on the Verana specifications and software;
 
-**WHEREAS**, the Certificator is an Associate Member of the Foundation (in Formation) in good standing under a Membership Agreement dated {{membership_effective_date}} (the **"Membership Agreement"**), and wishes to deliver training, assess candidates and issue certifications under the Program;
+**WHEREAS**, the Certificator holds a Qualifying Membership as an Associate under the Policy, pursuant to a Membership Agreement dated {{membership_effective_date}} (the **"Membership Agreement"**), and wishes to deliver training, assess candidates and issue certifications under the Program;
 
-**WHEREAS**, the Foundation (in Formation) has reviewed the Certificator's application under Section 10 of the Policy and is willing to accredit the Certificator on the terms of this Agreement;
+**WHEREAS**, 2060 has reviewed the Certificator's application under Section 10 of the Policy and is willing to accredit the Certificator on the terms of this Agreement;
 
 **NOW, THEREFORE**, in consideration of the mutual covenants herein, the Parties agree as follows.
 
@@ -34,11 +34,11 @@ The Foundation (in Formation) and the Certificator are hereinafter referred to i
 
 1.2 The Policy, in its version in force from time to time, is incorporated into this Agreement by reference. In case of conflict, this Agreement prevails over the Policy, and the Membership Agreement prevails over both on the matters it governs (membership, intellectual property and licensing of contributions, code of conduct, governing law and dispute resolution).
 
-1.3 The Parties acknowledge that Section 2 of the Membership Agreement (Hybrid Binding Structure) applies to this Agreement. Sections 6 (Fees), 8 (Intellectual Property and Marks), 9 (Confidentiality), 10 (Data Protection), 12 (Liability), 13.6 (Effects of Termination), 14 (Governing Law and Dispute Resolution) and 15 (Miscellaneous) are Immediate Binding Provisions.
+1.3 **"Foundation"** means 2060 until the Verana Foundation accepts an assignment of this Agreement in writing under Section 15.3, and means the Verana Foundation from that acceptance. Every section of this Agreement binds the Parties on the Effective Date. Section 2 of the Membership Agreement (Hybrid Binding Structure) does not apply to this Agreement. Section 1.2 does not allow that Section 2 to defer, limit, or condition any section of this Agreement.
 
 ## SECTION 2. ACCREDITATION
 
-2.1 **Grant.** The Foundation (in Formation) accredits the Certificator as a Verana Authorized Certificator for the Tracks, regions and languages listed in Annex A, and grants the Certificator the non-exclusive right to deliver training, proctor assessments, grade practical work and issue certifications under the Program within that scope.
+2.1 **Grant.** The Foundation accredits the Certificator as a Verana Authorized Certificator for the Tracks, regions and languages listed in Annex A, and grants the Certificator the non-exclusive right to deliver training, proctor assessments, grade practical work and issue certifications under the Program within that scope.
 
 2.2 **Non-exclusivity.** The Foundation may accredit any number of Certificators and may itself certify candidates and organizations.
 
@@ -52,7 +52,7 @@ The Foundation (in Formation) and the Certificator are hereinafter referred to i
 
 3.2 It renews for successive one-year periods upon the annual review of Section 10.7 of the Policy, unless either Party gives written notice of non-renewal at least sixty days before the end of the current period, or the Foundation decides not to renew following the review.
 
-3.3 Renewal is conditional on the Certificator holding a valid Associate membership for the whole of the renewed period.
+3.3 Renewal is conditional on the Certificator holding a Qualifying Membership as an Associate for the whole of the renewed period.
 
 ## SECTION 4. OBLIGATIONS OF THE CERTIFICATOR
 
@@ -144,15 +144,15 @@ The Foundation (in Formation) and the Certificator are hereinafter referred to i
 
 11.1 Each Party represents that it is validly existing, has the authority to enter into this Agreement, and that this Agreement does not conflict with any obligation binding on it.
 
-11.2 The Certificator represents that it holds a valid Associate membership, that the information in its application is accurate and complete, that it has the instructors, facilities and processes stated in its application, and that it is not subject to sanctions, insolvency proceedings or a conviction that would bring the Program into disrepute.
+11.2 The Certificator represents that it holds a Qualifying Membership as an Associate, that the information in its application is accurate and complete, that it has the instructors, facilities and processes stated in its application, and that it is not subject to sanctions, insolvency proceedings or a conviction that would bring the Program into disrepute.
 
 11.3 Except as expressly stated, the Curriculum, the platform and the credentials are provided as they are, without warranty of any kind, and the Foundation gives no warranty as to the commercial results the Certificator may obtain.
 
 ## SECTION 12. LIABILITY AND INDEMNITY
 
-12.1 Section 9 of the Membership Agreement (Limitation of Liability) applies to this Agreement, with the exception that the aggregate liability of the Foundation (in Formation) and of 2060 OÜ under this Agreement shall not exceed the fees paid by the Certificator under Section 6 in the twelve months preceding the claim.
+12.1 Section 9 of the Membership Agreement (Limitation of Liability) applies to this Agreement, with the exception that the aggregate liability of 2060 and of the Verana Foundation under this Agreement shall not exceed the fees paid by the Certificator under Section 6 in the twelve months preceding the claim.
 
-12.2 The Certificator shall indemnify and hold harmless the Foundation (in Formation), 2060 OÜ and their officers against any third-party claim arising from the Certificator's training, assessment, grading, use of the Marks, processing of personal data, or breach of this Agreement, except to the extent caused by the Foundation.
+12.2 The Certificator shall indemnify and hold harmless 2060, the Verana Foundation, and their officers against any third-party claim arising from the Certificator's training, assessment, grading, use of the Marks, processing of personal data, or breach of this Agreement, except to the extent caused by the Foundation.
 
 12.3 A certification issued under the Program attests the result of an assessment at a point in time and is not a warranty by either Party of the holder's future performance.
 
@@ -162,7 +162,7 @@ The Foundation (in Formation) and the Certificator are hereinafter referred to i
 
 13.2 **Suspension.** The Foundation may suspend the accreditation with immediate effect, in whole or for part of Annex A, on the grounds of Section 10.8 of the Policy, pending a decision under Section 13.3. During a suspension the Certificator shall not enroll new Candidates, proctor assessments or issue credentials, and shall say so to its Candidates.
 
-13.3 **Termination for cause.** Either Party may terminate this Agreement with immediate effect if the other Party materially breaches it and, where the breach can be cured, does not cure it within thirty days of notice. The Foundation may terminate with immediate effect for a breach of Section 4.3, 4.6, 9 or 10, for loss or lapse of the Certificator's Associate membership, for insolvency, or for conduct that brings the Program into disrepute.
+13.3 **Termination for cause.** Either Party may terminate this Agreement with immediate effect if the other Party materially breaches it and, where the breach can be cured, does not cure it within thirty days of notice. The Foundation may terminate with immediate effect for a breach of Section 4.3, 4.6, 9 or 10, for loss or lapse of the Certificator's Qualifying Membership as an Associate, for insolvency, or for conduct that brings the Program into disrepute.
 
 13.4 **Automatic termination.** This Agreement terminates automatically when the Membership Agreement terminates.
 
@@ -182,7 +182,7 @@ The Foundation (in Formation) and the Certificator are hereinafter referred to i
 
 15.2 **Amendments.** Amendments to this Agreement require a written document signed by both Parties. Amendments to the Policy and to its fee schedule are made under Section 15 of the Policy and bind the Certificator on notice; a Certificator that does not accept an amendment to Section 10 or Annex A of the Policy may terminate this Agreement under Section 13.1 before the amendment takes effect, in which case the ninety-day notice is reduced to the notice period of the amendment.
 
-15.3 **Assignment.** The Certificator may not assign or transfer this Agreement, including by change of control, without the Foundation's written consent. The Foundation (in Formation) may assign this Agreement to the Verana Foundation upon incorporation, and the Certificator consents to that assignment now.
+15.3 **Assignment.** The Certificator may not assign or transfer this Agreement, including by change of control, without the Foundation's written consent. 2060 shall assign this Agreement to the Verana Foundation upon its incorporation, and the Certificator consents to that assignment now. The assignment takes effect when the Verana Foundation accepts it in writing. Until that acceptance, 2060 remains the obligor under every section. From that acceptance, the Verana Foundation assumes the rights and obligations under this Agreement. 2060 is released from obligations that arise after the acceptance and remains liable for obligations that accrued before it.
 
 15.4 **Notices.** Notices are given in writing by email to the addresses below, with effect on the business day following transmission, unless a bounce is received.
 
@@ -208,9 +208,9 @@ The Foundation (in Formation) and the Certificator are hereinafter referred to i
 
 By signing below, the Parties acknowledge and agree to be bound by this Agreement, including Annex A, and by the Verana Certification Policy.
 
-### **VERANA FOUNDATION (IN FORMATION)**
+### **2060 OÜ**
 
-Represented by 2060 OÜ
+In its own name, as organizer of the Verana Foundation
 
 By:
 
