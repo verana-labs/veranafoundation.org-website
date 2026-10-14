@@ -120,15 +120,22 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 | Credential | Issued by | Held by |
 |---|---|---|
+| Verana Certified Associate (Level 1) | The Foundation | The individual, in a personal wallet |
+| Verana Certified Professional (Level 2) | The Certificator that enrolled the Candidate | The individual, in a personal wallet |
+| Verana Certified Organization | The Certificator that reviewed the organization | The organization, published on its DID |
 | Verana Authorized Certificator | The Foundation | The Certificator, published on its DID |
-| Verana Certified Professional | The Certificator that assessed the Candidate | The individual, in a personal wallet |
-| Verana Certified Organization | The Certificator that assessed the organization | The organization, published on its DID |
 
-7.2 Credentials carry the name of the holder, the Track or Designation, the level, the Program Version, the certificate identifier, the issuance and expiry dates and the issuing Certificator. The credential schemas are published by the Foundation.
+The Foundation issues a Verana Certified Associate credential when the Candidate passes the Level 1 exam and any exam fee is paid. The Foundation issues a Verana Authorized Certificator credential on accreditation under Section 10.2. A Verana Certified Expert (Level 3) credential is not issued under this version. The Program Version that opens Level 3 names its issuer.
 
-7.3 **Network.** Until the Verana main network is available for the Program, credentials are issued on a Verana test network and the Registry pages of veranafoundation.org are the authoritative record. When the main network becomes available, the Foundation re-creates the Verana Certification Ecosystem there and valid certifications are re-issued at no charge.
+Where Section 10.3 or Section 10.6 provides that the Office certifies, the Foundation is the issuer of that credential. It stands in the place of the Certificator for issuance, for revocation under Section 8, and for re-issue under Section 7.3.
 
-7.4 **Registry.** Certified Organizations and Certificators are listed in the Registry. Certified Professionals are listed only with their consent, given in the Candidate Terms and revocable at any time. The Registry shows the holder's name, the certification, the Program Version, the validity dates and the issuing Certificator.
+For a Verana Certified Professional credential or a Verana Certified Organization credential that a Certificator issues, the Certificator reports the result to the Office within five business days. The Foundation records that reported result within ten business days after receiving it, unless within those ten days it notifies the Certificator that it has opened a review under Section 10.5. If it does not open a review, the reported result stands. The Certificator issues the credential within five business days after the Foundation records that the requirements of that credential are met, and does not issue a result the Foundation has overturned. After issuance, a challenge is brought under Section 8.
+
+7.2 Credentials carry the name of the holder, the Track or Designation, the level, the Program Version, the certificate identifier, the issuance and expiry dates, and the issuer. The issuer is the Foundation or the Certificator, named as such. A credential the Foundation re-issues under Section 7.3 also names the original Certificator. The credential schemas are published by the Foundation.
+
+7.3 **Network.** Until the Verana main network is available for the Program, credentials are issued on a Verana test network and the Registry pages of veranafoundation.org are the authoritative record. When the main network becomes available, the Foundation re-creates the Verana Certification Ecosystem there. The issuer re-issues its own valid credentials at no charge, keeps the certificate identifier, and does so within the period the Foundation sets. If a Certificator does not re-issue, or its accreditation has ended, the Foundation re-issues that credential, names itself as issuer, and records the original Certificator.
+
+7.4 **Registry.** Certified Organizations and Certificators are listed in the Registry. Certified Professionals are listed only with their consent, given in the Candidate Terms and revocable at any time. The Registry shows the holder's name, the certification, the Program Version, the validity dates and the issuer. Where the Foundation has re-issued a credential under Section 7.3, the Registry also shows the original Certificator.
 
 7.5 **Verification.** Anyone may verify a certification on veranafoundation.org by its certificate identifier or by presenting the credential, and through trust resolution of the holder's DID for organizations.
 
@@ -138,9 +145,9 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 8.1 The Office may suspend or revoke a certification when it was obtained in breach of Section 5.6, when the holder misuses the Marks, when a Certified Organization no longer meets Section 9.3, or when the holder brings the Program into disrepute.
 
-8.2 The holder is notified with the reasons and may appeal under Section 12. A revoked certification is removed from the Registry and its credential status is set to revoked.
+8.2 The holder is notified with the reasons and may appeal under Section 12. A revoked certification is removed from the Registry. The issuer sets the credential status to revoked within five business days of the Office's instruction. If the issuer does not do so, or is a Certificator that no longer holds an accreditation, the Foundation records the credential as revoked in the Registry, and a verifier treats that recorded status as the current status of the credential.
 
-8.3 Certifications issued by a Certificator whose accreditation ends remain valid until their expiry unless revoked under Section 8.1. The Office may re-attest them.
+8.3 Certifications issued by a Certificator whose accreditation ends remain valid until their expiry unless revoked under Section 8.1. Re-issue of those certifications is governed by Section 7.3.
 
 ## SECTION 9. ORGANIZATION DESIGNATIONS
 
@@ -154,7 +161,7 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 9.2 **Membership.** A Certified Organization shall hold a Qualifying Membership as a Contributor, active for the whole validity period of its Designation.
 
-9.3 **Process.** The organization applies through a Certificator, which verifies the staff requirements against the Registry, reviews the evidence against the Assessment Criteria and issues the Designation credential. The Certificator shall not be the organization itself or an affiliate of it (Section 10.6).
+9.3 **Process.** The organization applies through a Certificator, which verifies the staff requirements against the Registry, reviews the evidence against the Assessment Criteria and issues the Designation credential under Section 7.1. The Certificator shall not be the organization itself or an affiliate of it (Section 10.6).
 
 9.4 **Validity and attestation.** A Designation is valid for two years. Each year the organization attests to the Certificator that the required staff are still employed and still certified; the Certificator records the attestation with the Office.
 
@@ -168,7 +175,7 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 10.2 **Accreditation.** Applications are submitted on veranafoundation.org. The Office reviews an application within two weeks of a complete file, onboards the applicant, issues the Certificator credential and lists the Certificator in the Registry. Accreditation is granted for one year and renewed after the annual review of Section 10.7. The Office may limit an accreditation to specific Tracks, regions or languages.
 
-10.3 **Launch Certificators.** The Office may accredit the first Certificators directly, and certifies their instructors and their organizations itself.
+10.3 **Launch Certificators.** The Office may accredit the first Certificators directly, and certifies their instructors and their organizations itself. The Foundation issues those credentials under Section 7.1.
 
 10.4 **Obligations.** A Certificator shall:
 
@@ -192,9 +199,9 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 (j) inform the Office of any change in its instructors, its membership status or its verifiable service.
 
-10.5 **Independence of results.** A Certificator decides on practical and case-study results independently and in good faith. The Office may overturn a result after review.
+10.5 **Independence of results.** A Certificator decides on practical and case-study results independently and in good faith. The Office may overturn a reported result by opening a review within the ten business days Section 7.1 gives it to record the result. A result already issued is challenged under Section 8.
 
-10.6 **Conflicts of interest.** A Certificator shall not certify its own organization, its affiliates, or its own employees and contractors, nor grade their work. Such certifications are delivered by the Office or by another Certificator.
+10.6 **Conflicts of interest.** A Certificator shall not certify its own organization, its affiliates, or its own employees and contractors, nor grade their work. Such certifications are delivered by the Office or by another Certificator. Where the Office delivers them, the Foundation issues the credential under Section 7.1.
 
 10.7 **Annual review.** Each year the Office reviews the Certificator's results, audit findings, candidate feedback and instructor coverage, and renews, limits or ends the accreditation.
 
@@ -232,11 +239,11 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 14.1 The fees payable under the Program are set out in Annex A. A fee is consideration for accreditation, for issuing a credential, or for an exam attempt. It is not a membership due, and Section 7.7 of the Membership Agreement does not describe it.
 
-14.2 Until the Verana Foundation accepts assignment of the Program in writing, 2060 OÜ invoices these fees in its own name. From that acceptance, the Foundation invoices them. Accreditation fees and issuance fees are invoiced together to the Certificator. Membership dues are invoiced separately under the Membership Agreement. An exam fee is invoiced to the Candidate alone. The membership dues characterisation is not sent with a Program invoice.
+14.2 Until the Verana Foundation accepts assignment of the Program in writing, 2060 OÜ invoices these fees in its own name. From that acceptance, the Foundation invoices them. Accreditation fees and issuance fees are invoiced as Annex A provides. Membership dues are invoiced separately under the Membership Agreement. An exam fee is invoiced to the Candidate alone. The membership dues characterisation is not sent with a Program invoice.
 
 14.3 Sections 7.9(a), 7.9(b), 7.9(d), 7.10, and 7.11(a), (b), and (d) of the Membership Agreement apply to the payment of these fees. The payer stands in the place of the Member, and these fees stand in the place of membership fees, for those provisions only. The assistance mentioned in Section 7.10 does not include a statement under Section 7.11(c). Sections 7.7, 7.9(c), and 7.11(c) do not apply.
 
-14.4 The fees are exclusive of value added tax and similar taxes. Where the Certificator is a taxable person outside Estonia, the accreditation and issuance fees are a business supply and may fall under a reverse charge. An exam fee charged to a Candidate is a consumer supply. The rate and the place of supply follow the law that applies to that supply.
+14.4 The fees are exclusive of value added tax and similar taxes. Where the Certificator is a taxable person outside Estonia, the accreditation fee and an issuance fee charged to the Certificator are a business supply and may fall under a reverse charge. An issuance fee invoiced to an applicant under Section A.2 is a business supply where that applicant is a taxable person outside Estonia, and may fall under a reverse charge, and is a consumer supply where that applicant is an individual. An exam fee charged to a Candidate is a consumer supply. The rate and the place of supply follow the law that applies to that supply.
 
 14.5 Certificators set the prices of their own workshops, coaching and services freely and invoice them directly.
 
@@ -265,12 +272,12 @@ A.1 Fees are stated in euro, exclusive of value added tax and similar taxes, and
 | Fee | Payer | Amount |
 |---|---|---|
 | Certificator accreditation, per year, in addition to Associate dues | Certificator | 2,500 EUR |
-| Issuance of a Verana Certified Professional credential, per certification | Certificator | 100 EUR |
-| Issuance of a Verana Certified Organization credential, per Designation | Certificator | 1,000 EUR |
+| Issuance of a Verana Certified Professional credential, per certification | The Certificator that issues it, except as Section A.2 provides | 100 EUR |
+| Issuance of a Verana Certified Organization credential, per Designation | The Certificator that issues it, except as Section A.2 provides | 1,000 EUR |
 | Renewal exam, per attempt | Candidate | 50 EUR, waived under Section 6.4 |
 | Level 1 exam, per attempt | Candidate | No charge until 31 December 2027 |
 
-A.2 Issuance fees are invoiced to Certificators monthly in arrears. Accreditation fees are invoiced on accreditation and at each renewal.
+A.2 Issuance fees for credentials a Certificator issues are invoiced to that Certificator monthly in arrears. Accreditation fees are invoiced on accreditation and at each renewal. No issuance fee is charged for a credential the Office issues under Section 10.3. The issuance fee for a credential the Office issues under Section 10.6 is invoiced to the applicant.
 
 A.3 A Program invoice describes the fee as accreditation, credential issuance, or an exam attempt. It does not describe the fee as a membership due, and it is not accompanied by the membership dues characterisation.
 

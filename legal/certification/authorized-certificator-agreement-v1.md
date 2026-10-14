@@ -64,7 +64,7 @@ This **Authorized Certificator Agreement** (this **"Agreement"**) is entered int
 
 4.4 **Records.** The Certificator shall keep enrollment, attendance, assessment and grading records for every Candidate for the validity period of the related certification and twenty-four months after it, and shall make them available to the Foundation on request.
 
-4.5 **Verifiable service.** The Certificator shall operate a verifiable service on the Verana network designated by the Policy, holding its Verana Authorized Certificator credential and its issuer accreditations in the Verana Certification Ecosystem, and shall issue the credentials of Section 7 from that service.
+4.5 **Verifiable service.** The Certificator shall operate a verifiable service on the Verana network designated by the Policy, holding its Verana Authorized Certificator credential and its issuer accreditations in the Verana Certification Ecosystem, and shall issue from that service the credentials that Section 7 of the Policy assigns to the Certificator.
 
 4.6 **Conflicts of interest.** The Certificator shall not certify, assess or grade its own organization, its affiliates, or its own employees and contractors, and shall disclose to the Foundation any other circumstance that could reasonably be seen to compromise the independence of a result.
 
@@ -80,7 +80,7 @@ This **Authorized Certificator Agreement** (this **"Agreement"**) is entered int
 
 5.1 The Foundation shall publish and maintain the Curriculum, including the Assessment Criteria, and shall give the Certificator access to the Marker Pack needed to deliver the Program within Annex A.
 
-5.2 The Foundation shall operate the Program platform on veranafoundation.org, administer knowledge exams, maintain the Registry, and process reported results within ten business days.
+5.2 The Foundation shall operate the Program platform on veranafoundation.org, administer knowledge exams, maintain the Registry, and record reported results within ten business days, as Section 7 of the Policy provides.
 
 5.3 The Foundation shall list the Certificator in the Registry and on veranafoundation.org with its scope under Annex A, and shall refer enquiries from prospective candidates and organizations to the listed Certificators without preference.
 
@@ -102,15 +102,15 @@ This **Authorized Certificator Agreement** (this **"Agreement"**) is entered int
 
 ## SECTION 7. CREDENTIALS AND THE REGISTRY
 
-7.1 The Foundation issues the Verana Authorized Certificator credential to the Certificator's DID and onboards the Certificator as an issuer of the Verana Certified Professional and Verana Certified Organization credential schemas in the Verana Certification Ecosystem, within the scope of Annex A.
+7.1 The Foundation issues the Verana Authorized Certificator credential to the Certificator's DID under Section 7 of the Policy, and onboards the Certificator as an issuer of the Verana Certified Professional and Verana Certified Organization credential schemas in the Verana Certification Ecosystem, within the scope of Annex A.
 
-7.2 The Certificator issues Verana Certified Professional credentials to the individuals it has assessed and Verana Certified Organization credentials to the organizations it has reviewed, only after the Foundation has confirmed the assessment results, and with the claims defined by the Foundation and no others.
+7.2 The Certificator issues the credentials that Section 7 of the Policy assigns to it, with the claims of Section 7.2 of the Policy and no others. It reports the result within five business days. The Foundation records that reported result within ten business days after receiving it, unless within those ten days it notifies the Certificator that it has opened a review under Section 10.5 of the Policy. If it does not open a review, the reported result stands. The Certificator issues the credential within five business days after the Foundation records that the requirements of that credential are met, and does not issue a result the Foundation has overturned. After issuance, a challenge is brought under Section 8 of the Policy.
 
-7.3 The Certificator shall revoke a credential it issued when instructed by the Foundation under Section 8 of the Policy, within five business days.
+7.3 The Certificator shall revoke a credential it issued when instructed by the Foundation under Section 8 of the Policy, within five business days. If it does not, or if its accreditation has ended, the Foundation records that credential as revoked in the Registry, and a verifier treats that recorded status as the current status of the credential.
 
-7.4 The Foundation may at any time re-attest, suspend or revoke any credential issued under the Program, and may suspend or revoke the Certificator's own credential and issuer accreditations under Section 13.
+7.4 The Foundation may suspend or revoke a credential under Section 8 of the Policy, and may suspend or revoke the Certificator's own credential and issuer accreditations under Section 13.
 
-7.5 When the Program moves to the Verana main network under Section 7.3 of the Policy, the Certificator shall re-issue, at no charge to holders, the valid credentials it issued, within the period set by the Foundation.
+7.5 When the Program moves to the Verana main network under Section 7.3 of the Policy, the Certificator shall re-issue, at no charge to holders, the valid credentials it issued, keeping the certificate identifier, within the period set by the Foundation. If the Certificator does not, or its accreditation has ended, the Foundation re-issues that credential, names itself as issuer, and records the Certificator as the original issuer.
 
 ## SECTION 8. INTELLECTUAL PROPERTY AND MARKS
 

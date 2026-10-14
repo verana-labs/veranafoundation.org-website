@@ -30,11 +30,11 @@ These Candidate Terms (the **"Terms"**) govern your participation in the Verana 
 
 ## 3. Certifications
 
-3.1 A certification is issued when you pass every Module of a Track under one Program Version, or the Level 1 exam, and the applicable fees have been paid.
+3.1 A certification is issued under Section 7 of the Policy when you have passed every Module of a Track under one Program Version, or the Level 1 exam, the pass is recorded as that section provides, and any applicable fee has been paid.
 
 3.2 A certification is valid for two years and is renewed under Section 6 of the Policy. An expired certification is not restored; you may obtain a new one.
 
-3.3 Your certification is issued as a verifiable credential to a personal wallet you control, and as a certificate with a unique identifier that anyone can verify on veranafoundation.org. The credential contains your name, the Track, the level, the Program Version, the identifier, the dates and the issuing Certificator, and nothing else.
+3.3 Your certification is issued as a verifiable credential to a personal wallet you control, and as a certificate with a unique identifier that anyone can verify on veranafoundation.org. The credential contains your name, the Track, the level, the Program Version, the identifier, the dates and the issuer, and nothing else. The issuer is the Foundation or a Certificator, named as such. A credential the Foundation re-issues under Section 7.3 of the Policy also names the original Certificator.
 
 3.4 The Foundation may suspend or revoke a certification under Section 8 of the Policy. You are notified with the reasons and may appeal.
 
@@ -46,7 +46,7 @@ These Candidate Terms (the **"Terms"**) govern your participation in the Verana 
 
 ## 5. Registry and publication
 
-5.1 You choose, at enrollment, whether your name, certification, Program Version, validity dates and issuing Certificator are listed in the public Registry on veranafoundation.org. You may change that choice at any time from your account. Verification by certificate identifier works whether or not you are listed.
+5.1 You choose, at enrollment, whether your name, certification, Program Version, validity dates and issuer are listed in the public Registry on veranafoundation.org. You may change that choice at any time from your account. Verification by certificate identifier works whether or not you are listed.
 
 5.2 Your certification supports the organization designation of the organization that employs you, under Section 9 of the Policy, and the Foundation may confirm its validity to that organization and its Certificator.
 
