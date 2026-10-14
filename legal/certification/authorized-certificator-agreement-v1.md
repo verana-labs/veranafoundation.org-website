@@ -60,7 +60,7 @@ This **Authorized Certificator Agreement** (this **"Agreement"**) is entered int
 
 4.2 **Instructors.** The Certificator shall employ or contract at least two Certified Instructors covering every Track in Annex A, shall notify the Foundation of every change within ten business days, and shall ensure that only Certified Instructors proctor assessments and grade practical work.
 
-4.3 **Assessment integrity.** The Certificator shall proctor assessments in accordance with the Policy and the proctoring guidelines published by the Foundation, shall apply the published rubrics, shall grade independently and in good faith, and shall report every assessment result to the Foundation within five business days.
+4.3 **Assessment integrity.** The Certificator shall proctor assessments in accordance with the Policy and the candidate-facing rules in the Assessment Criteria, shall grade against the Assessment Criteria, shall use the Marker Pack only for proctoring and grading, shall not disclose the Marker Pack to a Candidate, shall grade independently and in good faith, and shall report every assessment result to the Foundation within five business days.
 
 4.4 **Records.** The Certificator shall keep enrollment, attendance, assessment and grading records for every Candidate for the validity period of the related certification and twenty-four months after it, and shall make them available to the Foundation on request.
 
@@ -78,7 +78,7 @@ This **Authorized Certificator Agreement** (this **"Agreement"**) is entered int
 
 ## SECTION 5. OBLIGATIONS OF THE FOUNDATION
 
-5.1 The Foundation shall publish and maintain the Curriculum, the assessment instruments, the rubrics and the proctoring guidelines, and give the Certificator access to the confidential material needed to deliver the Program within Annex A.
+5.1 The Foundation shall publish and maintain the Curriculum, including the Assessment Criteria, and shall give the Certificator access to the Marker Pack needed to deliver the Program within Annex A.
 
 5.2 The Foundation shall operate the Program platform on veranafoundation.org, administer knowledge exams, maintain the Registry, and process reported results within ten business days.
 
@@ -114,9 +114,9 @@ This **Authorized Certificator Agreement** (this **"Agreement"**) is entered int
 
 ## SECTION 8. INTELLECTUAL PROPERTY AND MARKS
 
-8.1 **Curriculum.** The published Curriculum is licensed to the public under the Creative Commons Attribution-ShareAlike 4.0 International license. The Certificator may use, translate and adapt it under that license, keeping the attribution to the Verana Foundation, and shall mark its adaptations as its own under Section 4.1.
+8.1 **Curriculum.** The published Curriculum, including the Assessment Criteria, is licensed to the public under the Creative Commons Attribution-ShareAlike 4.0 International license. The Certificator may use, translate and adapt it under that license, keeping the attribution to the Verana Foundation, and shall mark its adaptations as its own under Section 4.1. The Marker Pack is not part of the Curriculum and is not licensed under this Section 8.1.
 
-8.2 **Confidential material.** Question banks, grading rubrics, lab solutions, proctoring guidelines and any other material the Foundation designates as confidential are licensed to the Certificator only for the delivery of the Program during the term, are not sublicensable, and remain the property of the Foundation or its licensors.
+8.2 **Marker Pack.** The Marker Pack is licensed to the Certificator only for the delivery of the Program during the term, is not sublicensable, and remains the property of the Foundation or its licensors. The Certificator shall not disclose it to a Candidate or to any person who does not need it to proctor or grade.
 
 8.3 **Contributions.** Material that the Certificator contributes to the Curriculum through the Showcase and Certification Working Group is contributed under Section 4 of the Membership Agreement.
 
@@ -128,7 +128,7 @@ This **Authorized Certificator Agreement** (this **"Agreement"**) is entered int
 
 9.1 Section 5 of the Membership Agreement applies to this Agreement. The material of Section 8.2, assessment results before their notification to the Candidate, audit findings, and the personal data of Candidates are Confidential Information of the Foundation; the Certificator's candidate lists and commercial terms are Confidential Information of the Certificator.
 
-9.2 The Certificator shall protect assessment content with at least the same care as its own most sensitive information, shall restrict access to Certified Instructors and staff who need it, and shall report any suspected disclosure within twenty-four hours.
+9.2 The Certificator shall protect the Marker Pack with at least the same care as its own most sensitive information, shall restrict access to Certified Instructors and staff who need it, and shall report any suspected disclosure within twenty-four hours.
 
 ## SECTION 10. DATA PROTECTION
 
@@ -168,7 +168,7 @@ This **Authorized Certificator Agreement** (this **"Agreement"**) is entered int
 
 13.5 **Hearing.** Before terminating for cause the Foundation shall hear the Certificator, unless the breach is such that a hearing would be futile or harmful to Candidates.
 
-13.6 **Effects.** On termination for any reason the Certificator shall stop using the Marks and presenting itself as a Certificator; the Foundation revokes the Certificator's credential and issuer accreditations; the Certificator completes, within thirty days, the assessments already started with the Foundation's cooperation, or transfers the Candidates to the Foundation or to another Certificator; the Certificator hands its candidate records to the Foundation and deletes the confidential material of Section 8.2; and accrued fees remain due. Certifications issued before termination remain valid under Section 8.3 of the Policy. Sections 6 (to the extent of outstanding obligations), 8.2, 8.4 (last sentence), 9, 10, 12, 13.6, 14 and 15 survive.
+13.6 **Effects.** On termination for any reason the Certificator shall stop using the Marks and presenting itself as a Certificator; the Foundation revokes the Certificator's credential and issuer accreditations; the Certificator completes, within thirty days, the assessments already started with the Foundation's cooperation, or transfers the Candidates to the Foundation or to another Certificator; the Certificator hands its candidate records to the Foundation and deletes the Marker Pack; and accrued fees remain due. Certifications issued before termination remain valid under Section 8.3 of the Policy. Sections 6 (to the extent of outstanding obligations), 8.2, 8.4 (last sentence), 9, 10, 12, 13.6, 14 and 15 survive.
 
 ## SECTION 14. GOVERNING LAW AND DISPUTE RESOLUTION
 

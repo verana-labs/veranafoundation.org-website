@@ -34,7 +34,7 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 2.6 **"Certified Professional"** means an individual holding a valid certification under Section 4.
 
-2.7 **"Curriculum"** means the modules, tracks, learning material, labs and assessments published by the Foundation under the Program, in the version applicable at the time of assessment.
+2.7 **"Curriculum"** means the modules, tracks, learning material, labs, assessments and Assessment Criteria published by the Foundation under the Program, in the version applicable at the time of assessment. The Curriculum does not include the Marker Pack.
 
 2.8 **"Designation"** means one of the organization certifications of Section 9.
 
@@ -54,11 +54,15 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 2.16 **"Qualifying Membership"** means a membership of the class named where this term is used, Contributor or Associate, that is in force under the Membership Agreement. Until the incorporated Verana Foundation has ratified that Membership Agreement, provisional participation of that class which 2060 OÜ has accepted and has not revoked is a Qualifying Membership.
 
+2.17 **"Assessment Criteria"** means the statement, published with the Curriculum for a Module or a Designation, of what is judged, how the points are allocated and what the pass mark is, together with the candidate-facing rules of the assessment, including its duration, the materials allowed and the assistance forbidden. Assessment Criteria do not include a model answer, an expected configuration or a lab solution. A statement that gives the answer is part of the Marker Pack.
+
+2.18 **"Marker Pack"** means the question banks, model answers, point-by-point marking notes, lab solutions and the proctoring material that describes how a breach of Section 5.6 is detected, together with any other material the Foundation designates as part of the Marker Pack. The Marker Pack is confidential. It is made available only to the Foundation and to the Certified Instructors and staff who need it to proctor or grade.
+
 ## SECTION 3. GOVERNANCE
 
 3.1 **The Office** approves Certificators, Program Versions, assessment instruments and this Policy; maintains the Registry; decides appeals at first instance; conducts audits; and issues the credentials of Section 7 that the Foundation issues itself.
 
-3.2 **The Working Group** proposes the Curriculum and its versions, reviews training material and assessment instruments, and records its decisions in its published minutes. Question banks, grading rubrics and lab solutions are confidential and are not published in the minutes.
+3.2 **The Working Group** proposes the Curriculum and its versions, reviews training material and assessment instruments, and records its decisions in its published minutes. The Marker Pack is confidential and is not published in the minutes. The Assessment Criteria are published with the Curriculum.
 
 3.3 **The Foundation** approves the fee schedule of Annex A, the Authorized Certificator Agreement and the Candidate Terms.
 
@@ -71,7 +75,7 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 | Level | Name | How it is obtained |
 |---|---|---|
 | 1 | Verana Certified Associate (Fundamentals) | Self-study of the published material and an online knowledge exam administered by the Foundation. No Certificator is involved. |
-| 2 | Verana Certified Professional, in a Track | Completion of the Track's Modules: a proctored knowledge exam administered by the Foundation and a practical lab or case study graded by a Certificator against the Foundation's rubric. Workshops are optional and offered by Certificators. |
+| 2 | Verana Certified Professional, in a Track | Completion of the Track's Modules: a proctored knowledge exam administered by the Foundation and a practical lab or case study graded by a Certificator against the Assessment Criteria. Workshops are optional and offered by Certificators. |
 | 3 | Verana Certified Expert, in a Track | Level 2 in the Track held for at least one year, a portfolio of real deployments or engagements, and an oral defense before two Certified Instructors from two different Certificators. Level 3 opens with a later Program Version. |
 
 4.2 **Tracks and Modules.** The Tracks, their Modules and the core Modules common to every Track are published in the Curriculum. A Module passed under a Program Version counts for every Track that includes it under the same Program Version.
@@ -84,17 +88,17 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 ## SECTION 5. ASSESSMENT
 
-5.1 **Knowledge exams** are administered on the Foundation platform, drawn at random from the confidential question bank of the applicable Program Version, and graded automatically. Unless the Curriculum states otherwise for a Module, an exam lasts sixty minutes and the pass mark is seventy percent of the available points. Level 2 and Level 3 exams are proctored by a Certified Instructor; Level 1 exams are not proctored.
+5.1 **Knowledge exams** are administered on the Foundation platform, drawn at random from the question bank in the Marker Pack of the applicable Program Version, and graded automatically. Unless the Assessment Criteria state otherwise for a Module, an exam lasts sixty minutes and the pass mark is seventy percent of the available points. Level 2 and Level 3 exams are proctored by a Certified Instructor; Level 1 exams are not proctored.
 
-5.2 **Practical labs** are executed on the environments designated by the Curriculum, which may include the Verana Playground and the Verana test networks. Where the Curriculum provides automated checks, their result is binding; a Certified Instructor reviews the remaining criteria against the published rubric.
+5.2 **Practical labs** are executed on the environments designated by the Curriculum, which may include the Verana Playground and the Verana test networks. Where the Curriculum provides automated checks, their result is binding; a Certified Instructor reviews the remaining criteria against the Assessment Criteria.
 
-5.3 **Case studies and live demonstrations** are graded by a Certified Instructor against the published rubric. The Office second-marks a sample of graded work each quarter.
+5.3 **Case studies, live demonstrations and oral defenses** are graded by a Certified Instructor against the Assessment Criteria. The Office second-marks a sample of graded work each quarter.
 
 5.4 **Retakes.** A Candidate who fails an assessment may retake it twice, with at least fourteen days between attempts. A third failure requires a new enrollment after ninety days.
 
 5.5 **Accommodations.** A Candidate may request additional time or another reasonable accommodation from the Office before the assessment. Requests are granted where justified and recorded.
 
-5.6 **Integrity.** A Candidate shall not copy, record, share or attempt to obtain assessment content, impersonate another Candidate or be impersonated, or receive assistance during an assessment beyond what the Curriculum allows. A breach voids the attempt, may void existing certifications of the Candidate and may bar the Candidate from the Program. A Certificator that facilitates a breach is subject to Section 10.8.
+5.6 **Integrity.** A Candidate shall not copy, record, share or attempt to obtain the Marker Pack, impersonate another Candidate or be impersonated, or receive assistance during an assessment beyond what the Curriculum allows. A breach voids the attempt, may void existing certifications of the Candidate and may bar the Candidate from the Program. A Certificator that facilitates a breach is subject to Section 10.8.
 
 5.7 **Language.** Assessments are available in English. Other languages are added by Program Version; the English version prevails in case of discrepancy.
 
@@ -150,7 +154,7 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 9.2 **Membership.** A Certified Organization shall hold a Qualifying Membership as a Contributor, active for the whole validity period of its Designation.
 
-9.3 **Process.** The organization applies through a Certificator, which verifies the staff requirements against the Registry, reviews the evidence against the published rubric and issues the Designation credential. The Certificator shall not be the organization itself or an affiliate of it (Section 10.6).
+9.3 **Process.** The organization applies through a Certificator, which verifies the staff requirements against the Registry, reviews the evidence against the Assessment Criteria and issues the Designation credential. The Certificator shall not be the organization itself or an affiliate of it (Section 10.6).
 
 9.4 **Validity and attestation.** A Designation is valid for two years. Each year the organization attests to the Certificator that the required staff are still employed and still certified; the Certificator records the attestation with the Office.
 
@@ -170,7 +174,7 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 (a) deliver the published Curriculum unchanged, additions being allowed when marked as the Certificator's own;
 
-(b) proctor assessments and grade practical work with Certified Instructors only, against the published rubrics;
+(b) proctor assessments and grade practical work with Certified Instructors only, against the Assessment Criteria, using the Marker Pack;
 
 (c) report assessment results to the Office within five business days;
 
@@ -178,7 +182,7 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 (e) accept audits, including attendance of Office observers and assessments by unannounced candidates;
 
-(f) keep the question banks, rubrics and lab solutions confidential and use them only for the Program;
+(f) keep the Marker Pack confidential and use it only for the Program;
 
 (g) use the Marks only as the trademark policy of Section 11 allows;
 
@@ -208,7 +212,7 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 12.1 A Candidate, a holder or a Certificator may appeal a decision of the Office or a result within thirty days of its notification, in writing, stating the grounds.
 
-12.2 The Office decides the appeal within thirty days after hearing the appellant and, where relevant, the Certificator. A second appeal lies to the Foundation, whose decision is final within the Program.
+12.2 The Office decides the appeal within thirty days after hearing the appellant and, where relevant, the Certificator. A second appeal lies to the Foundation, whose decision is final within the Program. On an appeal of a result, the Office gives the appellant the Assessment Criteria applied to the work and the points awarded against each criterion, and does not disclose the Marker Pack.
 
 12.3 Complaints about a Certificator are addressed to the Office, which investigates and may audit the Certificator.
 

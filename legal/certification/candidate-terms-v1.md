@@ -18,13 +18,13 @@ These Candidate Terms (the **"Terms"**) govern your participation in the Verana 
 
 ## 2. Assessments
 
-2.1 Assessments are conducted under Section 5 of the Policy: knowledge exams on the Foundation platform, practical labs and case studies graded by Certified Instructors against published rubrics, and oral defenses for Level 3.
+2.1 Assessments are conducted under Section 5 of the Policy: knowledge exams on the Foundation platform, and practical labs, case studies and oral defenses graded by Certified Instructors against the Assessment Criteria. You receive the Assessment Criteria with the Curriculum. You do not receive the Marker Pack.
 
 2.2 You may retake a failed assessment twice, with at least fourteen days between attempts. After a third failure you may enroll again after ninety days.
 
 2.3 You may request a reasonable accommodation before an assessment. Requests are decided by the Certification Office and recorded.
 
-2.4 You shall not copy, record, share or try to obtain assessment content, let anyone take an assessment for you, take one for anyone else, or receive help during an assessment beyond what the Curriculum allows. A breach voids the attempt, may void your existing certifications and may bar you from the Program.
+2.4 You shall not copy, record, share or try to obtain the Marker Pack, let anyone take an assessment for you, take one for anyone else, or receive help during an assessment beyond what the Curriculum allows. A breach voids the attempt, may void your existing certifications and may bar you from the Program.
 
 2.5 Proctored assessments may be recorded (screen, camera, audio) for integrity purposes. Recordings are kept under Section 13 of the Policy and are not shared beyond the Certificator and the Foundation except in an appeal or a legal proceeding.
 
@@ -64,7 +64,7 @@ These Candidate Terms (the **"Terms"**) govern your participation in the Verana 
 
 ## 8. Appeals
 
-8.1 You may appeal a result or a decision of the Certification Office within thirty days of its notification, under Section 12 of the Policy.
+8.1 You may appeal a result or a decision of the Certification Office within thirty days of its notification, under Section 12 of the Policy. On an appeal of a result, you receive the Assessment Criteria applied to your work and the points awarded against each criterion. You do not receive the Marker Pack.
 
 ## 9. Liability
 
