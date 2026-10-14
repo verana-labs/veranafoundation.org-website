@@ -186,7 +186,7 @@ This **Authorized Certificator Agreement** (this **"Agreement"**) is entered int
 
 15.4 **Notices.** Notices are given in writing by email to the addresses below, with effect on the business day following transmission, unless a bounce is received.
 
-15.5 **Severability, waiver, counterparts, language.** Sections 12.1 to 12.5 of the Membership Agreement apply. This Agreement is executed in English; translations are for convenience only.
+15.5 **Severability, waiver, counterparts, language.** Sections 12.6 (Severability), 12.5 (No Waiver), and 12.11 (Counterparts; Electronic Execution) of the Membership Agreement apply to this Agreement as if set out in full, the Certificator standing in the place of the Member, and "this Agreement" in those sections meaning this Agreement. Sections 12.1 to 12.4 of the Membership Agreement do not apply to this Agreement. This Agreement is executed in English; translations are for convenience only.
 
 ---
 
