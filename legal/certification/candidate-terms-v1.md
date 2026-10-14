@@ -52,7 +52,7 @@ These Candidate Terms (the **"Terms"**) govern your participation in the Verana 
 
 ## 6. Fees
 
-6.1 Fees payable to the Foundation are set out in Annex A of the Policy. Fees are non-refundable once an assessment has been attempted or a credential issued, except as required by law.
+6.1 Fees payable to the Foundation are set out in Annex A of the Policy. An exam fee is the price of that attempt. It is invoiced to you alone and is not a membership due. Fees are non-refundable once an assessment has been attempted or a credential issued, except as required by law. Section 14 of the Policy applies to the payment.
 
 6.2 Fees of a Certificator are set by the Certificator and paid to it.
 

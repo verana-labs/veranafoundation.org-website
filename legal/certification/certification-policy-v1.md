@@ -230,11 +230,17 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 ## SECTION 14. FEES
 
-14.1 The fees payable to the Foundation under the Program are set out in Annex A. They are invoiced by the Invoicing Entity designated under the Membership Agreement and are subject to Sections 7.9 to 7.11 of the Membership Agreement.
+14.1 The fees payable under the Program are set out in Annex A. A fee is consideration for accreditation, for issuing a credential, or for an exam attempt. It is not a membership due, and Section 7.7 of the Membership Agreement does not describe it.
 
-14.2 Certificators set the prices of their own workshops, coaching and services freely and invoice them directly.
+14.2 Until the Verana Foundation accepts assignment of the Program in writing, 2060 OÜ invoices these fees in its own name. From that acceptance, the Foundation invoices them. Accreditation fees and issuance fees are invoiced together to the Certificator. Membership dues are invoiced separately under the Membership Agreement. An exam fee is invoiced to the Candidate alone. The membership dues characterisation is not sent with a Program invoice.
 
-14.3 Fees are non-refundable once an assessment has been attempted or a credential issued, except as required by law.
+14.3 Sections 7.9(a), 7.9(b), 7.9(d), 7.10, and 7.11(a), (b), and (d) of the Membership Agreement apply to the payment of these fees. The payer stands in the place of the Member, and these fees stand in the place of membership fees, for those provisions only. The assistance mentioned in Section 7.10 does not include a statement under Section 7.11(c). Sections 7.7, 7.9(c), and 7.11(c) do not apply.
+
+14.4 The fees are exclusive of value added tax and similar taxes. Where the Certificator is a taxable person outside Estonia, the accreditation and issuance fees are a business supply and may fall under a reverse charge. An exam fee charged to a Candidate is a consumer supply. The rate and the place of supply follow the law that applies to that supply.
+
+14.5 Certificators set the prices of their own workshops, coaching and services freely and invoice them directly.
+
+14.6 Fees are non-refundable once an assessment has been attempted or a credential issued, except as required by law.
 
 ## SECTION 15. VERSIONS, AMENDMENTS AND PUBLICATION
 
@@ -254,7 +260,7 @@ CERTIFICATION POLICY v1 DRAFT 20261012
 
 ## ANNEX A. FEE SCHEDULE
 
-A.1 Fees are stated in euro, exclusive of value added tax and similar taxes, and payable to the Invoicing Entity. The amounts below are the initial schedule and may be amended under Section 15.2.
+A.1 Fees are stated in euro, exclusive of value added tax and similar taxes, and payable as Section 14 provides. The amounts below are the initial schedule and may be amended under Section 15.2.
 
 | Fee | Payer | Amount |
 |---|---|---|
@@ -265,6 +271,8 @@ A.1 Fees are stated in euro, exclusive of value added tax and similar taxes, and
 | Level 1 exam, per attempt | Candidate | No charge until 31 December 2027 |
 
 A.2 Issuance fees are invoiced to Certificators monthly in arrears. Accreditation fees are invoiced on accreditation and at each renewal.
+
+A.3 A Program invoice describes the fee as accreditation, credential issuance, or an exam attempt. It does not describe the fee as a membership due, and it is not accompanied by the membership dues characterisation.
 
 ## ANNEX B. PROGRAM VERSIONS
 

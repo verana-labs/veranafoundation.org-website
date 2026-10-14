@@ -90,11 +90,11 @@ This **Authorized Certificator Agreement** (this **"Agreement"**) is entered int
 
 ## SECTION 6. FEES
 
-6.1 The Certificator shall pay the Foundation the fees set out in Annex A of the Policy as in force from time to time: the annual accreditation fee, invoiced on the Effective Date and at each renewal, and the issuance fees, invoiced monthly in arrears on the basis of the credentials issued in the month.
+6.1 The Certificator shall pay the Foundation the fees set out in Annex A of the Policy as in force from time to time: the annual accreditation fee, invoiced on the Effective Date and at each renewal, and the issuance fees, invoiced monthly in arrears on the basis of the credentials issued in the month. These fees are consideration for accreditation and for issuing credentials. They are not membership dues.
 
 6.2 The accreditation fee is in addition to the Associate membership dues under the Membership Agreement.
 
-6.3 Invoices are issued by the Invoicing Entity designated under the Membership Agreement and are payable within thirty days of the invoice date. Sections 7.9 (Taxes; No Deduction; Gross-Up), 7.10 (Currency, Payment Methods, and Charges) and 7.11 (Tax Documentation and Cooperation) of the Membership Agreement apply to every payment under this Agreement.
+6.3 Invoices under this Section 6 are issued by 2060 in its own name until the Verana Foundation accepts the assignment under Section 15.3, and by the Verana Foundation from that acceptance. They are payable within thirty days of the invoice date. An invoice under this Section 6 does not include Associate membership dues and is not accompanied by the membership dues characterisation. Sections 7.9(a), 7.9(b), 7.9(d), 7.10, and 7.11(a), (b), and (d) of the Membership Agreement apply to every payment under this Section 6, the Certificator standing in the place of the Member and these fees standing in the place of membership fees. The assistance mentioned in Section 7.10 does not include a statement under Section 7.11(c). Sections 7.7, 7.9(c), and 7.11(c) do not apply.
 
 6.4 Fees paid are non-refundable, including on early termination, except as required by law.
 
