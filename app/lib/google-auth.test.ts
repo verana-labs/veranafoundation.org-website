@@ -11,9 +11,9 @@ describe("hostForLanguage", () => {
   });
 
   it("maps a language to its host, case- and space-insensitively", () => {
-    vi.stubEnv("GOOGLE_MEETINGS_HOSTS", " es = Meeting-ES@veranafoundation.org , fr=meetings-fr@veranafoundation.org");
-    expect(hostForLanguage("es")).toBe("meeting-es@veranafoundation.org");
-    expect(hostForLanguage("ES")).toBe("meeting-es@veranafoundation.org");
+    vi.stubEnv("GOOGLE_MEETINGS_HOSTS", " es = Meetings-ES@veranafoundation.org , fr=meetings-fr@veranafoundation.org");
+    expect(hostForLanguage("es")).toBe("meetings-es@veranafoundation.org");
+    expect(hostForLanguage("ES")).toBe("meetings-es@veranafoundation.org");
     expect(hostForLanguage("fr")).toBe("meetings-fr@veranafoundation.org");
     expect(hostForLanguage("en")).toBeNull();
   });
