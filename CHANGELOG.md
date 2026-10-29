@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.18.0...veranafoundation-website-v0.19.0) (2026-10-29)
+
+
+### Features
+
+* **wg:** host each meeting from a per-language Workspace account ([#169](https://github.com/verana-labs/veranafoundation.org-website/issues/169)) ([9ba4d4b](https://github.com/verana-labs/veranafoundation.org-website/commit/9ba4d4baab89e0b1eb71fcd18f8b4bb46d97af22))
+
 ## [0.18.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.17.3...veranafoundation-website-v0.18.0) (2026-10-14)
 
 
