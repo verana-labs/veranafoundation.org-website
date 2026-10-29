@@ -1,10 +1,14 @@
 import type { WgRegion, WgVisibility } from "@prisma/client";
 import { db } from "@/app/lib/db";
 import { nextOccurrences } from "@/app/lib/recurrence";
+import { googleAccessToken, hostForLanguage } from "@/app/lib/google-auth";
 import {
   attachConference,
   calendarConfigured,
+  cancelOccurrence,
   createScheduleEvent,
+  deleteScheduleEvent,
+  moveOccurrence,
   updateScheduleEvent,
   type MeetConference,
 } from "@/app/lib/google-calendar";
@@ -184,6 +188,7 @@ async function attendeeEmails(wgId: string): Promise<string[]> {
  */
 export async function syncScheduleToGoogle(
   wgId: string,
+  now = new Date(),
 ): Promise<{ ok: boolean; error?: string }> {
   const wg = await db.workingGroup.findUnique({
     where: { id: wgId },
@@ -197,6 +202,9 @@ export async function syncScheduleToGoogle(
     });
     return { ok: false, error: "Google Calendar is not configured." };
   }
+
+  // A failed move leaves the meeting with its current host, which still syncs.
+  const rehome = await rehomeSchedule(wgId, now);
 
   // Own the space first so the event carries it from the start; a failure
   // here is recorded on the Meet side and the event still syncs.
@@ -222,9 +230,11 @@ export async function syncScheduleToGoogle(
     attendees: await attendeeEmails(wgId),
   };
 
+  const host = schedule.googleHost;
+  const created = !schedule.googleEventId;
   try {
     if (schedule.googleEventId) {
-      const { meetLink } = await updateScheduleEvent(schedule.googleEventId, input, conference);
+      const { meetLink } = await updateScheduleEvent(host, schedule.googleEventId, input, conference);
       const link = conference?.uri ?? meetLink ?? schedule.meetLink;
       await db.wgSchedule.update({
         where: { id: schedule.id },
@@ -236,7 +246,7 @@ export async function syncScheduleToGoogle(
         },
       });
     } else {
-      const { eventId, meetLink } = await createScheduleEvent(input, conference);
+      const { eventId, meetLink } = await createScheduleEvent(host, input, conference);
       const link = conference?.uri ?? meetLink;
       await db.wgSchedule.update({
         where: { id: schedule.id },
@@ -258,12 +268,130 @@ export async function syncScheduleToGoogle(
     return { ok: false, error };
   }
 
+  // A new series (first sync, or moved to another host) starts clean: carry
+  // the upcoming cancellations and moves over to it.
+  const replay = created ? await replayExceptions(schedule.id, now) : null;
+
   // Meet side: transcription window + co-hosts. Their own failures are
   // recorded separately (meetConfigError / meetMembersError) and never fail
   // the Calendar sync.
   await syncMeetConfig(wgId);
   await syncMeetMembers(wgId);
-  return { ok: true };
+  const problem = rehome.error ?? replay;
+  if (!problem) return { ok: true };
+  await db.wgSchedule.update({ where: { id: schedule.id }, data: { syncError: problem.slice(0, 1000) } });
+  return { ok: false, error: problem };
+}
+
+/** Whether the group's meeting is organized by the host its language calls for. */
+export function hostMismatch(wg: { language: string; schedule: { googleHost: string | null } | null }): boolean {
+  return !!wg.schedule && (wg.schedule.googleHost ?? null) !== hostForLanguage(wg.language);
+}
+
+/**
+ * Move the group's meeting to the host account its language calls for
+ * (lib/google-auth.ts hostForLanguage): Meet transcribes in the language the
+ * host selected, and leads outside the Workspace cannot change it. The old
+ * series is cancelled for its attendees and its space stops transcribing; the
+ * caller then creates the space and the event as the new host, so attendees
+ * receive a new invitation with a new Meet link. Deferred while a meeting's
+ * transcription window is open, so a running call is never cut. Failures are
+ * recorded on the schedule (`syncError`) and returned; nothing is cancelled
+ * unless the new host answers first.
+ */
+export async function rehomeSchedule(
+  wgId: string,
+  now: Date,
+): Promise<{ moved: boolean; error?: string }> {
+  const wg = await db.workingGroup.findUnique({
+    where: { id: wgId },
+    include: { schedule: { include: { exceptions: true } } },
+  });
+  const schedule = wg?.schedule;
+  if (!wg || !schedule || !hostMismatch(wg)) return { moved: false };
+  const target = hostForLanguage(wg.language);
+  if (!schedule.googleEventId && !schedule.meetSpaceName) {
+    await db.wgSchedule.update({ where: { id: schedule.id }, data: { googleHost: target } });
+    return { moved: false };
+  }
+  if (occurrenceWindowAt(schedule, now, schedule.exceptions) !== null) return { moved: false };
+
+  const from = schedule.googleHost;
+  try {
+    // The new host must answer before the old series is cancelled: a mistyped
+    // or unlicensed account would otherwise leave the group with no meeting.
+    await googleAccessToken(target, [
+      "https://www.googleapis.com/auth/calendar.events",
+      "https://www.googleapis.com/auth/meetings.space.created",
+    ]);
+  } catch (e) {
+    const error = `Cannot act as ${target ?? "the default host"}; the meeting stays where it is: ${e instanceof Error ? e.message : String(e)}`;
+    await db.wgSchedule.update({ where: { id: schedule.id }, data: { syncError: error.slice(0, 1000) } });
+    return { moved: false, error };
+  }
+  if (schedule.googleEventId) {
+    try {
+      await deleteScheduleEvent(from, schedule.googleEventId); // cancels for attendees
+    } catch (e) {
+      const error = `Moving the meeting to ${target ?? "the default host"} failed: ${e instanceof Error ? e.message : String(e)}`;
+      await db.wgSchedule.update({ where: { id: schedule.id }, data: { syncError: error.slice(0, 1000) } });
+      return { moved: false, error };
+    }
+  }
+  if (schedule.meetSpaceName && schedule.meetAutoTranscribe) {
+    // Best effort: the abandoned space must not keep transcribing.
+    await setAutoTranscriptionByName(from, schedule.meetSpaceName, false).catch((e) =>
+      console.warn(`[wg-meet] could not switch off transcription on ${schedule.meetSpaceName}:`, e),
+    );
+  }
+  await db.wgSchedule.update({
+    where: { id: schedule.id },
+    data: {
+      googleHost: target,
+      googleEventId: null,
+      meetLink: null,
+      syncedAt: null,
+      syncError: null,
+      meetSpaceName: null,
+      meetingCode: null,
+      meetAutoTranscribe: null,
+      meetConfiguredAt: null,
+      meetConfigError: null,
+      meetMembersSyncedAt: null,
+      meetMembersError: null,
+    },
+  });
+  console.info(`[wg-meet] ${wg.slug}: meeting moved from ${from ?? "default host"} to ${target ?? "default host"}`);
+  return { moved: true };
+}
+
+/** Push the upcoming cancellations and moves onto a freshly created event. */
+async function replayExceptions(scheduleId: string, now: Date): Promise<string | null> {
+  const schedule = await db.wgSchedule.findUniqueOrThrow({
+    where: { id: scheduleId },
+    include: { exceptions: true },
+  });
+  if (!schedule.googleEventId) return null;
+  const problems: string[] = [];
+  for (const x of schedule.exceptions) {
+    if (x.originalStart < now && (!x.movedTo || x.movedTo < now)) continue;
+    try {
+      if (x.movedTo) {
+        await moveOccurrence(
+          schedule.googleHost, schedule.googleEventId, x.originalStart, x.movedTo,
+          schedule.durationMin, schedule.timezone,
+        );
+      } else {
+        await cancelOccurrence(schedule.googleHost, schedule.googleEventId, x.originalStart);
+      }
+    } catch (e) {
+      problems.push(`${x.originalStart.toISOString()}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+  if (!problems.length) return null;
+  const error = `Meeting moved to the new host, but some cancellations or moves did not carry over: ${problems.join(" | ")}`;
+  await db.wgSchedule.update({ where: { id: scheduleId }, data: { syncError: error.slice(0, 1000) } });
+  return error;
 }
 
 /**
@@ -280,9 +408,9 @@ export async function ensureAppSpace(
   const schedule = await db.wgSchedule.findUnique({ where: { wgId } });
   if (!schedule || schedule.meetSpaceName || !meetConfigured()) return { ok: true };
   try {
-    const space = await createSpace();
+    const space = await createSpace(schedule.googleHost);
     if (opts.attach && schedule.googleEventId) {
-      await attachConference(schedule.googleEventId, {
+      await attachConference(schedule.googleHost, schedule.googleEventId, {
         meetingCode: space.meetingCode,
         uri: space.uri,
       });
@@ -304,7 +432,7 @@ export async function ensureAppSpace(
       // Best effort: the superseded Calendar-created space must not keep
       // transcribing whoever still opens the old link.
       try {
-        await setAutoTranscription(oldCode, false);
+        await setAutoTranscription(schedule.googleHost, oldCode, false);
       } catch (e) {
         console.warn(`[wg-meet] could not switch off transcription on old space ${oldCode}:`, e);
       }
@@ -351,8 +479,8 @@ export async function syncMeetConfig(
   }
   try {
     const space = schedule.meetSpaceName
-      ? await setAutoTranscriptionByName(schedule.meetSpaceName, desired)
-      : await setAutoTranscription(meetingCode!, desired);
+      ? await setAutoTranscriptionByName(schedule.googleHost, schedule.meetSpaceName, desired)
+      : await setAutoTranscription(schedule.googleHost, meetingCode!, desired);
     await db.wgSchedule.update({
       where: { id: schedule.id },
       data: {
@@ -397,7 +525,7 @@ export async function syncMeetMembers(
   let added = 0;
   let removed = 0;
   try {
-    const current = await listMembers(schedule.meetSpaceName);
+    const current = await listMembers(schedule.googleHost, schedule.meetSpaceName);
     const have = new Set<string>();
     for (const m of current) {
       if (m.role !== "COHOST") continue;
@@ -405,7 +533,7 @@ export async function syncMeetMembers(
         have.add(m.email);
       } else {
         try {
-          await removeMember(m.name);
+          await removeMember(schedule.googleHost, m.name);
           removed++;
         } catch (e) {
           problems.push(`${m.email}: ${e instanceof Error ? e.message : String(e)}`);
@@ -415,7 +543,7 @@ export async function syncMeetMembers(
     for (const email of desired) {
       if (have.has(email)) continue;
       try {
-        await addCohost(schedule.meetSpaceName, email);
+        await addCohost(schedule.googleHost, schedule.meetSpaceName, email);
         added++;
       } catch (e) {
         problems.push(`${email}: ${e instanceof Error ? e.message : String(e)}`);

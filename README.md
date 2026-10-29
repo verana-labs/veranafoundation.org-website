@@ -280,7 +280,8 @@ Where: **local** = `.env.local`; **secret** = GitHub Actions secret → k8s Secr
 | --- | --- | --- | --- |
 | `GOOGLE_SA_EMAIL` | for Calendar sync | secret | Service-account email |
 | `GOOGLE_SA_PRIVATE_KEY` | for Calendar sync | secret | SA key PEM (`\n`-escaped); DWD scopes `calendar.events`, `meetings.space.created`, `meetings.space.settings`, `meetings.space.readonly` |
-| `GOOGLE_CALENDAR_IMPERSONATE` | for Calendar sync | secret | Role account organizing all WG meetings (`meetings@veranafoundation.org`) |
+| `GOOGLE_CALENDAR_IMPERSONATE` | for Calendar sync | secret | Default role account organizing WG meetings (`meetings@veranafoundation.org`) |
+| `GOOGLE_MEETINGS_HOSTS` | no | secret | Per-language hosts, `lang=email` pairs (`es=meetings-es@…,fr=meetings-fr@…`); each account's Meet language set to that language. Changing a group's language moves its meeting to the matching host |
 | `ANTHROPIC_API_KEY` | for drafted minutes | secret | Claude API key; without it transcripts are collected and leads write minutes by hand |
 | `MINUTES_AI_MODEL` | no | — | Model override (default `claude-opus-5`) |
 | `MINUTES_REPO` | for publishing | secret | Public minutes repo (`verana-labs/working-groups`) |

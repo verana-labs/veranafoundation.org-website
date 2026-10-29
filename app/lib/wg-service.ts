@@ -17,6 +17,7 @@ import {
   moveOccurrence,
   restoreOccurrence,
 } from "@/app/lib/google-calendar";
+import { hostForLanguage } from "@/app/lib/google-auth";
 import { setAutoTranscriptionByName } from "@/app/lib/google-meet";
 import {
   buildRrule,
@@ -438,14 +439,14 @@ export async function deleteSchedule(actor: Actor, wgId: string): Promise<Result
   if (!schedule) return { ok: true };
   if (schedule.googleEventId) {
     try {
-      await deleteScheduleEvent(schedule.googleEventId); // cancels for attendees
+      await deleteScheduleEvent(schedule.googleHost, schedule.googleEventId); // cancels for attendees
     } catch (e) {
       return { error: e instanceof Error ? e.message : "Calendar cancellation failed." };
     }
   }
   if (schedule.meetSpaceName && schedule.meetAutoTranscribe) {
     // Best effort: the orphaned space must not keep transcribing.
-    await setAutoTranscriptionByName(schedule.meetSpaceName, false).catch(() => {});
+    await setAutoTranscriptionByName(schedule.googleHost, schedule.meetSpaceName, false).catch(() => {});
   }
   await db.wgSchedule.delete({ where: { wgId } });
   await audit(actor, "wg.schedule.delete", wgId);
@@ -485,7 +486,7 @@ export async function cancelMeeting(actor: Actor, wgId: string, originalStart: D
   await audit(actor, "wg.meeting.cancel", wgId, { originalStart, note });
   if (schedule.googleEventId) {
     try {
-      await cancelOccurrence(schedule.googleEventId, originalStart);
+      await cancelOccurrence(schedule.googleHost, schedule.googleEventId, originalStart);
     } catch (e) {
       return occurrenceSyncFailed(schedule.id, "Cancelled", e);
     }
@@ -544,7 +545,7 @@ export async function moveMeeting(
   await audit(actor, "wg.meeting.move", wgId, { originalStart, newStart, note });
   if (schedule.googleEventId) {
     try {
-      await moveOccurrence(schedule.googleEventId, originalStart, newStart, schedule.durationMin, schedule.timezone);
+      await moveOccurrence(schedule.googleHost, schedule.googleEventId, originalStart, newStart, schedule.durationMin, schedule.timezone);
     } catch (e) {
       return occurrenceSyncFailed(schedule.id, "Moved", e);
     }
@@ -565,7 +566,7 @@ export async function restoreMeeting(actor: Actor, wgId: string, originalStart: 
   await audit(actor, "wg.meeting.restore", wgId, { originalStart, wasMovedTo: previous?.movedTo ?? null });
   if (schedule.googleEventId) {
     try {
-      await restoreOccurrence(schedule.googleEventId, originalStart, schedule.durationMin, schedule.timezone);
+      await restoreOccurrence(schedule.googleHost, schedule.googleEventId, originalStart, schedule.durationMin, schedule.timezone);
     } catch (e) {
       return occurrenceSyncFailed(schedule.id, "Restored", e);
     }
@@ -591,9 +592,11 @@ export async function updateSettings(
   await db.workingGroup.update({ where: { id: wgId }, data: { autoMinutes, language } });
   await audit(actor, "wg.settings.update", wgId, { autoMinutes, language });
   // The Calendar description mentions transcription, so a toggle re-syncs the
-  // event (which also pushes the Meet setting); a language change only needs
-  // the Meet side checked.
-  const sync = before.autoMinutes !== autoMinutes ? await syncScheduleToGoogle(wgId) : await syncMeetConfig(wgId);
+  // event (which also pushes the Meet setting); so does a language change that
+  // calls for another host account (the meeting moves to it). Otherwise only
+  // the Meet side needs checking.
+  const resync = before.autoMinutes !== autoMinutes || hostForLanguage(before.language) !== hostForLanguage(language);
+  const sync = resync ? await syncScheduleToGoogle(wgId) : await syncMeetConfig(wgId);
   return sync.ok ? { ok: true, message: "Settings saved." } : { error: `Saved, but the Google sync failed: ${sync.error}` };
 }
 
@@ -673,9 +676,12 @@ export async function updateGroup(
   await db.workingGroup.update({ where: { id: wgId }, data });
   await audit(actor, "wg.update", wgId, input);
   // The Calendar description mentions transcription, so a toggle re-syncs the
-  // event (and the Meet space); otherwise only the Meet side is checked.
+  // event (and the Meet space), as does a language change that calls for
+  // another host account; otherwise only the Meet side is checked.
   if (input.autoMinutes !== undefined && current.autoMinutes !== input.autoMinutes) {
     await db.workingGroup.update({ where: { id: wgId }, data: { autoMinutes: input.autoMinutes } });
+    await syncScheduleToGoogle(wgId);
+  } else if (input.language !== undefined && hostForLanguage(current.language) !== hostForLanguage(input.language)) {
     await syncScheduleToGoogle(wgId);
   } else if (input.language !== undefined) {
     await syncMeetConfig(wgId);

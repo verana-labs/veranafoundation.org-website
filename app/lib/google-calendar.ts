@@ -2,8 +2,9 @@ import { googleAccessToken, googleConfigured } from "@/app/lib/google-auth";
 
 /**
  * Google Calendar client for WG meetings (ADR-0003). The delegated service
- * account (lib/google-auth.ts) impersonates the meetings role account, which is
- * the organizer of every WG event: Google auto-creates the Meet link and
+ * account (lib/google-auth.ts) impersonates a meetings role account (the
+ * group's host, `host`; null = the default host), which is the organizer of
+ * the WG event: Google auto-creates the Meet link and
  * delivers invitations/cancellations to all attendees (Gmail natively;
  * Microsoft/Apple via standard iCalendar email).
  *
@@ -21,12 +22,13 @@ export function calendarConfigured(): boolean {
 }
 
 async function api<T>(
+  host: string | null,
   method: string,
   path: string,
   query: Record<string, string>,
   body?: object,
 ): Promise<T> {
-  const token = await googleAccessToken(SCOPES);
+  const token = await googleAccessToken(host, SCOPES);
   const qs = new URLSearchParams(query).toString();
   const res = await fetch(`${API}${path}${qs ? `?${qs}` : ""}`, {
     method,
@@ -102,10 +104,12 @@ function conferenceData(c: MeetConference) {
  * co-hosts); without it Google generates a Meet link of its own.
  */
 export async function createScheduleEvent(
+  host: string | null,
   input: ScheduleEventInput,
   conference?: MeetConference,
 ): Promise<{ eventId: string; meetLink: string | null }> {
   const ev = await api<GEvent>(
+    host,
     "POST",
     "/calendars/primary/events",
     { conferenceDataVersion: "1", sendUpdates: "all" },
@@ -126,10 +130,12 @@ export async function createScheduleEvent(
 
 /** Replace the event's Meet link with a site-created space; attendees are notified. */
 export async function attachConference(
+  host: string | null,
   eventId: string,
   conference: MeetConference,
 ): Promise<{ meetLink: string | null }> {
   const ev = await api<GEvent>(
+    host,
     "PATCH",
     `/calendars/primary/events/${eventId}`,
     { conferenceDataVersion: "1", sendUpdates: "all" },
@@ -144,11 +150,13 @@ export async function attachConference(
  * sync always converges on the link the site owns.
  */
 export async function updateScheduleEvent(
+  host: string | null,
   eventId: string,
   input: ScheduleEventInput,
   conference?: MeetConference,
 ): Promise<{ meetLink: string | null }> {
   const ev = await api<GEvent>(
+    host,
     "PATCH",
     `/calendars/primary/events/${eventId}`,
     { conferenceDataVersion: "1", sendUpdates: "all" },
@@ -159,17 +167,18 @@ export async function updateScheduleEvent(
 
 /** Replace the attendee list (on WG join/leave). Google notifies the delta. */
 export async function setEventAttendees(
+  host: string | null,
   eventId: string,
   emails: string[],
 ): Promise<void> {
-  await api("PATCH", `/calendars/primary/events/${eventId}`, {
+  await api(host, "PATCH", `/calendars/primary/events/${eventId}`, {
     sendUpdates: "all",
   }, { attendees: emails.map((email) => ({ email })) });
 }
 
 /** Cancel the whole series (schedule removed / WG deleted). */
-export async function deleteScheduleEvent(eventId: string): Promise<void> {
-  await api("DELETE", `/calendars/primary/events/${eventId}`, {
+export async function deleteScheduleEvent(host: string | null, eventId: string): Promise<void> {
+  await api(host, "DELETE", `/calendars/primary/events/${eventId}`, {
     sendUpdates: "all",
   });
 }
@@ -180,14 +189,15 @@ export async function deleteScheduleEvent(eventId: string): Promise<void> {
  * keeps working right after a move — the `instances?originalStart=` listing
  * can lag for a moment — so that is tried first, the listing is the fallback.
  */
-async function findInstance(eventId: string, originalStart: Date): Promise<GEvent> {
+async function findInstance(host: string | null, eventId: string, originalStart: Date): Promise<GEvent> {
   const stamp = originalStart.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   try {
-    return await api<GEvent>("GET", `/calendars/primary/events/${eventId}_${stamp}`, {});
+    return await api<GEvent>(host, "GET", `/calendars/primary/events/${eventId}_${stamp}`, {});
   } catch {
     /* fall back to the listing below */
   }
   const { items } = await api<{ items: GEvent[] }>(
+    host,
     "GET",
     `/calendars/primary/events/${eventId}/instances`,
     {
@@ -205,26 +215,28 @@ async function findInstance(eventId: string, originalStart: Date): Promise<GEven
 
 /** Cancel one occurrence ("skip next week") — removed from attendees' calendars. */
 export async function cancelOccurrence(
+  host: string | null,
   eventId: string,
   originalStart: Date,
 ): Promise<void> {
-  const instance = await findInstance(eventId, originalStart);
-  await api("PATCH", `/calendars/primary/events/${instance.id}`, {
+  const instance = await findInstance(host, eventId, originalStart);
+  await api(host, "PATCH", `/calendars/primary/events/${instance.id}`, {
     sendUpdates: "all",
   }, { status: "cancelled" });
 }
 
 /** Move one occurrence to another date/time (same duration); attendees are notified. */
 export async function moveOccurrence(
+  host: string | null,
   eventId: string,
   originalStart: Date,
   newStart: Date,
   durationMin: number,
   timezone: string,
 ): Promise<void> {
-  const instance = await findInstance(eventId, originalStart);
+  const instance = await findInstance(host, eventId, originalStart);
   const end = new Date(newStart.getTime() + durationMin * 60_000);
-  await api("PATCH", `/calendars/primary/events/${instance.id}`, {
+  await api(host, "PATCH", `/calendars/primary/events/${instance.id}`, {
     sendUpdates: "all",
   }, {
     status: "confirmed",
@@ -235,14 +247,15 @@ export async function moveOccurrence(
 
 /** Undo a single-occurrence cancellation or move: back to the series slot. */
 export async function restoreOccurrence(
+  host: string | null,
   eventId: string,
   originalStart: Date,
   durationMin: number,
   timezone: string,
 ): Promise<void> {
-  const instance = await findInstance(eventId, originalStart);
+  const instance = await findInstance(host, eventId, originalStart);
   const end = new Date(originalStart.getTime() + durationMin * 60_000);
-  await api("PATCH", `/calendars/primary/events/${instance.id}`, {
+  await api(host, "PATCH", `/calendars/primary/events/${instance.id}`, {
     sendUpdates: "all",
   }, {
     status: "confirmed",

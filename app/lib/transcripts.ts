@@ -15,9 +15,12 @@ import { alertOps } from "@/app/lib/relaticle";
 import { formatInTimezone, occurrenceWindowAt } from "@/app/lib/recurrence";
 import {
   ensureAppSpace,
+  hostMismatch,
   personName,
+  rehomeSchedule,
   syncMeetConfig,
   syncMeetMembers,
+  syncScheduleToGoogle,
 } from "@/app/lib/working-groups";
 import { backfillSessionSummaries } from "@/app/lib/session-summary";
 import { cleanupOAuth } from "@/app/lib/oauth";
@@ -135,7 +138,7 @@ export async function discoverTranscripts(now = new Date()): Promise<DiscoverRes
     result.scanned++;
     let records;
     try {
-      records = await listEndedConferences(code, since);
+      records = await listEndedConferences(schedule.googleHost, code, since);
     } catch (e) {
       result.errors.push(`${wg.slug}: ${e instanceof Error ? e.message : String(e)}`);
       continue;
@@ -165,6 +168,7 @@ export async function discoverTranscripts(now = new Date()): Promise<DiscoverRes
             wgId: wg.id,
             sessionId: session.id,
             meetingCode: code,
+            googleHost: schedule.googleHost,
             conferenceRecords: [record.name],
             startedAt: record.startedAt,
             endedAt: record.endedAt,
@@ -241,7 +245,7 @@ async function fetchStep(row: Row, now: Date): Promise<StepOutcome> {
   let pending = 0;
   let missing = 0;
   for (const record of row.conferenceRecords) {
-    const transcripts = await listTranscripts(record);
+    const transcripts = await listTranscripts(row.googleHost, record);
     if (transcripts.length === 0) {
       missing++;
       continue;
@@ -251,10 +255,10 @@ async function fetchStep(row: Row, now: Date): Promise<StepOutcome> {
       pending++;
       continue;
     }
-    const people = await listParticipants(record);
+    const people = await listParticipants(row.googleHost, record);
     participants.push(...people);
     for (const t of generated) {
-      parts.push({ entries: await listTranscriptEntries(t.name), participants: people });
+      parts.push({ entries: await listTranscriptEntries(row.googleHost, t.name), participants: people });
     }
   }
 
@@ -561,9 +565,39 @@ export async function syncMeetSpaces(now = new Date()): Promise<MeetSpacesResult
   return result;
 }
 
+/**
+ * Move every group whose language calls for another host account (lib/google-
+ * auth.ts hostForLanguage) onto it. Runs after discovery, so the old host's
+ * last conference is already attached to its session; a group in a meeting
+ * window is left for a later tick. Returns how many groups moved.
+ */
+export async function rehomeSchedules(now = new Date()): Promise<{ moved: number; errors: string[] }> {
+  const groups = await db.workingGroup.findMany({
+    where: { state: "enabled", schedule: { isNot: null } },
+    include: { schedule: { include: { exceptions: true } } },
+  });
+  const out = { moved: 0, errors: [] as string[] };
+  // Skip groups in a meeting window here: a full sync would only re-send the
+  // old series to every attendee each tick until the window closes.
+  const due = groups.filter(
+    (wg) => hostMismatch(wg) && occurrenceWindowAt(wg.schedule!, now, wg.schedule!.exceptions) === null,
+  );
+  for (const wg of due) {
+    // Only the move is retried each tick; a full sync follows once it happened.
+    const r = await rehomeSchedule(wg.id, now);
+    if (r.error) out.errors.push(`${wg.slug}: ${r.error}`);
+    if (!r.moved) continue;
+    out.moved++;
+    const sync = await syncScheduleToGoogle(wg.id, now);
+    if (!sync.ok) out.errors.push(`${wg.slug}: ${sync.error}`);
+  }
+  return out;
+}
+
 export type PipelineResult = {
   skipped?: string;
   meetSpaces?: MeetSpacesResult;
+  rehomed?: number;
   summaries?: number;
   discover?: DiscoverResult;
   processed: number;
@@ -593,6 +627,9 @@ export async function runTranscriptPipeline(
   result.meetSpaces = await syncMeetSpaces(now);
   result.discover = await discoverTranscripts(now);
   result.errors.push(...result.discover.errors);
+  const rehome = await rehomeSchedules(now);
+  result.rehomed = rehome.moved;
+  result.errors.push(...rehome.errors);
 
   const due = await db.wgTranscript.findMany({
     where: {

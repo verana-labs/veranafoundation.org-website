@@ -106,13 +106,13 @@ export async function deleteWg(formData: FormData) {
   const schedule = await db.wgSchedule.findUnique({ where: { wgId: id } });
   if (schedule?.googleEventId) {
     try {
-      await deleteScheduleEvent(schedule.googleEventId);
+      await deleteScheduleEvent(schedule.googleHost, schedule.googleEventId);
     } catch {
       /* attendees keep a stale event; acceptable on force-delete */
     }
   }
   if (schedule?.meetSpaceName && schedule.meetAutoTranscribe) {
-    await setAutoTranscriptionByName(schedule.meetSpaceName, false).catch(() => {});
+    await setAutoTranscriptionByName(schedule.googleHost, schedule.meetSpaceName, false).catch(() => {});
   }
   await db.workingGroup.delete({ where: { id } });
   await db.adminAction.create({
