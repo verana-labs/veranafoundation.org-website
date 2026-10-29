@@ -2,7 +2,8 @@ import { googleAccessToken, googleConfigured } from "@/app/lib/google-auth";
 
 /**
  * Google Meet REST API client (ADR-0004), as the meetings role account that
- * owns every WG meeting space. Three uses:
+ * owns the WG meeting space (the group's host, `host`; null = the default
+ * host). Three uses:
  *   - create the group's space and make its leads co-hosts (scope
  *     meetings.space.created — members can only be managed on spaces the app
  *     created, which is why the site owns them instead of Calendar);
@@ -34,13 +35,14 @@ export function meetingCodeFromLink(link: string | null | undefined): string | n
 }
 
 async function api<T>(
+  host: string | null,
   scopes: readonly string[],
   method: string,
   path: string,
   query: Record<string, string> = {},
   body?: object,
 ): Promise<T> {
-  const token = await googleAccessToken(scopes);
+  const token = await googleAccessToken(host, scopes);
   const qs = new URLSearchParams(query).toString();
   const res = await fetch(`${API}/${path}${qs ? `?${qs}` : ""}`, {
     method,
@@ -59,6 +61,7 @@ async function api<T>(
 
 /** Every page of a list endpoint, concatenated. */
 async function listAll<T>(
+  host: string | null,
   path: string,
   key: string,
   query: Record<string, string>,
@@ -66,7 +69,7 @@ async function listAll<T>(
   const out: T[] = [];
   let pageToken: string | undefined;
   for (let page = 0; page < 200; page++) {
-    const data = await api<Record<string, unknown>>(READ_SCOPES, "GET", path, {
+    const data = await api<Record<string, unknown>>(host, READ_SCOPES, "GET", path, {
       ...query,
       ...(pageToken ? { pageToken } : {}),
     });
@@ -122,8 +125,8 @@ export function parseSpace(s: GSpace, fallbackCode: string): MeetSpace {
  * user attends), transcription initially off (the cron opens it around each
  * scheduled occurrence), recording and notes untouched (off).
  */
-export async function createSpace(): Promise<MeetSpace> {
-  const space = await api<GSpace>(CREATED_SCOPES, "POST", "spaces", {}, {
+export async function createSpace(host: string | null): Promise<MeetSpace> {
+  const space = await api<GSpace>(host, CREATED_SCOPES, "POST", "spaces", {}, {
     config: {
       accessType: "TRUSTED",
       entryPointAccess: "ALL",
@@ -134,8 +137,8 @@ export async function createSpace(): Promise<MeetSpace> {
   return parseSpace(space, space.meetingCode ?? "");
 }
 
-export async function getSpace(meetingCode: string): Promise<MeetSpace> {
-  return parseSpace(await api<GSpace>(READ_SCOPES, "GET", `spaces/${meetingCode}`), meetingCode);
+export async function getSpace(host: string | null, meetingCode: string): Promise<MeetSpace> {
+  return parseSpace(await api<GSpace>(host, READ_SCOPES, "GET", `spaces/${meetingCode}`), meetingCode);
 }
 
 /**
@@ -148,19 +151,22 @@ export async function getSpace(meetingCode: string): Promise<MeetSpace> {
  * might not exist" otherwise — so the space is resolved first.
  */
 export async function setAutoTranscription(
+  host: string | null,
   meetingCode: string,
   on: boolean,
 ): Promise<MeetSpace> {
-  const current = await getSpace(meetingCode);
-  return setAutoTranscriptionByName(current.name, on);
+  const current = await getSpace(host, meetingCode);
+  return setAutoTranscriptionByName(host, current.name, on);
 }
 
 /** Same, when the resource name is already known (site-created spaces). */
 export async function setAutoTranscriptionByName(
+  host: string | null,
   spaceName: string,
   on: boolean,
 ): Promise<MeetSpace> {
   const space = await api<GSpace>(
+    host,
     SETTINGS_SCOPES,
     "PATCH",
     spaceName,
@@ -194,11 +200,12 @@ export function parseMember(m: GMember): MeetMember {
   };
 }
 
-export async function listMembers(spaceName: string): Promise<MeetMember[]> {
+export async function listMembers(host: string | null, spaceName: string): Promise<MeetMember[]> {
   const out: MeetMember[] = [];
   let pageToken: string | undefined;
   for (let page = 0; page < 20; page++) {
     const data = await api<{ members?: GMember[]; nextPageToken?: string }>(
+      host,
       CREATED_SCOPES,
       "GET",
       `${spaceName}/members`,
@@ -212,16 +219,16 @@ export async function listMembers(spaceName: string): Promise<MeetMember[]> {
 }
 
 /** Make a Google account (any domain) a co-host of the space. */
-export async function addCohost(spaceName: string, email: string): Promise<MeetMember> {
-  const m = await api<GMember>(CREATED_SCOPES, "POST", `${spaceName}/members`, {}, {
+export async function addCohost(host: string | null, spaceName: string, email: string): Promise<MeetMember> {
+  const m = await api<GMember>(host, CREATED_SCOPES, "POST", `${spaceName}/members`, {}, {
     email,
     role: "COHOST",
   });
   return parseMember(m);
 }
 
-export async function removeMember(memberName: string): Promise<void> {
-  const token = await googleAccessToken(CREATED_SCOPES);
+export async function removeMember(host: string | null, memberName: string): Promise<void> {
+  const token = await googleAccessToken(host, CREATED_SCOPES);
   const res = await fetch(`${API}/${memberName}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
@@ -260,10 +267,11 @@ export function parseConferenceRecord(r: GConferenceRecord): ConferenceRecord {
 
 /** Conferences held on a meeting code that ended at or after `endedSince`. */
 export async function listEndedConferences(
+  host: string | null,
   meetingCode: string,
   endedSince: Date,
 ): Promise<ConferenceRecord[]> {
-  const records = await listAll<GConferenceRecord>("conferenceRecords", "conferenceRecords", {
+  const records = await listAll<GConferenceRecord>(host, "conferenceRecords", "conferenceRecords", {
     filter: `space.meeting_code = "${meetingCode}" AND end_time >= "${endedSince.toISOString()}"`,
     pageSize: "100",
   });
@@ -278,12 +286,12 @@ export type MeetTranscript = {
   docUrl: string | null; // the Google Docs copy, for reference only
 };
 
-export async function listTranscripts(conferenceRecord: string): Promise<MeetTranscript[]> {
+export async function listTranscripts(host: string | null, conferenceRecord: string): Promise<MeetTranscript[]> {
   const items = await listAll<{
     name: string;
     state?: MeetTranscriptState;
     docsDestination?: { exportUri?: string };
-  }>(`${conferenceRecord}/transcripts`, "transcripts", { pageSize: "100" });
+  }>(host, `${conferenceRecord}/transcripts`, "transcripts", { pageSize: "100" });
   return items.map((t) => ({
     name: t.name,
     state: t.state ?? "STATE_UNSPECIFIED",
@@ -300,8 +308,8 @@ export type RawTranscriptEntry = {
 };
 
 /** All entries of a generated transcript, in start-time order. */
-export async function listTranscriptEntries(transcriptName: string): Promise<RawTranscriptEntry[]> {
-  return listAll<RawTranscriptEntry>(`${transcriptName}/entries`, "transcriptEntries", {
+export async function listTranscriptEntries(host: string | null, transcriptName: string): Promise<RawTranscriptEntry[]> {
+  return listAll<RawTranscriptEntry>(host, `${transcriptName}/entries`, "transcriptEntries", {
     pageSize: "100",
   });
 }
@@ -341,8 +349,8 @@ export function parseParticipant(p: GParticipant): MeetParticipant {
   };
 }
 
-export async function listParticipants(conferenceRecord: string): Promise<MeetParticipant[]> {
-  const items = await listAll<GParticipant>(`${conferenceRecord}/participants`, "participants", {
+export async function listParticipants(host: string | null, conferenceRecord: string): Promise<MeetParticipant[]> {
+  const items = await listAll<GParticipant>(host, `${conferenceRecord}/participants`, "participants", {
     pageSize: "250",
   });
   return items.map(parseParticipant);

@@ -220,6 +220,12 @@ spec:
                   name: veranafoundation-website-secrets
                   key: GOOGLE_CALENDAR_IMPERSONATE
                   optional: true
+            - name: GOOGLE_MEETINGS_HOSTS
+              valueFrom:
+                secretKeyRef:
+                  name: veranafoundation-website-secrets
+                  key: GOOGLE_MEETINGS_HOSTS
+                  optional: true
             - name: MINUTES_REPO
               valueFrom:
                 secretKeyRef:

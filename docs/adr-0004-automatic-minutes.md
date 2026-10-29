@@ -91,6 +91,16 @@ Decision:
 3. **Transcription is cropped to the schedule.** The cron switches the space's automatic transcription **on 20 minutes before** each non-cancelled occurrence and **off 30 minutes after its scheduled end** (a running call is never cut: the setting only governs new calls). Discovery ignores conferences that start outside a window. A stray join at any other time is therefore not transcribed at all.
 4. Scope added to the delegation: `https://www.googleapis.com/auth/meetings.space.created` (create spaces, manage their members). The `spaces.patch` call must use the resource name, not the meeting code.
 
+### Amendment 2026-10-29 — one host account per working language
+
+Meet writes the transcript in the language the **host account** selected (Meet settings, or "Meeting records" on each Calendar event). Leads outside the Workspace are co-hosts but get no meeting-language control (it is gated by the viewer's own edition), so a Spanish group hosted by an English `meetings@` was transcribed as English. Gemini "Take notes for me" was considered and rejected: same 8 languages, same host language, and a summary Doc instead of timed entries.
+
+Decision:
+
+1. **Per-language hosts.** `GOOGLE_MEETINGS_HOSTS` maps working languages to other role accounts (`es=meetings-es@…,fr=meetings-fr@…`), each with its Meet language set to that language; unlisted languages stay on `GOOGLE_CALENDAR_IMPERSONATE`. The same service account impersonates them (domain-wide delegation covers every account of the domain; no new scope).
+2. **`WgSchedule.googleHost`** records the account that organizes the event and owns the space (null = default host). Every Calendar and Meet call is made as that account; `WgTranscript.googleHost` keeps the host whose conference records a transcript reads.
+3. **Re-homing.** When a group's language calls for another host (language changed, or a mapping added), the meeting moves: the old series is cancelled for its attendees, its space stops transcribing, a new space and event are created as the new host (attendees receive a new invitation and Meet link), and upcoming cancellations and moves are replayed onto the new event. It happens on the settings change and in the cron **after discovery** (so the old host's last conference is already attached), and is **deferred while a transcription window is open**.
+
 ## Provisioning (one-time, manual)
 
 1. **Workspace edition:** Meet transcription requires **Business Standard or higher** (Business Starter and Essentials Starter have no transcription or recording; verified 2026-10-04). The verana.io subscription was upgraded to Business Standard; `meetings@` must hold that licence.
@@ -99,6 +109,7 @@ Decision:
 4. **Admin console:** Apps → Google Workspace → Google Meet → Meet video settings, for the organizational unit containing `meetings@`: **Recording** off; **Meeting transcripts** is locked on for Business Standard. (On Business Plus / Enterprise the "transcribed by default" option could be enabled as a safety net; it does not exist on Business Standard.)
 5. **Anthropic:** an API key for the Foundation, stored as `ANTHROPIC_API_KEY` (touch `.env.example`, `docker-publish.yml`, `k8s/statefulset.yaml`).
 6. **k8s:** `k8s/cronjob-wg-transcripts.yaml` (every 5 minutes, `activeDeadlineSeconds: 600`).
+7. **Per-language hosts (amendment 2026-10-29):** create each account (e.g. `meetings-es@`) with the same licence and organizational unit as `meetings@`, sign in once and set its Meet language, then add it to `GOOGLE_MEETINGS_HOSTS`.
 
 ## Data model summary (additions)
 

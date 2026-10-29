@@ -447,6 +447,10 @@ model WgSchedule {
   rrule       String // RFC 5545, e.g. "FREQ=WEEKLY;BYDAY=WE"
 
   // Google sync state — set after a successful Calendar API push.
+  // googleHost: the Workspace account that organizes the event and owns the
+  // Meet space (null = the default host). It follows the group's language
+  // (lib/google-auth.ts hostForLanguage); a change re-homes the meeting.
+  googleHost    String?
   googleEventId String?
   meetLink      String? // auto-created Meet link, participants-only
   syncedAt      DateTime?
@@ -532,6 +536,7 @@ model WgTranscript {
   session   WgSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   meetingCode       String
+  googleHost        String? // the host whose records these are (null = default)
   // Meet conference records merged into this transcript: a dropped call that
   // resumes creates a second record for the same occurrence.
   conferenceRecords String[]
