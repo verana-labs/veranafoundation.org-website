@@ -185,7 +185,7 @@ export default async function WorkingGroupPage({
               </p>
               {(joined || lead) && wg.schedule.meetLink && (
                 <p className="mt-3">
-                  <a href={wg.schedule.meetLink} rel="noopener" className="btn btn-primary text-sm">
+                  <a href={wg.schedule.meetLink} target="_blank" rel="noopener noreferrer" className="btn btn-primary text-sm">
                     Join the meeting (Google Meet)
                   </a>
                 </p>
