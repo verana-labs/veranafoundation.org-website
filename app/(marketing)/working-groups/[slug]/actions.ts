@@ -98,7 +98,7 @@ export async function removeLead(wgId: string, userId: string): Promise<ActionSt
 
 const scheduleSchema = z.object({
   wgId: z.string().min(1),
-  // From <input type="datetime-local">: wall time in the chosen timezone.
+  // A datetime-local-style value (DateTime24Input): wall time in the chosen timezone.
   firstAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/),
   timezone: z.string().min(1),
   durationMin: z.coerce.number().int().min(15).max(480),
