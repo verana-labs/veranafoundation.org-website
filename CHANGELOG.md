@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.20.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.19.0...veranafoundation-website-v0.20.0) (2026-10-29)
+
+
+### Features
+
+* **wg:** 24-hour time pickers in the lead console ([#171](https://github.com/verana-labs/veranafoundation.org-website/issues/171)) ([2c2096e](https://github.com/verana-labs/veranafoundation.org-website/commit/2c2096e439bcc78f3131223c8e583830fd8fba22))
+* **wg:** open the Google Meet join link in a new tab ([#173](https://github.com/verana-labs/veranafoundation.org-website/issues/173)) ([1f38f75](https://github.com/verana-labs/veranafoundation.org-website/commit/1f38f75fe4133b3c02a2d4c2faea03f6fef5147b))
+
 ## [0.19.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.18.0...veranafoundation-website-v0.19.0) (2026-10-29)
 
 
