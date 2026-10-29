@@ -4,6 +4,7 @@ import { useActionState, useState, useTransition } from "react";
 import type { Person } from "@/app/components/PersonAvatars";
 import PersonAvatars from "@/app/components/PersonAvatars";
 import LocalTime from "@/app/components/LocalTime";
+import DateTime24Input from "@/app/components/DateTime24Input";
 import { MINUTES_LANGUAGES } from "@/app/lib/languages";
 import {
   addLead,
@@ -186,10 +187,9 @@ export default function LeadConsole({
           <input type="hidden" name="wgId" value={wgId} />
           <div className="form-field">
             <label htmlFor="wg-firstAt">First (or reference) meeting</label>
-            <input
+            <DateTime24Input
               id="wg-firstAt"
               name="firstAt"
-              type="datetime-local"
               required
               defaultValue={
                 schedule ? toLocalInput(schedule.startsAt, schedule.timezone) : ""
@@ -343,11 +343,10 @@ export default function LeadConsole({
                     </div>
                     {moving === key && !struck && (
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <input
-                          type="datetime-local"
+                        <DateTime24Input
                           className="text-sm"
                           value={moveTo}
-                          onChange={(e) => setMoveTo(e.target.value)}
+                          onChange={setMoveTo}
                         />
                         <span className="text-xs text-muted">{schedule.timezone}</span>
                         <button
