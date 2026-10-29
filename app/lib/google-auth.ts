@@ -5,7 +5,7 @@ import { createSign } from "node:crypto";
  * (ADR-0004) clients: a hand-rolled JWT-bearer grant with domain-wide
  * delegation, impersonating a meetings role account. The default host is
  * GOOGLE_CALENDAR_IMPERSONATE; GOOGLE_MEETINGS_HOSTS maps working languages to
- * other hosts (e.g. "es=meeting-es@veranafoundation.org"), because Meet
+ * other hosts (e.g. "es=meetings-es@veranafoundation.org"), because Meet
  * transcribes in the language the host account selected and leads outside the
  * Workspace cannot change it. One cached access token per host and scope set.
  *
