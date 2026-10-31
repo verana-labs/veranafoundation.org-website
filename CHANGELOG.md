@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.1](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.20.0...veranafoundation-website-v0.20.1) (2026-10-31)
+
+
+### Bug Fixes
+
+* **contact:** label the honeypot as a required field so agents fill it in ([#174](https://github.com/verana-labs/veranafoundation.org-website/issues/174)) ([4286cae](https://github.com/verana-labs/veranafoundation.org-website/commit/4286cae3fcafa4c77c769d8a2ad2c61f6bd4c836))
+
 ## [0.20.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.19.0...veranafoundation-website-v0.20.0) (2026-10-29)
 
 
