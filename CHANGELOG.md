@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.20.1...veranafoundation-website-v0.21.0) (2026-11-04)
+
+
+### Features
+
+* **assets:** add a padded logo for credentials ([#176](https://github.com/verana-labs/veranafoundation.org-website/issues/176)) ([3ae4df8](https://github.com/verana-labs/veranafoundation.org-website/commit/3ae4df8fc9d36b9db2f5a7581ec8b8caba017b29))
+
 ## [0.20.1](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.20.0...veranafoundation-website-v0.20.1) (2026-10-31)
 
 
