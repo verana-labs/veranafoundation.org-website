@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.22.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.21.0...veranafoundation-website-v0.22.0) (2026-11-04)
+
+
+### Features
+
+* **assets:** credential logo with a 10% margin ([#178](https://github.com/verana-labs/veranafoundation.org-website/issues/178)) ([02c88a7](https://github.com/verana-labs/veranafoundation.org-website/commit/02c88a7a9a3a1599faa6bc592370f501c5535012))
+
 ## [0.21.0](https://github.com/verana-labs/veranafoundation.org-website/compare/veranafoundation-website-v0.20.1...veranafoundation-website-v0.21.0) (2026-11-04)
 
 
